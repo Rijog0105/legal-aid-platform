@@ -13,10 +13,11 @@ import { RootRedirect } from '@/components/guards/RootRedirect';
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { PeoplePage } from '@/features/people';
 import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
 
 export const router = createBrowserRouter([
-  /* ─── Root: smart redirect based on auth + role ─── */
+  /* ─── Root: smart redirect ─── */
   {
     path: ROUTES.HOME,
     element: <RootRedirect />,
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
         element: <DashboardPage />,
       },
       {
+        path: ROUTES.PEOPLE,
+        element: <PeoplePage />,
+      },
+      {
         path: ROUTES.CAMPS,
         element: <div className="text-surface-500">Camp list — Phase 4</div>,
       },
@@ -55,10 +60,6 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.CAMP_DETAIL,
         element: <div className="text-surface-500">Camp detail — Phase 4</div>,
-      },
-      {
-        path: ROUTES.PEOPLE,
-        element: <div className="text-surface-500">People registry — Phase 4</div>,
       },
     ],
   },
@@ -86,7 +87,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  /* ─── Catch-all redirect ─── */
+  /* ─── Catch-all ─── */
   {
     path: '*',
     element: <Navigate to={ROUTES.LOGIN} replace />,
