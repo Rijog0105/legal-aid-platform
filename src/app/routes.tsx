@@ -7,6 +7,7 @@ import { VolunteerLayout } from '@/components/layout/VolunteerLayout';
 
 /* Guards */
 import { ProtectedRoute } from '@/components/guards/ProtectedRoute';
+import { RootRedirect } from '@/components/guards/RootRedirect';
 
 /* Pages */
 import { LoginPage } from '@/features/auth/components/LoginPage';
@@ -15,6 +16,12 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
 
 export const router = createBrowserRouter([
+  /* ─── Root: smart redirect based on auth + role ─── */
+  {
+    path: ROUTES.HOME,
+    element: <RootRedirect />,
+  },
+
   /* ─── Public Routes ─── */
   {
     path: ROUTES.LOGIN,
