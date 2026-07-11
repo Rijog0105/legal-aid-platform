@@ -9,11 +9,15 @@ import { PERSON_CATEGORY, type PersonCategory } from '@/constants';
 import type { Person } from '@/types';
 import { createPerson, updatePerson } from '@/features/people/services/peopleService';
 
+const categoryValues = [
+  PERSON_CATEGORY.FACULTY,
+  PERSON_CATEGORY.STUDENT,
+  PERSON_CATEGORY.EXTERNAL,
+] as const;
+
 const schema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
-  category: z.enum(['faculty', 'student', 'external'], {
-    required_error: 'Category is required',
-  }) as z.ZodType<PersonCategory>,
+  category: z.enum(categoryValues, { error: 'Category is required' }),
   designation: z.string().optional(),
   organization: z.string().optional(),
   phone: z.string().optional(),
@@ -125,9 +129,9 @@ export function PersonForm({ person, onClose, onSaved }: PersonFormProps) {
                   errors.category ? 'border-red-500' : ''
                 }`}
               >
-                {(Object.keys(PERSON_CATEGORY) as Array<keyof typeof PERSON_CATEGORY>).map((key) => (
-                  <option key={key} value={PERSON_CATEGORY[key]}>
-                    {CATEGORY_LABELS[PERSON_CATEGORY[key]]}
+                {categoryValues.map((val) => (
+                  <option key={val} value={val}>
+                    {CATEGORY_LABELS[val]}
                   </option>
                 ))}
               </select>
