@@ -20,11 +20,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 2 (next to implement) |
-| **Last Completed Phase** | Phase 1 — Project Setup & Foundation |
-| **Latest Commit** | `358dc52f2ad2735bdc9e0d71733ae9de5ea037d7` |
-| **Commit Message** | "Phase 1 - Project Setup Complete" |
-| **Build Status** | ✅ `tsc --noEmit` passes, `npm run build` succeeds |
+| **Current Phase** | Phase 4 — implemented, pending local build verification |
+| **Last Completed Phase** | Phase 3 — People Registry |
+| **Latest Commit (before Phase 4)** | `9a4512c7b88fc985b44a7234674fc1b35b6d5971` |
+| **Commit Message** | Phase 4 not yet committed — run `npx tsc --noEmit && npm run build`, verify, then commit locally |
+| **Build Status** | ⚠️ Not yet verified in this session (no shell access) — run `npx tsc --noEmit` and `npm run build` locally |
 
 ---
 
@@ -85,25 +85,33 @@
 
 ---
 
+## Completed Work (Phase 2)
+
+- LoginPage wired to Supabase Auth (`signInWithPassword`), Zod + react-hook-form validation
+- Session persistence via Supabase `localStorage` session + `onAuthStateChange` listener
+- `RootRedirect` + role-based redirect (volunteer → `/volunteer`, others → `/dashboard`)
+- `ProtectedRoute` role guard, `/unauthorized` redirect for wrong-role access
+- Full auth error handling (invalid credentials, unconfirmed email, network errors, expired session)
+- See `docs/PHASE_02_AUTH.md` for full details
+
+## Completed Work (Phase 3)
+
+- `peopleService.ts` — Supabase CRUD (fetchPeople, fetchPerson, createPerson, updatePerson, deletePerson)
+- `usePeople` hook — debounced search + category filter
+- `PeoplePage` — searchable/filterable table with edit/delete
+- `PersonForm` — create/edit modal with Zod validation
+- `/people` route wired into AppShell
+- See `docs/PHASE_03_PEOPLE.md` for full details
+
+## Completed Work (Phase 4 — pending verification)
+
+- `campService.ts` / `campPeopleService.ts` — Supabase CRUD for camps and camp_people
+- `CampListPage`, `CampCreatePage`, `CampDetailPage`, `CampPeopleTab`, `AssignPersonModal`, `CampForm`
+- Status transitions: draft → active → completed → archived
+- People assignment to camps with camp roles
+- See `docs/PHASE_04_CAMPS.md` for full details and required verification steps
+
 ## Pending Work (Next Phases)
-
-### Phase 2 — Authentication & Session Management
-- Wire LoginPage to real Supabase Auth
-- Session persistence across page refreshes
-- Role-based redirect after login (faculty → dashboard, volunteer → volunteer home)
-- Create test users in Supabase Auth dashboard
-- Error handling for all auth scenarios
-
-### Phase 3 — People Registry
-- People list page with search/filter
-- Person create/edit form
-- Category filtering (faculty, student, external)
-
-### Phase 4 — Camp Management
-- Camp CRUD (create, list, detail, edit)
-- Camp status transitions
-- People assignment to camps
-- Tabbed camp detail page
 
 ### Phase 5 — Activity Management
 - Activity CRUD within camps
@@ -235,6 +243,8 @@ legal-aid-camp-platform/
 │   │   └── ui/                     # Button, Input, Card, Badge, Spinner, EmptyState
 │   ├── constants/index.ts          # All enums, statuses, routes, config
 │   ├── features/auth/              # Auth service, hook, LoginPage
+│   ├── features/people/            # People registry (service, hook, list, form)
+│   ├── features/camps/             # Camp management (service, hooks, list/create/detail, people tab)
 │   ├── pages/                      # Dashboard, Unauthorized, VolunteerHome
 │   ├── services/supabase.ts        # Supabase client
 │   ├── store/authStore.ts          # Zustand auth store

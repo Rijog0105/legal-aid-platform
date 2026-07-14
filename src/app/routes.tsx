@@ -14,6 +14,7 @@ import { LoginPage } from '@/features/auth/components/LoginPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PeoplePage } from '@/features/people';
+import { CampListPage, CampCreatePage, CampDetailPage } from '@/features/camps';
 import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
 
 export const router = createBrowserRouter([
@@ -51,15 +52,15 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.CAMPS,
-        element: <div className="text-surface-500">Camp list — Phase 4</div>,
+        element: <CampListPage />,
       },
       {
         path: ROUTES.CAMP_CREATE,
-        element: <div className="text-surface-500">Create camp — Phase 4</div>,
+        element: <CampCreatePage />,
       },
       {
         path: ROUTES.CAMP_DETAIL,
-        element: <div className="text-surface-500">Camp detail — Phase 4</div>,
+        element: <CampDetailPage />,
       },
     ],
   },

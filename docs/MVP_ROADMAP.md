@@ -9,9 +9,9 @@
 | Phase | Name | Status | Complexity |
 |-------|------|--------|------------|
 | 1 | Project Setup & Foundation | ✅ **Complete** | Medium |
-| 2 | Authentication & Session Management | 🔲 Pending | Medium |
-| 3 | People Registry | 🔲 Pending | Low–Medium |
-| 4 | Camp Management | 🔲 Pending | High |
+| 2 | Authentication & Session Management | ✅ **Complete** | Medium |
+| 3 | People Registry | ✅ **Complete** | Low–Medium |
+| 4 | Camp Management | 🟡 Implemented (pending build verification) | High |
 | 5 | Activity Management | 🔲 Pending | Medium |
 | 6 | Photo Documentation | 🔲 Pending | High |
 | 7 | Budget & Narrative Sections | 🔲 Pending | Medium |
@@ -54,7 +54,7 @@ All source code, configuration, SQL migrations, and documentation listed in `doc
 
 ## Phase 2 — Authentication & Session Management
 
-**Status:** 🔲 Pending
+**Status:** ✅ Complete (see `docs/PHASE_02_AUTH.md`)
 **Estimated Complexity:** Medium
 
 ### Objective
@@ -101,7 +101,7 @@ Complete the end-to-end authentication flow. Ensure users can sign in, maintain 
 
 ## Phase 3 — People Registry
 
-**Status:** 🔲 Pending
+**Status:** ✅ Complete (see `docs/PHASE_03_PEOPLE.md`)
 **Estimated Complexity:** Low–Medium
 
 ### Objective
@@ -142,7 +142,7 @@ Build the people management module. Faculty can create and manage person records
 
 ## Phase 4 — Camp Management
 
-**Status:** 🔲 Pending
+**Status:** 🟡 Implemented — pending local `tsc`/`build` verification (see `docs/PHASE_04_CAMPS.md`)
 **Estimated Complexity:** High
 
 ### Objective
