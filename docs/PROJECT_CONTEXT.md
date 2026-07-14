@@ -20,11 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 4 — implemented, pending local build verification |
-| **Last Completed Phase** | Phase 3 — People Registry |
-| **Latest Commit (before Phase 4)** | `9a4512c7b88fc985b44a7234674fc1b35b6d5971` |
-| **Commit Message** | Phase 4 not yet committed — run `npx tsc --noEmit && npm run build`, verify, then commit locally |
-| **Build Status** | ⚠️ Not yet verified in this session (no shell access) — run `npx tsc --noEmit` and `npm run build` locally |
+| **Current Phase** | Phase 5 — Activity Management |
+| **Last Completed Phase** | Phase 4 — Camp Management |
+| **Latest Commit** | `9a4512c7b88fc985b44a7234674fc1b35b6d5971` |
+| **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass |
 
 ---
 
@@ -103,17 +102,20 @@
 - `/people` route wired into AppShell
 - See `docs/PHASE_03_PEOPLE.md` for full details
 
-## Completed Work (Phase 4 — pending verification)
+## Completed Work (Phase 4)
 
 - `campService.ts` / `campPeopleService.ts` — Supabase CRUD for camps and camp_people
 - `CampListPage`, `CampCreatePage`, `CampDetailPage`, `CampPeopleTab`, `AssignPersonModal`, `CampForm`
 - Status transitions: draft → active → completed → archived
 - People assignment to camps with camp roles
-- See `docs/PHASE_04_CAMPS.md` for full details and required verification steps
+- TypeScript verification and production build confirmed passing
+- Supabase project created; `001_complete_schema.sql` executed; database tables and roles confirmed
+- Frontend connects to Supabase; login page confirmed reaching Supabase Auth
+- See `docs/PHASE_04_CAMPS.md` for full details
 
 ## Pending Work (Next Phases)
 
-### Phase 5 — Activity Management
+### Phase 5 — Activity Management (Current)
 - Activity CRUD within camps
 - Drag-and-drop reordering
 - Predefined activity templates
@@ -291,3 +293,6 @@ npm run dev
 |------|--------------|
 | Admin/Owner | @Dhanush051104 |
 | Admin/Owner | @Rijog0105 |
+
+
+---

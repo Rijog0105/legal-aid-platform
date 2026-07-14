@@ -11,8 +11,8 @@
 | 1 | Project Setup & Foundation | ✅ **Complete** | Medium |
 | 2 | Authentication & Session Management | ✅ **Complete** | Medium |
 | 3 | People Registry | ✅ **Complete** | Low–Medium |
-| 4 | Camp Management | 🟡 Implemented (pending build verification) | High |
-| 5 | Activity Management | 🔲 Pending | Medium |
+| 4 | Camp Management | ✅ **Complete** | High |
+| 5 | Activity Management | 🔲 Pending (Next) | Medium |
 | 6 | Photo Documentation | 🔲 Pending | High |
 | 7 | Budget & Narrative Sections | 🔲 Pending | Medium |
 | 8 | Report Generation ⭐ | 🔲 Pending | Very High |
@@ -142,7 +142,7 @@ Build the people management module. Faculty can create and manage person records
 
 ## Phase 4 — Camp Management
 
-**Status:** 🟡 Implemented — pending local `tsc`/`build` verification (see `docs/PHASE_04_CAMPS.md`)
+**Status:** ✅ Complete (see `docs/PHASE_04_CAMPS.md`)
 **Estimated Complexity:** High
 
 ### Objective
@@ -178,18 +178,24 @@ Build the core camp management module — the central entity of the entire platf
 
 ### Success Criteria
 
-- [ ] Faculty creates a camp with all required fields
-- [ ] Camp list shows status badges and counts
-- [ ] Camp detail page loads with tabbed navigation
-- [ ] People can be assigned and removed from camps
-- [ ] Status transitions work correctly
-- [ ] RLS enforces permission matrix
+- [x] Faculty creates a camp with all required fields
+- [x] Camp list shows status badges and counts
+- [x] Camp detail page loads with tabbed navigation
+- [x] People can be assigned and removed from camps
+- [x] Status transitions work correctly
+- [x] RLS enforces permission matrix
+- [x] TypeScript check passes (`npx tsc --noEmit`)
+- [x] Production build passes (`npm run build`)
+- [x] Supabase project created and schema executed successfully
+- [x] Database tables and roles confirmed in Supabase
+- [x] Frontend connects to Supabase successfully
+- [x] Login page reaches Supabase Auth (confirmed via credential error response)
 
 ---
 
 ## Phase 5 — Activity Management
 
-**Status:** 🔲 Pending
+**Status:** 🔲 Pending (Next)
 **Estimated Complexity:** Medium
 
 ### Objective
@@ -479,13 +485,13 @@ graph TD
 | Phase | Effort | Cumulative |
 |-------|--------|------------|
 | Phase 1 ✅ | Complete | — |
-| Phase 2 | 1 session | 1 session |
-| Phase 3 | 1 session | 2 sessions |
-| Phase 4 | 2 sessions | 4 sessions |
-| Phase 5 | 1 session | 5 sessions |
-| Phase 6 | 2 sessions | 7 sessions |
-| Phase 7 | 1 session | 8 sessions |
-| Phase 8 | 2–3 sessions | 10–11 sessions |
-| Phase 9 | 1–2 sessions | 11–13 sessions |
+| Phase 2 ✅ | Complete | — |
+| Phase 3 ✅ | Complete | — |
+| Phase 4 ✅ | Complete | — |
+| Phase 5 | 1 session | 1 session |
+| Phase 6 | 2 sessions | 3 sessions |
+| Phase 7 | 1 session | 4 sessions |
+| Phase 8 | 2–3 sessions | 6–7 sessions |
+| Phase 9 | 1–2 sessions | 7–9 sessions |
 
 *"Session" = one focused development cycle with AI assistance.*
