@@ -16,20 +16,26 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { isAuthenticated, isInitialized, isLoading, roleName } = useAuth();
 
+  console.log('[ProtectedRoute] render — isInitialized:', isInitialized, '| isLoading:', isLoading, '| isAuthenticated:', isAuthenticated, '| roleName:', roleName, '| allowedRoles:', allowedRoles);
+
   /* Still loading auth state */
-  if (!isInitialized || isLoading) {
+  if (!isInitialized) {
+    console.log('[ProtectedRoute] → blocking: isInitialized=false, rendering <PageLoader>');
     return <PageLoader message="Loading..." />;
   }
 
   /* Not logged in */
   if (!isAuthenticated) {
+    console.log('[ProtectedRoute] → not authenticated, redirecting to LOGIN');
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
   /* Role check */
   if (allowedRoles && roleName && !allowedRoles.includes(roleName)) {
+    console.log('[ProtectedRoute] → role mismatch (roleName:', roleName, ', allowed:', allowedRoles, '), redirecting to UNAUTHORIZED');
     return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }
 
+  console.log('[ProtectedRoute] → access granted, rendering children');
   return <>{children}</>;
 }

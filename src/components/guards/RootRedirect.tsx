@@ -13,17 +13,23 @@ import { ROLES, ROUTES } from '@/constants';
 export function RootRedirect() {
   const { isInitialized, isAuthenticated, roleName } = useAuth();
 
+  console.log('[RootRedirect] render — isInitialized:', isInitialized, '| isAuthenticated:', isAuthenticated, '| roleName:', roleName);
+
   if (!isInitialized) {
+    console.log('[RootRedirect] → blocking: isInitialized=false, rendering <PageLoader>');
     return <PageLoader message="Loading..." />;
   }
 
   if (!isAuthenticated) {
+    console.log('[RootRedirect] → not authenticated, redirecting to LOGIN');
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
   if (roleName === ROLES.VOLUNTEER) {
+    console.log('[RootRedirect] → volunteer, redirecting to VOLUNTEER_HOME');
     return <Navigate to={ROUTES.VOLUNTEER_HOME} replace />;
   }
 
+  console.log('[RootRedirect] → redirecting to DASHBOARD');
   return <Navigate to={ROUTES.DASHBOARD} replace />;
 }

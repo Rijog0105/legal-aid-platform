@@ -40,24 +40,34 @@ const initialState = {
 export const useAuthStore = create<AuthState>((set) => ({
   ...initialState,
 
-  setSession: (session) =>
-    set({
-      session,
-      isAuthenticated: !!session,
-    }),
+  setSession: (session) => {
+    console.log('[authStore] setSession — session:', session ? 'EXISTS (user: ' + session.user?.id + ')' : 'NULL');
+    set({ session, isAuthenticated: !!session });
+  },
 
-  setProfile: (profile) =>
+  setProfile: (profile) => {
+    console.log('[authStore] setProfile — profile:', profile ? 'FOUND (id: ' + profile.id + ', role: ' + profile.role?.name + ')' : 'NULL');
     set({
       profile,
       roleName: profile?.role?.name ?? null,
       userId: profile?.id ?? null,
       personId: profile?.person_id ?? null,
       displayName: profile?.person?.full_name ?? null,
-    }),
+    });
+  },
 
-  setLoading: (isLoading) => set({ isLoading }),
+  setLoading: (isLoading) => {
+    console.log('[authStore] setLoading —', isLoading);
+    set({ isLoading });
+  },
 
-  setInitialized: (isInitialized) => set({ isInitialized }),
+  setInitialized: (isInitialized) => {
+    console.log('[authStore] setInitialized —', isInitialized);
+    set({ isInitialized });
+  },
 
-  reset: () => set(initialState),
+  reset: () => {
+    console.log('[authStore] reset() called — isLoading → true, isInitialized → false');
+    set(initialState);
+  },
 }));
