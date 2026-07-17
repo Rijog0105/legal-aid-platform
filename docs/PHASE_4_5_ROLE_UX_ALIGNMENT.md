@@ -1,6 +1,6 @@
 # Phase 4.5 — Role & UX Alignment
 
-## Status: Planned
+## Status: Accepted with Deferred Issues
 
 > This document records verified test findings from Phase 4 acceptance testing and defines
 > the scope of Phase 4.5 corrective work before Phase 5 (Activity Management) begins.
@@ -101,12 +101,14 @@ role-based UX with finalized MVP requirements before building further.
 
 ### Success Criteria
 
-- [ ] Faculty login shows full sidebar with all administrative navigation
-- [ ] Team Lead login shows constrained navigation — no camp creation, no budget, no reports
-- [ ] Volunteer login shows mobile-first interface — photo capture and form fill only
-- [ ] No role can navigate to a route outside their permitted set
-- [ ] Display name shows person's full name for all roles
-- [ ] All existing Phase 4 auth tests continue to pass
+- [x] Faculty login shows full sidebar with all administrative navigation
+- [ ] ~~Team Lead login shows constrained navigation — no camp creation, no budget, no reports~~ — **Deferred**
+- [ ] ~~Volunteer login shows mobile-first interface — photo capture and form fill only~~ — **Deferred**
+- [ ] ~~No role can navigate to a route outside their permitted set~~ — **Deferred**
+- [ ] ~~Display name shows person's full name for all roles~~ — **Deferred**
+- [x] All existing Phase 4 auth tests continue to pass
+
+> These items have been deferred and are not required for commencement of Phase 5.
 
 ---
 
@@ -118,6 +120,67 @@ role-based UX with finalized MVP requirements before building further.
 
 ---
 
+## Deferred Issues
+
+The following issues were investigated during Phase 4.5 review but were determined not to
+block MVP progress and are deferred to a later hardening/refinement phase.
+
+### Deferred Issue 1 — Display Name Resolution
+
+**Observed:**
+- Faculty display name resolves correctly.
+- Team Lead and Volunteer users display "User".
+
+**Investigation Summary:**
+- `users` records exist.
+- `persons` records exist.
+- `role` records exist.
+- `auth_user_id` mappings verified.
+- No conclusive root cause identified during Phase 4.5 review.
+
+**Impact:** Cosmetic/UI issue only. Does not block camp management or future MVP phases.
+
+**Priority:** Low
+
+---
+
+### Deferred Issue 2 — Role-Based Navigation Separation
+
+**Observed:** Volunteers currently see navigation items intended for administrative roles.
+
+**Current Behaviour:**
+- Restricted actions are not successfully executed.
+- Backend protections remain in place.
+
+**Impact:** UX issue. Does not block Activity Management development.
+
+**Priority:** Medium
+
+---
+
+### Deferred Issue 3 — Authorization Guard Hardening
+
+**Observed:** Route protection behaviour requires additional review and testing.
+
+**Impact:** Requires future audit before production deployment.
+
+**Priority:** Medium
+
+---
+
+## Phase 4.5 Outcome
+
+Phase 4.5 review determined that no critical blocker exists for continuation into Phase 5.
+Authentication, session management, database structure, role records, person records, and
+camp creation functionality have been validated.
+
+Remaining issues are classified as deferred refinement items and will be addressed during
+a future hardening pass prior to production deployment.
+
+---
+
 ## Next Phase
 
-Phase 5 — Activity Management begins after all Phase 4.5 success criteria are met.
+Phase 5 — Activity Management
+
+Phase 5 may begin immediately. Phase 4.5 is accepted with deferred issues recorded above.
