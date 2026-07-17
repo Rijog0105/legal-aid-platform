@@ -28,9 +28,24 @@ ON CONFLICT DO NOTHING;
 
 -- ─── NOTE: Users will be created after auth users are set up ──
 -- Uncomment and replace UUIDs with actual auth_user_ids:
---
--- INSERT INTO public.users (auth_user_id, role_id, person_id) VALUES
---   ('<faculty-auth-uuid>', (SELECT id FROM roles WHERE name = 'faculty'), 'a1000000-0000-0000-0000-000000000001'),
---   ('<teamlead-auth-uuid>', (SELECT id FROM roles WHERE name = 'team_lead'), 'a1000000-0000-0000-0000-000000000002'),
---   ('<volunteer1-auth-uuid>', (SELECT id FROM roles WHERE name = 'volunteer'), 'a1000000-0000-0000-0000-000000000003'),
---   ('<volunteer2-auth-uuid>', (SELECT id FROM roles WHERE name = 'volunteer'), 'a1000000-0000-0000-0000-000000000004');
+INSERT INTO public.users (auth_user_id, role_id, person_id) VALUES
+  (
+    '5f6fa028-9eca-413c-afda-abc49b79e8c8',
+    (SELECT id FROM roles WHERE name = 'faculty'),
+    'a1000000-0000-0000-0000-000000000001'
+  ),
+  (
+    '9cc88ff5-f247-49e9-9c6b-3f4ebb68b666',
+    (SELECT id FROM roles WHERE name = 'team_lead'),
+    'a1000000-0000-0000-0000-000000000002'
+  ),
+  (
+    'b7f84848-a344-4b81-af8d-01083b7fe44a',
+    (SELECT id FROM roles WHERE name = 'volunteer'),
+    'a1000000-0000-0000-0000-000000000003'
+  ),
+  (
+    'b1460f14-5d14-4c2b-bc3d-2972186d2249',
+    (SELECT id FROM roles WHERE name = 'volunteer'),
+    'a1000000-0000-0000-0000-000000000004'
+  );
