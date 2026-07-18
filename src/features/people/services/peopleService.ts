@@ -67,6 +67,15 @@ export async function updatePerson(id: string, payload: Partial<PersonPayload>):
 }
 
 export async function deletePerson(id: string): Promise<void> {
-  const { error } = await supabase.from('persons').delete().eq('id', id);
+  const { data, error } = await supabase
+    .from('persons')
+    .delete()
+    .eq('id', id)
+    .select();
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Person could not be deleted. It may be referenced elsewhere, or you may not have permission to delete it.'
+    );
+  }
 }

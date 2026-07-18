@@ -74,3 +74,35 @@ export async function deleteActivity(id: string): Promise<void> {
   const { error } = await supabase.from('activities').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+export async function updateActivityStatus(
+  id: string,
+  status: ActivityStatus
+): Promise<Activity> {
+  const { data, error } = await supabase
+    .from('activities')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Activity;
+}
+
+/**
+ * Persists a new activity_order for each activity in a camp, based on the
+ * order of `orderedIds` (0-indexed). Used by the drag-and-drop reorder UI.
+ */
+export async function reorderActivities(campId: string, orderedIds: string[]): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase
+        .from('activities')
+        .update({ activity_order: index })
+        .eq('id', id)
+        .eq('camp_id', campId)
+    )
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new Error(failed.error.message);
+}

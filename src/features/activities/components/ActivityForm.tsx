@@ -12,9 +12,21 @@ import {
   getNextActivityOrder,
 } from '@/features/activities/services/activityService';
 
-const schema = z.object({
-  activity_name: z.string().min(2, 'Activity name must be at least 2 characters'),
-});
+const OTHER_ACTIVITY_VALUE = '__other__';
+
+const schema = z
+  .object({
+    template: z.string().min(1, 'Select an activity'),
+    custom_name: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      data.template !== OTHER_ACTIVITY_VALUE || (data.custom_name?.trim().length ?? 0) >= 2,
+    {
+      message: 'Custom activity name must be at least 2 characters',
+      path: ['custom_name'],
+    }
+  );
 
 type FormValues = z.infer<typeof schema>;
 
@@ -25,6 +37,10 @@ interface ActivityFormProps {
   onSaved: (activity: Activity) => void;
 }
 
+function isPredefined(name: string): boolean {
+  return (PREDEFINED_ACTIVITIES as readonly string[]).includes(name);
+}
+
 export function ActivityForm({ campId, activity, onClose, onSaved }: ActivityFormProps) {
   const isEdit = !!activity;
 
@@ -32,26 +48,38 @@ export function ActivityForm({ campId, activity, onClose, onSaved }: ActivityFor
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      activity_name: '',
+      template: '',
+      custom_name: '',
     },
   });
 
   useEffect(() => {
     if (activity) {
-      reset({ activity_name: activity.activity_name });
+      if (isPredefined(activity.activity_name)) {
+        reset({ template: activity.activity_name, custom_name: '' });
+      } else {
+        reset({ template: OTHER_ACTIVITY_VALUE, custom_name: activity.activity_name });
+      }
     }
   }, [activity, reset]);
 
+  const template = watch('template');
+  const showCustomInput = template === OTHER_ACTIVITY_VALUE;
+
   const onSubmit = async (values: FormValues) => {
+    const activity_name =
+      values.template === OTHER_ACTIVITY_VALUE ? values.custom_name!.trim() : values.template;
+
     const saved = isEdit
-      ? await updateActivity(activity.id, { activity_name: values.activity_name })
+      ? await updateActivity(activity.id, { activity_name })
       : await createActivity({
           camp_id: campId,
-          activity_name: values.activity_name,
+          activity_name,
           activity_order: await getNextActivityOrder(campId),
         });
     onSaved(saved);
@@ -81,35 +109,40 @@ export function ActivityForm({ campId, activity, onClose, onSaved }: ActivityFor
         {/* Body */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="px-6 py-5 space-y-4">
-            <Input
-              label="Activity Name *"
-              id="activity_name"
-              list="predefined-activities"
-              placeholder="Inauguration, Welcome Address…"
-              error={errors.activity_name?.message}
-              {...register('activity_name')}
-            />
-            <datalist id="predefined-activities">
-              {PREDEFINED_ACTIVITIES.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
-
-            {!isEdit && (
-              <div className="flex flex-wrap gap-2">
-                {PREDEFINED_ACTIVITIES.slice(0, 6).map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() =>
-                      reset({ activity_name: name }, { keepDefaultValues: true })
-                    }
-                    className="px-3 py-1.5 rounded-full text-xs font-medium border border-surface-300 text-surface-600 hover:bg-surface-100 transition-colors"
-                  >
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="template" className="text-sm font-medium text-surface-700">
+                Activity *
+              </label>
+              <select
+                id="template"
+                {...register('template')}
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-white text-surface-900 border-surface-300 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all duration-200 ${
+                  errors.template ? 'border-red-500' : ''
+                }`}
+              >
+                <option value="" disabled>
+                  Select an activity…
+                </option>
+                {PREDEFINED_ACTIVITIES.map((name) => (
+                  <option key={name} value={name}>
                     {name}
-                  </button>
+                  </option>
                 ))}
-              </div>
+                <option value={OTHER_ACTIVITY_VALUE}>Other / Custom Activity</option>
+              </select>
+              {errors.template && (
+                <p className="text-xs text-red-600 mt-0.5">{errors.template.message}</p>
+              )}
+            </div>
+
+            {showCustomInput && (
+              <Input
+                label="Custom Activity Name *"
+                id="custom_name"
+                placeholder="Enter a custom activity name"
+                error={errors.custom_name?.message}
+                {...register('custom_name')}
+              />
             )}
           </div>
 

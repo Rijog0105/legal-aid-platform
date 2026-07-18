@@ -25,5 +25,5 @@ export function useActivities(campId: string | undefined) {
     load();
   }, [load]);
 
-  return { activities, isLoading, error, reload: load };
+  return { activities, isLoading, error, reload: load, setActivities };
 }
