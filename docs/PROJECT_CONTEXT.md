@@ -115,11 +115,21 @@
 
 ## Completed Work (Phase 5)
 
+**Status:** ✅ Complete — Milestones A and B (see `docs/PHASE_05_ACTIVITY_MANAGEMENT.md`)
+
+**Milestone A — Activity CRUD**
 - `activityService.ts` — Supabase CRUD for `activities` (fetchActivities, fetchActivity, createActivity, updateActivity, deleteActivity, getNextActivityOrder)
 - `useActivities` hook — fetch/reload activities for a camp, ordered by `activity_order`
-- `ActivityForm`, `ActivityListItem`, `ActivitiesTab` — create/edit/delete activities within the camp detail page, with predefined-activity suggestions from `PREDEFINED_ACTIVITIES`
+- `ActivityForm`, `ActivityListItem`, `ActivitiesTab` — create/edit/delete activities within the camp detail page
 - `ActivitiesTab` wired into `CampDetailPage`'s Activities tab
-- Drag-and-drop reordering and activity status transitions deferred to Milestone B
+
+**Milestone B — Reordering, Status Workflow, Form UX**
+- `activityService.ts` extended with `updateActivityStatus(id, status)` and `reorderActivities(campId, orderedIds)`
+- `useActivities` now exposes `setActivities` for optimistic local updates
+- Drag-and-drop reordering — `ActivityListItem` is a `@dnd-kit/sortable` row with a drag handle; `ActivitiesTab` wraps the list in `DndContext`/`SortableContext` and persists the new `activity_order` on drop
+- Activity status workflow — `planned → active → completed`, one "Mark {status}" action per row (mirrors the `CampStatus` transition pattern in `CampDetailPage`)
+- `ActivityForm` UX improved — the predefined-activity `datalist` was replaced with a `<select>` dropdown (`PREDEFINED_ACTIVITIES` + an "Other / Custom Activity" option); choosing "Other" reveals a custom-name text input, validated with Zod
+- No schema, migration, or RLS changes were required for either milestone
 - See `docs/PHASE_05_ACTIVITY_MANAGEMENT.md` for full details
 
 ## Pending Work (Next Phases)
@@ -129,6 +139,8 @@
 - Upload to Supabase Storage
 - Faculty photo review gallery
 - Report photo selection
+- Volunteer Dashboard (mobile activity selector, upload queue, own submissions)
+- `activityStore` (Zustand) for active-activity context during capture
 
 ### Phase 7 — Budget & Narrative Sections
 - Expense line items with auto-totals
@@ -142,10 +154,75 @@
 - Report versioning and storage
 
 ### Phase 9 — Dashboard & Polish
-- Live statistics dashboard
+- Live statistics dashboard (Dashboard currently shows placeholder stats only)
+- Automatic camp status transitions (Scheduled → Expired / Completed) — camp status is currently faculty-triggered only; no scheduled/automatic transition logic exists yet
+- Role-based navigation/UI — sidebar and route groups currently split faculty-vs-volunteer only; finer-grained per-role UI (e.g. team_lead-specific views) is not yet implemented
 - Error boundaries, loading states
 - Code splitting, performance optimization
 - Deployment readiness
+
+---
+
+## Current Architecture
+
+- **Pattern:** `service → hook → component`, repeated per feature module. Each feature under `src/features/<name>/` owns its own `services/`, `hooks/`, and `components/`, plus a barrel `index.ts`.
+- **Feature modules implemented so far:** `auth`, `people`, `camps` (includes the People tab, status transitions), `activities` (new in Phase 5 — CRUD, drag-and-drop reorder, status workflow, form with predefined/custom activity selection).
+- **Shared UI primitives** (`src/components/ui/`): `Button`, `Input`, `Card`, `Badge` (with camp/activity status variants), `Spinner`, `EmptyState` — reused by every feature module, including `activities`.
+- **State:** Zustand only where needed (`authStore`); most feature state lives in local hooks (`usePeople`, `useCamp`, `useActivities`) rather than a global store. No `activityStore` yet — deferred to Phase 6.
+- **Data layer:** Supabase client (`src/services/supabase.ts`) accessed directly from feature services — no repository/ORM abstraction layer.
+- **Drag-and-drop:** `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`, first used in Phase 5 for activity reordering; no other feature uses it yet.
+- **Routing:** React Router v7, faculty routes under the sidebar `AppShell`, volunteer routes under `VolunteerLayout`; `activities` has no dedicated route — it's a tab within `CampDetailPage`, consistent with `people` (via `CampPeopleTab`).
+
+---
+
+## Current Feature Status
+
+| Module | Status | Notes |
+|---|---|---|
+| Auth (login, session, role-based redirect) | ✅ Working | Phase 2 |
+| People registry (create, edit, list, search, filter) | ⚠️ Partial | Create/edit/list/search/filter all work. **Delete is broken — see Known Bugs.** |
+| Camp management (create, edit, list, status transitions) | ✅ Working | Status transitions are manual (faculty-triggered); no automatic expiry — see Deferred Issues |
+| Camp People tab (assign/remove people to a camp) | ✅ Working | Phase 4 |
+| Activities (CRUD, reorder, status workflow) | ✅ Working | Phase 5, Milestones A + B complete |
+| Photos, Surveys, Expenses, Narratives, Reports | 🔲 Not started | Phases 6–8 |
+| Dashboard statistics | 🔲 Not started | Placeholder cards only, no live queries |
+| Volunteer Dashboard | 🔲 Not started | Phase 6 |
+| Role-based navigation/UI (beyond faculty/volunteer split) | 🔲 Not started | See Deferred Issues |
+
+---
+
+## Current Database Status
+
+- Schema: `supabase/migrations/001_complete_schema.sql` — 11 tables (roles, persons, users, camps, camp_people, activities, photos, surveys, expenses, narrative_sections, reports), unchanged since Phase 1
+- RLS enabled on all tables; helper functions `get_user_role()` / `get_app_user_id()` in place
+- `activities` table (used by Phase 5) required no schema, migration, or RLS changes — `status` continues to use the existing `planned | active | completed` check constraint
+- No Storage buckets configured yet (`camp-photos`, `camp-reports` are required for Phase 6 and Phase 8 respectively, not yet created)
+- No new tables, columns, or migrations have been added since Phase 1's initial schema
+
+---
+
+## Deferred Issues
+
+| Issue | Target Phase |
+|---|---|
+| Photo capture, upload, and review | Phase 6 |
+| Volunteer Dashboard | Phase 6 |
+| `activityStore` (Zustand active-activity context for volunteer capture) | Phase 6 |
+| Survey forms / survey analytics | Out of scope — this platform only stores survey reference IDs and aggregate stats, per the "not a survey platform" project rule |
+| Budget and narrative sections | Phase 7 |
+| Report generation (PDF/DOCX) | Phase 8 |
+| Dashboard statistics (live counts, recent activity feed, completion indicators) | Phase 9 |
+| Automatic Camp Status transitions (Scheduled → Expired / Completed) | Phase 9 |
+| Role-based navigation/UI beyond the current faculty/volunteer layout split | Phase 9 |
+| Error boundaries, skeleton loading states, code splitting | Phase 9 |
+
+---
+
+## Known Bugs
+
+| Bug | Area | Details |
+|---|---|---|
+| People deletion does not remove the person | People registry (`peopleService.ts` / `PeoplePage`) | The delete confirmation dialog appears and can be confirmed, but the underlying person record is not actually removed. Needs investigation before Phase 5 work is considered fully closed out from a QA standpoint. Not fixed as part of this documentation pass — implementation code was intentionally left untouched. |
 
 ---
 
@@ -221,6 +298,8 @@ Each feature in `src/features/` has its own `components/`, `hooks/`, `services/`
 | Zip | pizzip | 3.2.0 |
 | Icons | lucide-react | 1.24.0 |
 | DnD | @dnd-kit/core | 6.3.1 |
+| DnD | @dnd-kit/sortable | 10.0.0 |
+| DnD | @dnd-kit/utilities | 3.2.2 |
 | Dates | date-fns | 4.4.0 |
 
 ---
@@ -250,6 +329,7 @@ legal-aid-camp-platform/
 │   ├── features/auth/              # Auth service, hook, LoginPage
 │   ├── features/people/            # People registry (service, hook, list, form)
 │   ├── features/camps/             # Camp management (service, hooks, list/create/detail, people tab)
+│   ├── features/activities/        # Activity management (service, hook, form, list item, tab) — Phase 5
 │   ├── pages/                      # Dashboard, Unauthorized, VolunteerHome
 │   ├── services/supabase.ts        # Supabase client
 │   ├── store/authStore.ts          # Zustand auth store

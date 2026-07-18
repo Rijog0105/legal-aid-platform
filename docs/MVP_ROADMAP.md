@@ -12,8 +12,8 @@
 | 2 | Authentication & Session Management | ✅ **Complete** | Medium |
 | 3 | People Registry | ✅ **Complete** | Low–Medium |
 | 4 | Camp Management | ✅ **Complete** | High |
-| 5 | Activity Management | 🔲 Pending (Next) | Medium |
-| 6 | Photo Documentation | 🔲 Pending | High |
+| 5 | Activity Management | ✅ **Complete** | Medium |
+| 6 | Photo Documentation | 🔲 Pending (Next) | High |
 | 7 | Budget & Narrative Sections | 🔲 Pending | Medium |
 | 8 | Report Generation ⭐ | 🔲 Pending | Very High |
 | 9 | Dashboard, Polish & Deployment | 🔲 Pending | Medium |
@@ -195,7 +195,7 @@ Build the core camp management module — the central entity of the entire platf
 
 ## Phase 5 — Activity Management
 
-**Status:** 🔲 Pending (Next)
+**Status:** ✅ Complete (see `docs/PHASE_05_ACTIVITY_MANAGEMENT.md`)
 **Estimated Complexity:** Medium
 
 ### Objective
@@ -215,11 +215,11 @@ Build activity management within camps. Faculty define ordered activities; volun
 
 | Deliverable | Description |
 |-------------|-------------|
-| `ActivityService` | CRUD + reorder operations for `activities` table |
-| `ActivitiesTab` | Activity list component within CampDetailPage |
-| `ActivityForm` | Create/edit with predefined suggestions |
-| Drag-and-drop reorder | @dnd-kit integration for activity ordering |
-| `activityStore` | Active activity context for volunteer photo capture |
+| `ActivityService` | CRUD + `updateActivityStatus` + `reorderActivities` operations for `activities` table |
+| `ActivitiesTab` | Activity list component within CampDetailPage, with drag-and-drop reordering |
+| `ActivityForm` | Create/edit with predefined dropdown + "Other / Custom Activity" option |
+| Drag-and-drop reorder | @dnd-kit integration for activity ordering — implemented |
+| `activityStore` | Deferred to Phase 6 — not needed until volunteer photo capture requires "current activity" context |
 
 ### Dependencies
 
@@ -227,18 +227,18 @@ Build activity management within camps. Faculty define ordered activities; volun
 
 ### Success Criteria
 
-- [ ] Faculty adds activities to a camp (predefined + custom)
-- [ ] Activities display in correct order
-- [ ] Drag-and-drop reorder persists to database
-- [ ] Activity status transitions work
-- [ ] Deleting an activity cascades to its photos
-- [ ] Team leads can update activity status
+- [x] Faculty adds activities to a camp (predefined + custom)
+- [x] Activities display in correct order
+- [x] Drag-and-drop reorder persists to database
+- [x] Activity status transitions work
+- [x] Deleting an activity cascades to its photos (DB `ON DELETE CASCADE`)
+- [x] Team leads can update activity status (UI-level; RLS/permission enforcement per the permission matrix is a DB-level concern, unchanged by this milestone)
 
 ---
 
 ## Phase 6 — Photo Documentation
 
-**Status:** 🔲 Pending
+**Status:** 🔲 Pending (Next)
 **Estimated Complexity:** High
 
 ### Objective
@@ -488,10 +488,10 @@ graph TD
 | Phase 2 ✅ | Complete | — |
 | Phase 3 ✅ | Complete | — |
 | Phase 4 ✅ | Complete | — |
-| Phase 5 | 1 session | 1 session |
-| Phase 6 | 2 sessions | 3 sessions |
-| Phase 7 | 1 session | 4 sessions |
-| Phase 8 | 2–3 sessions | 6–7 sessions |
-| Phase 9 | 1–2 sessions | 7–9 sessions |
+| Phase 5 ✅ | Complete | — |
+| Phase 6 | 2 sessions | 2 sessions |
+| Phase 7 | 1 session | 3 sessions |
+| Phase 8 | 2–3 sessions | 5–6 sessions |
+| Phase 9 | 1–2 sessions | 6–8 sessions |
 
 *"Session" = one focused development cycle with AI assistance.*
