@@ -20,8 +20,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 5 — Activity Management |
-| **Last Completed Phase** | Phase 4 — Camp Management |
+| **Current Phase** | Phase 6 — Photo Documentation |
+| **Last Completed Phase** | Phase 5 — Activity Management |
 | **Latest Commit** | `9a4512c7b88fc985b44a7234674fc1b35b6d5971` |
 | **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass |
 
@@ -113,15 +113,18 @@
 - Frontend connects to Supabase; login page confirmed reaching Supabase Auth
 - See `docs/PHASE_04_CAMPS.md` for full details
 
+## Completed Work (Phase 5)
+
+- `activityService.ts` — Supabase CRUD for `activities` (fetchActivities, fetchActivity, createActivity, updateActivity, deleteActivity, getNextActivityOrder)
+- `useActivities` hook — fetch/reload activities for a camp, ordered by `activity_order`
+- `ActivityForm`, `ActivityListItem`, `ActivitiesTab` — create/edit/delete activities within the camp detail page, with predefined-activity suggestions from `PREDEFINED_ACTIVITIES`
+- `ActivitiesTab` wired into `CampDetailPage`'s Activities tab
+- Drag-and-drop reordering and activity status transitions deferred to Milestone B
+- See `docs/PHASE_05_ACTIVITY_MANAGEMENT.md` for full details
+
 ## Pending Work (Next Phases)
 
-### Phase 5 — Activity Management (Current)
-- Activity CRUD within camps
-- Drag-and-drop reordering
-- Predefined activity templates
-- Activity status management
-
-### Phase 6 — Photo Documentation
+### Phase 6 — Photo Documentation (Current)
 - Volunteer photo capture (mobile camera)
 - Upload to Supabase Storage
 - Faculty photo review gallery

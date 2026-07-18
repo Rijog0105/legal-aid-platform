@@ -7,6 +7,7 @@ import { useCamp } from '@/features/camps/hooks/useCamp';
 import { updateCampStatus } from '@/features/camps/services/campService';
 import { CampForm } from './CampForm';
 import { CampPeopleTab } from './CampPeopleTab';
+import { ActivitiesTab } from '@/features/activities';
 
 const STATUS_FLOW: Record<CampStatus, CampStatus[]> = {
   [CAMP_STATUS.DRAFT]: [CAMP_STATUS.ACTIVE],
@@ -27,7 +28,7 @@ type Tab = 'overview' | 'people' | 'activities' | 'photos' | 'budget' | 'narrati
 const TABS: { key: Tab; label: string; phase?: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'people', label: 'People' },
-  { key: 'activities', label: 'Activities', phase: 'Phase 5' },
+  { key: 'activities', label: 'Activities' },
   { key: 'photos', label: 'Photos', phase: 'Phase 6' },
   { key: 'budget', label: 'Budget', phase: 'Phase 7' },
   { key: 'narratives', label: 'Narratives', phase: 'Phase 7' },
@@ -184,7 +185,9 @@ export function CampDetailPage() {
 
       {activeTab === 'people' && <CampPeopleTab campId={camp.id} />}
 
-      {activeTab !== 'overview' && activeTab !== 'people' && (
+      {activeTab === 'activities' && <ActivitiesTab campId={camp.id} />}
+
+      {activeTab !== 'overview' && activeTab !== 'people' && activeTab !== 'activities' && (
         <Card>
           <p className="text-sm text-surface-500">
             {TABS.find((t) => t.key === activeTab)?.label} coming in{' '}
