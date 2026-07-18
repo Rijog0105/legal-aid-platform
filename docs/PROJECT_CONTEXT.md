@@ -180,7 +180,7 @@
 | Module | Status | Notes |
 |---|---|---|
 | Auth (login, session, role-based redirect) | ✅ Working | Phase 2 |
-| People registry (create, edit, list, search, filter) | ⚠️ Partial | Create/edit/list/search/filter all work. **Delete is broken — see Known Bugs.** |
+| People registry (create, edit, list, search, filter) | ✅ Working | Create/edit/list/search/filter all work. Delete functionality currently exists; its correctness has not been re-verified as part of this documentation pass, and it is scheduled for removal per ADR-001 — see Scheduled Architectural Changes. |
 | Camp management (create, edit, list, status transitions) | ✅ Working | Status transitions are manual (faculty-triggered); no automatic expiry — see Deferred Issues |
 | Camp People tab (assign/remove people to a camp) | ✅ Working | Phase 4 |
 | Activities (CRUD, reorder, status workflow) | ✅ Working | Phase 5, Milestones A + B complete |
@@ -205,6 +205,7 @@
 
 | Issue | Target Phase |
 |---|---|
+| People Registry & Camp Assignment redesign (ADR-001–006 — see `docs/IMPLEMENTATION_DECISIONS.md`) | Milestone 1 (between Phase 5 and Phase 6 — see `docs/IMPLEMENTATION_MILESTONES.md`) |
 | Photo capture, upload, and review | Phase 6 |
 | Volunteer Dashboard | Phase 6 |
 | `activityStore` (Zustand active-activity context for volunteer capture) | Phase 6 |
@@ -220,9 +221,17 @@
 
 ## Known Bugs
 
-| Bug | Area | Details |
+None currently tracked as bugs. (People Registry deletion was previously described here as a bug — see "Scheduled Architectural Changes" below for its accurate status.)
+
+---
+
+## Scheduled Architectural Changes
+
+| Area | Current State | Planned Change |
 |---|---|---|
-| People deletion does not remove the person | People registry (`peopleService.ts` / `PeoplePage`) | The delete confirmation dialog appears and can be confirmed, but the underlying person record is not actually removed. Needs investigation before Phase 5 work is considered fully closed out from a QA standpoint. Not fixed as part of this documentation pass — implementation code was intentionally left untouched. |
+| People Registry deletion | `ADR-001` (see `docs/IMPLEMENTATION_DECISIONS.md`) has been approved. The current implementation still contains Delete functionality on the People Registry (`peopleService.ts` / `PeoplePage.tsx`) — this is not being treated as a bug to fix, but as functionality scheduled for removal. | Registry deletion is scheduled for removal during **Milestone 1 — People Registry & Camp Assignment Redesign** (see `docs/IMPLEMENTATION_MILESTONES.md`), positioned between Phase 5 and Phase 6. Camp assignment removal (removing a person from a specific camp via `CampPeopleTab`) is unaffected and will remain supported. |
+
+See `docs/IMPLEMENTATION_DECISIONS.md` (ADR-001 through ADR-006) and `docs/IMPLEMENTATION_MILESTONES.md` (Milestone 1) for the full set of approved-but-not-yet-implemented People Registry / Camp Assignment changes. None of that work has been implemented as of this document.
 
 ---
 
@@ -312,6 +321,8 @@ legal-aid-camp-platform/
 │   ├── PHASE_01_SETUP.md          # Phase 1 completion notes
 │   ├── PROJECT_BLUEPRINT.md       # Master specification
 │   ├── MVP_ROADMAP.md             # Implementation roadmap
+│   ├── IMPLEMENTATION_DECISIONS.md # Post-Blueprint ADR log
+│   ├── IMPLEMENTATION_MILESTONES.md # Cross-phase milestone tracker
 │   └── PROJECT_CONTEXT.md         # This file
 ├── supabase/
 │   ├── migrations/

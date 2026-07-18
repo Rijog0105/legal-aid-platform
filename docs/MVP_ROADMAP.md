@@ -18,6 +18,8 @@
 | 8 | Report Generation ⭐ | 🔲 Pending | Very High |
 | 9 | Dashboard, Polish & Deployment | 🔲 Pending | Medium |
 
+> **Note on implementation milestones:** Approved architectural improvements are sometimes delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). These are tracked separately in `docs/IMPLEMENTATION_MILESTONES.md`, with supporting rationale in `docs/IMPLEMENTATION_DECISIONS.md`. As of this writing, **Milestone 1 — People Registry & Camp Assignment Redesign** is planned between Phase 5 and Phase 6; it does not appear as a phase in the table above and does not block Phase 6 from starting.
+
 ---
 
 ## Phase 1 — Project Setup & Foundation

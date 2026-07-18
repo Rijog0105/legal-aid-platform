@@ -20,7 +20,7 @@ People records are referenced by historical camp assignments and, eventually, by
 - Historical person records are retained indefinitely.
 
 **Expected Implementation Phase**
-Not yet scheduled — deferred until after Phase 5 merge, ahead of Phase 6.
+Milestone 1 — People Registry & Camp Assignment Redesign, between Phase 5 and Phase 6 (see `docs/IMPLEMENTATION_MILESTONES.md`).
 
 **Impact**
 - `PeoplePage.tsx` — the delete button/confirm-dialog action must be removed.
@@ -46,7 +46,7 @@ Student names are not reliably unique across cohorts and years, which causes amb
 - Faculty and Guests leave `roll_number` `NULL`.
 
 **Expected Implementation Phase**
-Not yet scheduled — deferred until after Phase 5 merge.
+Milestone 1 — People Registry & Camp Assignment Redesign, between Phase 5 and Phase 6 (see `docs/IMPLEMENTATION_MILESTONES.md`).
 
 **Impact**
 - Requires a new Supabase migration (e.g. `003_persons_roll_number.sql`) — **no such migration currently exists in this repository.**
@@ -71,7 +71,7 @@ As camps grow to include dozens of assigned people, a flat unsorted list becomes
 People assignment (in `AssignPersonModal` and/or `CampPeopleTab`) should eventually present candidates/assignees grouped into three sections: Students, Faculty, Guests.
 
 **Expected Implementation Phase**
-Not yet scheduled — likely bundled with ADR-004/ADR-005/ADR-006 since they touch the same components.
+Milestone 1 — People Registry & Camp Assignment Redesign, between Phase 5 and Phase 6 (see `docs/IMPLEMENTATION_MILESTONES.md`).
 
 **Impact**
 - `src/features/camps/components/AssignPersonModal.tsx` — currently a flat filtered list; needs grouping logic.
@@ -95,7 +95,7 @@ Most students assigned to a camp serve as volunteers; requiring faculty to manua
 - Faculty can manually change a selected student's assignment to `team_lead`.
 
 **Expected Implementation Phase**
-Not yet scheduled — bundled with ADR-003/ADR-005/ADR-006.
+Milestone 1 — People Registry & Camp Assignment Redesign, between Phase 5 and Phase 6 (see `docs/IMPLEMENTATION_MILESTONES.md`).
 
 **Impact**
 - `AssignPersonModal.tsx` — currently defaults every assignment to `CAMP_ROLE.VOLUNTEER` regardless of category (an incidental default, not category-driven logic). This needs to become an explicit category-conditioned default, with a role override control retained specifically for students.
@@ -117,7 +117,7 @@ Faculty and Guests only ever occupy one meaningful camp role each (`faculty_coor
 When assigning a person with `category = 'faculty'` or `category = 'external'` (guest), the camp role is inferred automatically from the category — no manual role picker is shown for these categories.
 
 **Expected Implementation Phase**
-Not yet scheduled — bundled with ADR-003/ADR-004/ADR-006.
+Milestone 1 — People Registry & Camp Assignment Redesign, between Phase 5 and Phase 6 (see `docs/IMPLEMENTATION_MILESTONES.md`).
 
 **Impact**
 - `AssignPersonModal.tsx` — currently shows a manual `camp_role` `<select>` for every person regardless of category. Needs conditional logic: show the picker only for students (per ADR-004), infer and hide it otherwise.
@@ -139,7 +139,7 @@ A consistent, role-significant ordering (rather than assignment-timestamp orderi
 Assigned people should display in this fixed group order: **Guests → Faculty → Team Leads → Volunteers.**
 
 **Expected Implementation Phase**
-Not yet scheduled — bundled with ADR-003/ADR-004/ADR-005.
+Milestone 1 — People Registry & Camp Assignment Redesign, between Phase 5 and Phase 6 (see `docs/IMPLEMENTATION_MILESTONES.md`).
 
 **Impact**
 - `CampPeopleTab.tsx` — currently ordered by `assigned_at` only (inherited from `fetchCampPeople`'s `.order('assigned_at')`). Needs either a client-side sort by `camp_role` in this fixed order, or a query-level `ORDER BY` using a `CASE` expression on `camp_role`.
@@ -183,4 +183,4 @@ None at this time.
 | ADR-006 | Assigned people display order (Guests → Faculty → Team Leads → Volunteers) | Approved – Pending Implementation |
 | ADR-007 | Use designation/organization in report generation | Approved – Already Satisfied |
 
-**None of ADR-001 through ADR-006 are represented as implemented anywhere else in this repository's documentation.** `docs/PROJECT_CONTEXT.md`'s "Known Bugs" and "Current Feature Status" sections still describe the People Registry as it exists today (delete present but broken, no grouping, no `roll_number`) and have not been altered to imply otherwise.
+**None of ADR-001 through ADR-006 are represented as implemented anywhere else in this repository's documentation.** All six are scoped under **Milestone 1 — People Registry & Camp Assignment Redesign** (see `docs/IMPLEMENTATION_MILESTONES.md`), planned between Phase 5 and Phase 6. `docs/PROJECT_CONTEXT.md`'s "Current Feature Status" and "Scheduled Architectural Changes" sections describe the People Registry as it exists today and reference this same milestone — no document claims this work has been implemented.
