@@ -1,4 +1,3 @@
-import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Card } from '@/components/ui';
 import { Tent, Camera, Clock } from 'lucide-react';
 
@@ -7,8 +6,6 @@ import { Tent, Camera, Clock } from 'lucide-react';
  * Will be populated in later phases when camp assignment is implemented.
  */
 export function VolunteerHomePage() {
-  useAuth();
-
   return (
     <div className="space-y-6">
       {/* ─── Activity Banner ─── */}

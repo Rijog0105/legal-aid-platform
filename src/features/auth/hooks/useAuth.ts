@@ -9,9 +9,6 @@ import {
 } from '@/features/auth/services/authService';
 import type { RoleName } from '@/constants';
 
-// Global counter so we can tell subscriptions apart in the logs
-let _subCount = 0;
-
 /**
  * Primary auth hook — initializes auth listener, provides login/logout/signup actions.
  */
@@ -20,33 +17,23 @@ export function useAuth() {
 
   /* ─── Initialize auth listener on mount ─── */
   useEffect(() => {
-    const subId = ++_subCount;
-    console.log(`[useAuth] useEffect MOUNT — registering subscription #${subId}`);
-
     const { data: { subscription } } = onAuthStateChange(async (_event, session) => {
-      console.log(`[useAuth] onAuthStateChange fired on sub #${subId} — event: "${_event}", session:`, session ? 'EXISTS (user: ' + session.user?.id + ')' : 'NULL');
-
       store.setSession(session);
 
       if (session?.user) {
-        console.log(`[useAuth] sub #${subId} — session.user present, calling fetchUserProfile for ${session.user.id}`);
         store.setLoading(true);
         const profile = await fetchUserProfile(session.user.id);
-        console.log(`[useAuth] sub #${subId} — fetchUserProfile returned:`, profile ? 'PROFILE (role: ' + profile.role?.name + ')' : 'NULL (RLS block or missing row)');
         store.setProfile(profile);
         store.setLoading(false);
       } else {
-        console.log(`[useAuth] sub #${subId} — no session, skipping fetchUserProfile`);
         store.setProfile(null);
         store.setLoading(false);
       }
 
-      console.log(`[useAuth] sub #${subId} — calling setInitialized(true)`);
       store.setInitialized(true);
     });
 
     return () => {
-      console.log(`[useAuth] useEffect CLEANUP — unsubscribing sub #${subId}`);
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

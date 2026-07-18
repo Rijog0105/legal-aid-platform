@@ -55,8 +55,6 @@ export function onAuthStateChange(
  * Fetch the full user profile (user + role + person) for a given auth user ID.
  */
 export async function fetchUserProfile(authUserId: string): Promise<UserWithDetails | null> {
-  console.log('[fetchUserProfile] AUTH UUID', authUserId);
-
   const { data, error } = await supabase
     .from('users')
     .select(`
@@ -67,9 +65,6 @@ export async function fetchUserProfile(authUserId: string): Promise<UserWithDeta
     .eq('auth_user_id', authUserId)
     .eq('is_active', true)
     .single();
-
-  console.log('[fetchUserProfile] PROFILE RESULT', data);
-  console.log('[fetchUserProfile] PROFILE ERROR', error);
 
   if (error || !data) return null;
   return data as UserWithDetails;
