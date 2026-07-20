@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Pencil, Calendar, MapPin, Clock, X, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Pencil, Calendar, MapPin, Clock, X, AlertCircle, FileText, Info } from 'lucide-react';
 import { Button, Card, CampStatusBadge, Spinner } from '@/components/ui';
 import { CAMP_STATUS, ROUTES, type CampStatus } from '@/constants';
 import { useCamp } from '@/features/camps/hooks/useCamp';
@@ -24,16 +24,17 @@ const STATUS_LABELS: Record<CampStatus, string> = {
   [CAMP_STATUS.ARCHIVED]: 'Archived',
 };
 
-type Tab = 'overview' | 'people' | 'activities' | 'photos' | 'budget' | 'narratives' | 'report';
+type Tab = 'overview' | 'people' | 'attendance' | 'activities' | 'photos' | 'surveys' | 'budget' | 'report';
 
 const TABS: { key: Tab; label: string; phase?: string }[] = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'people', label: 'People' },
+  { key: 'overview', label: 'Camp Info' },
+  { key: 'people', label: 'Assign People' },
+  { key: 'attendance', label: 'Attendance' },
   { key: 'activities', label: 'Activities' },
-  { key: 'photos', label: 'Photos' },
+  { key: 'photos', label: 'Documentation' },
+  { key: 'surveys', label: 'Surveys' },
   { key: 'budget', label: 'Budget', phase: 'Phase 7' },
-  { key: 'narratives', label: 'Narratives', phase: 'Phase 7' },
-  { key: 'report', label: 'Report', phase: 'Phase 8' },
+  { key: 'report', label: 'Report Studio', phase: 'Phase 8' },
 ];
 
 export function CampDetailPage() {
@@ -78,37 +79,40 @@ export function CampDetailPage() {
   const nextStatuses = STATUS_FLOW[camp.status];
 
   return (
-    <div>
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* ─── Back Link ─── */}
       <Link
         to={ROUTES.CAMPS}
-        className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-surface-700 mb-4"
+        className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-surface-700 transition-colors"
       >
         <ArrowLeft size={15} /> Back to Camps
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+      {/* ─── Camp Header ─── */}
+      <div className="flex flex-wrap items-start justify-between gap-4 bg-white p-6 rounded-3xl border border-surface-200 shadow-sm">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-surface-900">{camp.camp_name}</h1>
             <CampStatusBadge status={camp.status} />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-surface-500">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-sm text-surface-500">
             <span className="flex items-center gap-1.5">
-              <Calendar size={14} /> {camp.camp_date}
+              <Calendar size={14} className="text-surface-400" /> {camp.camp_date}
             </span>
             {(camp.start_time || camp.end_time) && (
               <span className="flex items-center gap-1.5">
-                <Clock size={14} />
+                <Clock size={14} className="text-surface-400" />
                 {camp.start_time ?? '—'} – {camp.end_time ?? '—'}
               </span>
             )}
             <span className="flex items-center gap-1.5">
-              <MapPin size={14} />
+              <MapPin size={14} className="text-surface-400" />
               {camp.village_name}, {camp.taluk}, {camp.district}
             </span>
           </div>
         </div>
 
+        {/* Status Actions */}
         <div className="flex items-center gap-2">
           {nextStatuses.map((status) => (
             <Button
@@ -121,32 +125,26 @@ export function CampDetailPage() {
               Mark {STATUS_LABELS[status]}
             </Button>
           ))}
-          <Button size="sm" leftIcon={<Pencil size={14} />} onClick={() => setShowEdit(true)}>
-            Edit
+          <Button size="sm" variant="outline" leftIcon={<Pencil size={14} />} onClick={() => setShowEdit(true)}>
+            Edit Details
           </Button>
         </div>
       </div>
 
       {statusError && (
-        <div className="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
           <AlertCircle size={16} className="flex-shrink-0" />
           {statusError}
         </div>
       )}
 
-      {camp.description && (
-        <Card className="mb-6">
-          <p className="text-sm text-surface-600">{camp.description}</p>
-        </Card>
-      )}
-
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-surface-200 mb-6 overflow-x-auto">
+      {/* ─── Camp Workspace Modules (Tabs Navigation) ─── */}
+      <div className="flex items-center gap-1 border-b border-surface-200 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+            className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
               activeTab === tab.key
                 ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-surface-500 hover:text-surface-700'
@@ -157,52 +155,118 @@ export function CampDetailPage() {
         ))}
       </div>
 
-      {/* Tab content */}
+      {/* ─── Tab Content Views ─── */}
+
+      {/* 1. Camp Info Overview */}
       {activeTab === 'overview' && (
-        <Card>
-          <h3 className="text-base font-semibold text-surface-900 mb-3">Report Settings</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="text-surface-400">Include Budget</p>
-              <p className="text-surface-900 font-medium">
-                {camp.report_settings?.include_budget ? 'Yes' : 'No'}
-              </p>
+        <div className="space-y-4">
+          {camp.description && (
+            <Card>
+              <h3 className="text-sm font-bold text-surface-900 mb-1">Camp Description</h3>
+              <p className="text-sm text-surface-600 leading-relaxed">{camp.description}</p>
+            </Card>
+          )}
+
+          <Card>
+            <h3 className="text-sm font-bold text-surface-900 mb-3">Automation & Report Settings</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
+                <p className="text-xs text-surface-400">Include Budget in Report</p>
+                <p className="text-surface-900 font-semibold mt-0.5">
+                  {camp.report_settings?.include_budget ? 'Yes' : 'No'}
+                </p>
+              </div>
+              <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
+                <p className="text-xs text-surface-400">Include Survey Statistics</p>
+                <p className="text-surface-900 font-semibold mt-0.5">
+                  {camp.report_settings?.include_survey_stats ? 'Yes' : 'No'}
+                </p>
+              </div>
+              <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
+                <p className="text-xs text-surface-400">Max Photos / Activity</p>
+                <p className="text-surface-900 font-semibold mt-0.5">
+                  {camp.report_settings?.max_photos_per_activity}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-surface-400">Include Survey Stats</p>
-              <p className="text-surface-900 font-medium">
-                {camp.report_settings?.include_survey_stats ? 'Yes' : 'No'}
-              </p>
-            </div>
-            <div>
-              <p className="text-surface-400">Max Photos / Activity</p>
-              <p className="text-surface-900 font-medium">
-                {camp.report_settings?.max_photos_per_activity}
-              </p>
-            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* 2. Assign People */}
+      {activeTab === 'people' && <CampPeopleTab campId={camp.id} />}
+
+      {/* 3. Attendance */}
+      {activeTab === 'attendance' && (
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-base font-bold text-surface-900">Camp Attendance</h3>
+            <span className="text-xs text-surface-500 font-normal">
+              (Derived from assigned delegation roster)
+            </span>
+          </div>
+          <CampPeopleTab campId={camp.id} />
+        </Card>
+      )}
+
+      {/* 4. Activities */}
+      {activeTab === 'activities' && <ActivitiesTab campId={camp.id} />}
+
+      {/* 5. Documentation (Photos Curation) */}
+      {activeTab === 'photos' && <PhotosTab campId={camp.id} />}
+
+      {/* 6. Surveys Placeholder */}
+      {activeTab === 'surveys' && (
+        <Card className="p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+            <FileText size={24} />
+          </div>
+          <h3 className="text-base font-bold text-surface-900">Surveys Module Integration</h3>
+          <p className="text-xs text-surface-500 max-w-md mx-auto leading-relaxed">
+            Beneficiary survey form collection and survey metric aggregation.
+          </p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">
+            <span>Roadmap Target:</span>
+            <span className="font-semibold text-primary-700">Phase 7 (Survey Integration)</span>
           </div>
         </Card>
       )}
 
-      {activeTab === 'people' && <CampPeopleTab campId={camp.id} />}
+      {/* 7. Budget Placeholder */}
+      {activeTab === 'budget' && (
+        <Card className="p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
+            <Info size={24} />
+          </div>
+          <h3 className="text-base font-bold text-surface-900">Camp Budget Module</h3>
+          <p className="text-xs text-surface-500 max-w-md mx-auto leading-relaxed">
+            Track requested, approved, and actual camp expenditure items for financial reporting.
+          </p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">
+            <span>Roadmap Target:</span>
+            <span className="font-semibold text-primary-700">Phase 7 (Budget Module)</span>
+          </div>
+        </Card>
+      )}
 
-      {activeTab === 'activities' && <ActivitiesTab campId={camp.id} />}
+      {/* 8. Report Studio Placeholder Entry Point */}
+      {activeTab === 'report' && (
+        <Card className="p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+            <FileText size={24} />
+          </div>
+          <h3 className="text-base font-bold text-surface-900">Report Studio</h3>
+          <p className="text-xs text-surface-500 max-w-md mx-auto leading-relaxed">
+            Automated institutional report generation combining camp metadata, activities, curating photos, and narrative sections.
+          </p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">
+            <span>Roadmap Target:</span>
+            <span className="font-semibold text-amber-700">Phase 8 (Report Generation)</span>
+          </div>
+        </Card>
+      )}
 
-      {activeTab === 'photos' && <PhotosTab campId={camp.id} />}
-
-      {activeTab !== 'overview' &&
-        activeTab !== 'people' &&
-        activeTab !== 'activities' &&
-        activeTab !== 'photos' && (
-          <Card>
-            <p className="text-sm text-surface-500">
-              {TABS.find((t) => t.key === activeTab)?.label} coming in{' '}
-              {TABS.find((t) => t.key === activeTab)?.phase}.
-            </p>
-          </Card>
-        )}
-
-      {/* Edit modal */}
+      {/* Edit Modal */}
       {showEdit && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -215,7 +279,7 @@ export function CampDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowEdit(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:bg-surface-100 hover:text-surface-700 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:bg-surface-100 hover:text-surface-700 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
