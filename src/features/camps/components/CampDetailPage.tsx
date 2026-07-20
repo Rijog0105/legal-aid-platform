@@ -8,6 +8,7 @@ import { updateCampStatus } from '@/features/camps/services/campService';
 import { CampForm } from './CampForm';
 import { CampPeopleTab } from './CampPeopleTab';
 import { ActivitiesTab } from '@/features/activities';
+import { PhotosTab } from '@/features/volunteer';
 
 const STATUS_FLOW: Record<CampStatus, CampStatus[]> = {
   [CAMP_STATUS.DRAFT]: [CAMP_STATUS.ACTIVE],
@@ -29,7 +30,7 @@ const TABS: { key: Tab; label: string; phase?: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'people', label: 'People' },
   { key: 'activities', label: 'Activities' },
-  { key: 'photos', label: 'Photos', phase: 'Phase 6' },
+  { key: 'photos', label: 'Photos' },
   { key: 'budget', label: 'Budget', phase: 'Phase 7' },
   { key: 'narratives', label: 'Narratives', phase: 'Phase 7' },
   { key: 'report', label: 'Report', phase: 'Phase 8' },
@@ -187,14 +188,19 @@ export function CampDetailPage() {
 
       {activeTab === 'activities' && <ActivitiesTab campId={camp.id} />}
 
-      {activeTab !== 'overview' && activeTab !== 'people' && activeTab !== 'activities' && (
-        <Card>
-          <p className="text-sm text-surface-500">
-            {TABS.find((t) => t.key === activeTab)?.label} coming in{' '}
-            {TABS.find((t) => t.key === activeTab)?.phase}.
-          </p>
-        </Card>
-      )}
+      {activeTab === 'photos' && <PhotosTab campId={camp.id} />}
+
+      {activeTab !== 'overview' &&
+        activeTab !== 'people' &&
+        activeTab !== 'activities' &&
+        activeTab !== 'photos' && (
+          <Card>
+            <p className="text-sm text-surface-500">
+              {TABS.find((t) => t.key === activeTab)?.label} coming in{' '}
+              {TABS.find((t) => t.key === activeTab)?.phase}.
+            </p>
+          </Card>
+        )}
 
       {/* Edit modal */}
       {showEdit && (

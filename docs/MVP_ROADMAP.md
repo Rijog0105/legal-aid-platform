@@ -13,12 +13,12 @@
 | 3 | People Registry | ✅ **Complete** | Low–Medium |
 | 4 | Camp Management | ✅ **Complete** | High |
 | 5 | Activity Management | ✅ **Complete** | Medium |
-| 6 | Photo Documentation | 🔲 Pending (Next) | High |
-| 7 | Budget & Narrative Sections | 🔲 Pending | Medium |
+| 6 | Photo Documentation | ✅ **Complete** | High |
+| 7 | Budget & Narrative Sections | 🔲 Pending (Next) | Medium |
 | 8 | Report Generation ⭐ | 🔲 Pending | Very High |
 | 9 | Dashboard, Polish & Deployment | 🔲 Pending | Medium |
 
-> **Note on implementation milestones:** Approved architectural improvements are sometimes delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). These are tracked separately in `docs/IMPLEMENTATION_MILESTONES.md`, with supporting rationale in `docs/IMPLEMENTATION_DECISIONS.md`. As of this writing, **Milestone 1 — People Registry & Camp Assignment Redesign** is planned between Phase 5 and Phase 6; it does not appear as a phase in the table above and does not block Phase 6 from starting.
+> **Note on implementation milestones:** Approved architectural improvements are sometimes delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). These are tracked separately in `docs/IMPLEMENTATION_MILESTONES.md`, with supporting rationale in `docs/IMPLEMENTATION_DECISIONS.md`. As of this writing, **Milestone 1 — People Registry & Camp Assignment Redesign** is planned between Phase 6 and Phase 7; it does not appear as a phase in the table above and does not block Phase 7 from starting.
 
 ---
 
@@ -240,7 +240,7 @@ Build activity management within camps. Faculty define ordered activities; volun
 
 ## Phase 6 — Photo Documentation
 
-**Status:** 🔲 Pending (Next)
+**Status:** ✅ Complete (see `docs/PHASE_6.md`)
 **Estimated Complexity:** High
 
 ### Objective
@@ -267,11 +267,11 @@ Build the photo capture and curation workflow — the bridge between field work 
 | Deliverable | Description |
 |-------------|-------------|
 | `PhotoService` | Upload to Storage, CRUD on `photos` table, signed URL generation |
-| `PhotoCapturePage` | Volunteer mobile capture interface |
-| `PhotoGalleryTab` | Faculty photo review within CampDetailPage |
-| `PhotoCard` | Thumbnail with selection toggle and metadata |
-| `VolunteerSubmissions` | Volunteer's own photo history |
-| Storage bucket setup | `camp-photos` bucket with RLS policies |
+| `PhotoCapturePage` | Volunteer mobile capture interface (`VolunteerCapturePage.tsx`) |
+| `PhotoGalleryTab` | Faculty photo review within CampDetailPage (`PhotosTab.tsx`) |
+| `PhotoCard` | Thumbnail with selection toggle and metadata (`PhotoThumbnail.tsx`) |
+| `VolunteerSubmissions` | Volunteer's own photo history (`MySubmissionsPage.tsx`) |
+| Storage bucket setup | `camp-photos` bucket schema definitions |
 
 ### Dependencies
 
@@ -281,12 +281,12 @@ Build the photo capture and curation workflow — the bridge between field work 
 
 ### Success Criteria
 
-- [ ] Volunteer captures/uploads photo linked to current activity
-- [ ] Photo stored in Supabase Storage with signed URL
-- [ ] GPS coordinates captured (when available)
-- [ ] Faculty sees all photos in gallery, grouped by activity
-- [ ] Faculty can select/deselect photos for report
-- [ ] `max_photos_per_activity` limit enforced per report settings
+- [x] Volunteer captures/uploads photo linked to current activity
+- [x] Photo stored in Supabase Storage with signed URL
+- [x] GPS coordinates captured (when available)
+- [x] Faculty sees all photos in gallery, grouped by activity
+- [x] Faculty can select/deselect photos for report
+- [x] `max_photos_per_activity` limit enforced per report settings
 
 ---
 

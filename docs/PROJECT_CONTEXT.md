@@ -20,9 +20,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 6 — Photo Documentation |
-| **Last Completed Phase** | Phase 5 — Activity Management |
-| **Latest Commit** | `9a4512c7b88fc985b44a7234674fc1b35b6d5971` |
+| **Current Phase** | Phase 7 — Budget & Narrative Sections |
+| **Last Completed Phase** | Phase 6 — Photo Documentation |
 | **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass |
 
 ---
@@ -132,17 +131,21 @@
 - No schema, migration, or RLS changes were required for either milestone
 - See `docs/PHASE_05_ACTIVITY_MANAGEMENT.md` for full details
 
+## Completed Work (Phase 6)
+
+**Status:** ✅ Complete (see `docs/PHASE_6.md`)
+
+- `photoService.ts` extended with `uploadPhoto`, `fetchMyPhotosForActivity`, `fetchMyPhotos`, `getSignedPhotoUrl`, `fetchCampPhotos`, `togglePhotoReportSelection`, and `deletePhoto`
+- Volunteer photo capture interface (`VolunteerCapturePage.tsx`) with active camp resolution, activity selector, photo counter, camera/upload trigger, and GPS geolocation capture
+- Volunteer submission gallery (`MySubmissionsPage.tsx`) displaying volunteer's photos per camp
+- Faculty photo review tab (`PhotosTab.tsx`) integrated into `CampDetailPage`, featuring filter controls (by activity and report selection status), photo details (uploader, activity, GPS, timestamp), report inclusion toggle, and deletion modal
+- Custom hooks: `useMyCampAssignment`, `useActivityPhotos`, `useMyPhotos`, and `useCampPhotos`
+- Barrel export module created at `src/features/volunteer/index.ts`
+- Verified clean build (`npx tsc --noEmit` and `npm run build`)
+
 ## Pending Work (Next Phases)
 
-### Phase 6 — Photo Documentation (Current)
-- Volunteer photo capture (mobile camera)
-- Upload to Supabase Storage
-- Faculty photo review gallery
-- Report photo selection
-- Volunteer Dashboard (mobile activity selector, upload queue, own submissions)
-- `activityStore` (Zustand) for active-activity context during capture
-
-### Phase 7 — Budget & Narrative Sections
+### Phase 7 — Budget & Narrative Sections (Current)
 - Expense line items with auto-totals
 - 5 narrative section editors with auto-save
 
@@ -166,12 +169,12 @@
 ## Current Architecture
 
 - **Pattern:** `service → hook → component`, repeated per feature module. Each feature under `src/features/<name>/` owns its own `services/`, `hooks/`, and `components/`, plus a barrel `index.ts`.
-- **Feature modules implemented so far:** `auth`, `people`, `camps` (includes the People tab, status transitions), `activities` (new in Phase 5 — CRUD, drag-and-drop reorder, status workflow, form with predefined/custom activity selection).
-- **Shared UI primitives** (`src/components/ui/`): `Button`, `Input`, `Card`, `Badge` (with camp/activity status variants), `Spinner`, `EmptyState` — reused by every feature module, including `activities`.
-- **State:** Zustand only where needed (`authStore`); most feature state lives in local hooks (`usePeople`, `useCamp`, `useActivities`) rather than a global store. No `activityStore` yet — deferred to Phase 6.
+- **Feature modules implemented so far:** `auth`, `people`, `camps` (includes the People tab, status transitions), `activities` (CRUD, drag-and-drop reorder, status workflow), `volunteer` (photo capture, submission gallery, faculty photo review & report selection).
+- **Shared UI primitives** (`src/components/ui/`): `Button`, `Input`, `Card`, `Badge` (with camp/activity status variants), `Spinner`, `EmptyState` — reused by every feature module.
+- **State:** Zustand only where needed (`authStore`); most feature state lives in local hooks (`usePeople`, `useCamp`, `useActivities`, `useCampPhotos`, `useMyPhotos`, `useMyCampAssignment`).
 - **Data layer:** Supabase client (`src/services/supabase.ts`) accessed directly from feature services — no repository/ORM abstraction layer.
-- **Drag-and-drop:** `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`, first used in Phase 5 for activity reordering; no other feature uses it yet.
-- **Routing:** React Router v7, faculty routes under the sidebar `AppShell`, volunteer routes under `VolunteerLayout`; `activities` has no dedicated route — it's a tab within `CampDetailPage`, consistent with `people` (via `CampPeopleTab`).
+- **Drag-and-drop:** `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`, used in Phase 5 for activity reordering.
+- **Routing:** React Router v7, faculty routes under the sidebar `AppShell`, volunteer routes under `VolunteerLayout`; `activities` and `photos` have no dedicated routes for faculty — they are tabs within `CampDetailPage`.
 
 ---
 
@@ -180,13 +183,14 @@
 | Module | Status | Notes |
 |---|---|---|
 | Auth (login, session, role-based redirect) | ✅ Working | Phase 2 |
-| People registry (create, edit, list, search, filter) | ✅ Working | Create/edit/list/search/filter all work. Delete functionality currently exists; its correctness has not been re-verified as part of this documentation pass, and it is scheduled for removal per ADR-001 — see Scheduled Architectural Changes. |
-| Camp management (create, edit, list, status transitions) | ✅ Working | Status transitions are manual (faculty-triggered); no automatic expiry — see Deferred Issues |
+| People registry (create, edit, list, search, filter) | ✅ Working | Create/edit/list/search/filter all work. Delete functionality currently exists; scheduled for removal per ADR-001. |
+| Camp management (create, edit, list, status transitions) | ✅ Working | Status transitions are manual (faculty-triggered); no automatic expiry |
 | Camp People tab (assign/remove people to a camp) | ✅ Working | Phase 4 |
 | Activities (CRUD, reorder, status workflow) | ✅ Working | Phase 5, Milestones A + B complete |
-| Photos, Surveys, Expenses, Narratives, Reports | 🔲 Not started | Phases 6–8 |
+| Photos (Capture, Gallery, Faculty Review, Report Selection) | ✅ Working | Phase 6 complete |
+| Volunteer Dashboard & Submissions | ✅ Working | Phase 6 complete |
+| Expenses, Narratives, Reports | 🔲 Not started | Phases 7–8 |
 | Dashboard statistics | 🔲 Not started | Placeholder cards only, no live queries |
-| Volunteer Dashboard | 🔲 Not started | Phase 6 |
 | Role-based navigation/UI (beyond faculty/volunteer split) | 🔲 Not started | See Deferred Issues |
 
 ---
@@ -195,8 +199,7 @@
 
 - Schema: `supabase/migrations/001_complete_schema.sql` — 11 tables (roles, persons, users, camps, camp_people, activities, photos, surveys, expenses, narrative_sections, reports), unchanged since Phase 1
 - RLS enabled on all tables; helper functions `get_user_role()` / `get_app_user_id()` in place
-- `activities` table (used by Phase 5) required no schema, migration, or RLS changes — `status` continues to use the existing `planned | active | completed` check constraint
-- No Storage buckets configured yet (`camp-photos`, `camp-reports` are required for Phase 6 and Phase 8 respectively, not yet created)
+- Storage bucket policies: SQL commands for `camp-photos` bucket creation and RLS policies documented in `001_complete_schema.sql` (to be executed on live Supabase instance)
 - No new tables, columns, or migrations have been added since Phase 1's initial schema
 
 ---
@@ -205,10 +208,7 @@
 
 | Issue | Target Phase |
 |---|---|
-| People Registry & Camp Assignment redesign (ADR-001–006 — see `docs/IMPLEMENTATION_DECISIONS.md`) | Milestone 1 (between Phase 5 and Phase 6 — see `docs/IMPLEMENTATION_MILESTONES.md`) |
-| Photo capture, upload, and review | Phase 6 |
-| Volunteer Dashboard | Phase 6 |
-| `activityStore` (Zustand active-activity context for volunteer capture) | Phase 6 |
+| People Registry & Camp Assignment redesign (ADR-001–006 — see `docs/IMPLEMENTATION_DECISIONS.md`) | Milestone 1 (between Phase 6 and Phase 7 — see `docs/IMPLEMENTATION_MILESTONES.md`) |
 | Survey forms / survey analytics | Out of scope — this platform only stores survey reference IDs and aggregate stats, per the "not a survey platform" project rule |
 | Budget and narrative sections | Phase 7 |
 | Report generation (PDF/DOCX) | Phase 8 |

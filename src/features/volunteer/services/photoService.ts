@@ -115,3 +115,70 @@ export async function getSignedPhotoUrl(
   if (error) return null;
   return data.signedUrl;
 }
+
+export interface PhotoWithDetails extends Photo {
+  activity: { activity_name: string } | null;
+  uploader?: {
+    person: { full_name: string } | null;
+  } | null;
+}
+
+/**
+ * All photos captured for a camp — used by faculty to review, toggle report selection,
+ * and manage photos.
+ */
+export async function fetchCampPhotos(campId: string): Promise<PhotoWithDetails[]> {
+  const { data, error } = await supabase
+    .from('photos')
+    .select(`
+      *,
+      activity:activities(activity_name),
+      uploader:users(
+        person:persons(full_name)
+      )
+    `)
+    .eq('camp_id', campId)
+    .order('captured_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as PhotoWithDetails[];
+}
+
+/**
+ * Toggles whether a photo is selected for inclusion in institutional reports.
+ */
+export async function togglePhotoReportSelection(
+  photoId: string,
+  isSelected: boolean
+): Promise<Photo> {
+  const { data, error } = await supabase
+    .from('photos')
+    .update({ is_selected_for_report: isSelected })
+    .eq('id', photoId)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as Photo;
+}
+
+/**
+ * Deletes a photo from both Supabase Storage and the database.
+ */
+export async function deletePhoto(photoId: string, filePath: string): Promise<void> {
+  const { error: dbError } = await supabase
+    .from('photos')
+    .delete()
+    .eq('id', photoId);
+
+  if (dbError) throw new Error(dbError.message);
+
+  const { error: storageError } = await supabase.storage
+    .from(APP_CONFIG.PHOTO_BUCKET)
+    .remove([filePath]);
+
+  if (storageError) {
+    console.warn(`Failed to delete storage file ${filePath}: ${storageError.message}`);
+  }
+}
+
