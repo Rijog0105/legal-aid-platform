@@ -17,6 +17,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 /* ─── Role-based redirect helper ────────────────────────── */
 function getHomeRoute(roleName: string | null): string {
   if (roleName === ROLES.VOLUNTEER) return ROUTES.VOLUNTEER_HOME;
+  if (roleName === ROLES.TEAM_LEAD) return ROUTES.TEAM_LEAD_WORKSPACE;
   return ROUTES.DASHBOARD;
 }
 

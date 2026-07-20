@@ -30,6 +30,11 @@ export function RootRedirect() {
     return <Navigate to={ROUTES.VOLUNTEER_HOME} replace />;
   }
 
+  if (roleName === ROLES.TEAM_LEAD) {
+    console.log('[RootRedirect] → team_lead, redirecting to TEAM_LEAD_WORKSPACE');
+    return <Navigate to={ROUTES.TEAM_LEAD_WORKSPACE} replace />;
+  }
+
   console.log('[RootRedirect] → redirecting to DASHBOARD');
   return <Navigate to={ROUTES.DASHBOARD} replace />;
 }
