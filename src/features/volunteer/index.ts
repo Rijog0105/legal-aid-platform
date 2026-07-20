@@ -4,6 +4,7 @@ export * from './components/ActivitySelector';
 export * from './components/PhotoCounter';
 export * from './components/PhotoThumbnail';
 export * from './components/PhotosTab';
+export * from './components/TeamLeadPhotosPage';
 export * from './hooks/useMyCampAssignment';
 export * from './hooks/useActivityPhotos';
 export * from './hooks/useMyPhotos';

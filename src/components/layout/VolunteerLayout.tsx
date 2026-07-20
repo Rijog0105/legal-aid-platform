@@ -1,13 +1,13 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Camera, ClipboardList, Home, LogOut } from 'lucide-react';
+import { Camera, ClipboardList, Home, LogOut, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { ROUTES } from '@/constants';
+import { ROUTES, ROLES } from '@/constants';
 
 /**
  * Mobile-first layout for volunteers with bottom navigation.
  */
 export function VolunteerLayout() {
-  const { logout, displayName } = useAuth();
+  const { logout, displayName, roleName } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -15,14 +15,28 @@ export function VolunteerLayout() {
     navigate(ROUTES.LOGIN);
   };
 
+  const isTeamLead = roleName === ROLES.TEAM_LEAD;
+
   return (
     <div className="flex flex-col min-h-screen bg-surface-50">
       {/* ─── Top Bar ─── */}
       <header className="sticky top-0 z-10 glass border-b border-surface-200 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-sm font-bold text-surface-900">Legal Aid Camp</h1>
-            <p className="text-xs text-surface-500">{displayName || 'Volunteer'}</p>
+          <div className="flex items-center gap-2">
+            {isTeamLead && (
+              <button
+                onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}
+                className="flex items-center gap-0.5 text-xs font-semibold text-primary-600 bg-primary-50 px-2 py-1 rounded-lg border border-primary-100 hover:bg-primary-100 transition-colors cursor-pointer"
+                title="Back to Team Lead Workspace"
+              >
+                <ChevronLeft size={14} />
+                Workspace
+              </button>
+            )}
+            <div>
+              <h1 className="text-sm font-bold text-surface-900">Legal Aid Camp</h1>
+              <p className="text-xs text-surface-500">{displayName || (isTeamLead ? 'Team Lead' : 'Volunteer')}</p>
+            </div>
           </div>
           <button
             onClick={handleLogout}
