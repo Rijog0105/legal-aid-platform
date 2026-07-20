@@ -16,6 +16,7 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { PeoplePage } from '@/features/people';
 import { CampListPage, CampCreatePage, CampDetailPage } from '@/features/camps';
 import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
+import { VolunteerCapturePage, MySubmissionsPage } from '@/features/volunteer';
 
 export const router = createBrowserRouter([
   /* ─── Root: smart redirect ─── */
@@ -79,11 +80,11 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.VOLUNTEER_CAPTURE,
-        element: <div className="text-surface-500 text-center py-12">Photo capture — Phase 6</div>,
+        element: <VolunteerCapturePage />,
       },
       {
         path: ROUTES.VOLUNTEER_SUBMISSIONS,
-        element: <div className="text-surface-500 text-center py-12">My submissions — Phase 6</div>,
+        element: <MySubmissionsPage />,
       },
     ],
   },
