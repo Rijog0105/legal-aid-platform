@@ -1,0 +1,1880 @@
+================================================================================
+LEGAL AID CAMP PLATFORM
+MOBILE UI WORKFLOW SPECIFICATION
+================================================================================
+
+Version:
+Draft 1.0
+
+Status:
+Work in Progress
+
+Purpose:
+This document defines the mobile UI workflow for Volunteers and Team Leads.
+
+The goal is NOT to define colors, fonts or styling.
+
+The goal is to document:
+
+• Screen layouts
+• User workflow
+• Navigation
+• Permissions
+• UI philosophy
+• Behaviour
+
+================================================================================
+GENERAL UI PHILOSOPHY
+================================================================================
+
+The application is designed MOBILE FIRST.
+
+The majority of users (Volunteers and Team Leads) will use the application
+through their phones during legal aid camps.
+
+The UI should require almost zero training.
+
+A user should immediately know what action to perform after opening the app.
+
+The interface should avoid:
+
+- Complex menus
+- Sidebars
+- Nested navigation
+- Dashboard clutter
+
+Instead, every screen should expose only the actions required for that role.
+
+Desktop versions should NOT redesign the UI.
+
+Desktop should simply arrange the same cards in responsive grids.
+
+================================================================================
+VOLUNTEER HOME SCREEN
+================================================================================
+
+Purpose
+
+This is the primary working screen for volunteers.
+
+The volunteer performs only two major tasks:
+
+1. Capture Activity Documentation Photos
+2. Fill Survey Forms
+
+Nothing else should distract the volunteer.
+
+================================================================================
+SCREEN LAYOUT
+================================================================================
+
++------------------------------------------------------------+
+| Camp Name                             Logout               |
++------------------------------------------------------------+
+| Activity ▼                            Gallery              |
+| Photos Used : 2 / 5                                        |
++------------------------------------------------------------+
+|                                                            |
+|                                                            |
+|                                                            |
+|                     CAMERA                                 |
+|                                                            |
+|                                                            |
+|                                                            |
++------------------------------------------------------------+
+|                                                            |
+|                                                            |
+|                  SURVEY FORM                               |
+|                                                            |
+|                                                            |
++------------------------------------------------------------+
+
+================================================================================
+SCREEN REGIONS
+================================================================================
+
+Top Section (~10%)
+
+Contains:
+
+• Camp Name
+• Logout Button
+
+Purpose:
+
+Immediately inform the volunteer which camp is active.
+
+Logout remains available but should not consume unnecessary space.
+
+------------------------------------------------------------
+
+Second Section (~20%)
+
+Contains:
+
+• Activity Dropdown
+• Gallery Button
+• Photo Counter
+
+Example:
+
+Activity:
+▼ Legal Consultation
+
+Gallery
+
+Photos Used:
+2 / 5
+
+Purpose:
+
+The volunteer chooses the activity ONCE.
+
+Every photo captured afterwards belongs to the selected activity.
+
+The volunteer is NOT asked to select the activity for every photograph.
+
+Changing the dropdown changes the destination for future photos only.
+
+------------------------------------------------------------
+
+Remaining Screen (~70%)
+
+Split equally into two large action buttons.
+
+Upper Half:
+
+CAMERA
+
+Lower Half:
+
+SURVEY FORM
+
+Both buttons should be equally important.
+
+================================================================================
+VOLUNTEER WORKFLOW
+================================================================================
+
+Login
+
+↓
+
+Volunteer Home
+
+↓
+
+Select Activity
+
+↓
+
+Capture Photos
+
+↓
+
+OR
+
+↓
+
+Open Survey Form
+
+↓
+
+Repeat until camp ends
+
+================================================================================
+PHOTO CAPTURE RULES
+================================================================================
+
+Each volunteer may upload a maximum of FIVE photos per activity.
+
+The UI should always display:
+
+Photos Used:
+X / 5
+
+The limit exists to:
+
+• Reduce unnecessary storage
+• Prevent spam uploads
+• Reduce Faculty review workload
+• Encourage volunteers to capture only meaningful documentation
+
+================================================================================
+VOLUNTEER GALLERY
+================================================================================
+
+The Gallery is NOT filtered by the currently selected activity.
+
+Instead, the Gallery always displays ALL activities.
+
+Example:
+
+Gallery
+
+Activity 1
+  Photo
+  Photo
+
+Activity 2
+  Photo
+  Photo
+  Photo
+
+Activity 3
+  Photo
+
+...
+
+The volunteer may:
+
+• View own photos
+• Delete own photos
+
+The volunteer CANNOT:
+
+• View other volunteers' photographs
+
+Purpose:
+
+Allow volunteers to remove:
+
+• blurry images
+• duplicate images
+• accidental captures
+
+before Faculty review.
+
+================================================================================
+PHOTO TYPES
+================================================================================
+
+The system contains TWO different categories of photographs.
+
+Category A
+
+Activity Documentation
+
+Examples
+
+• Group Photo
+• Chief Guest
+• Awareness Session
+• Book Distribution
+• Camp Activities
+
+These photographs belong to:
+
+Camp
+↓
+
+Activity
+
+Category B
+
+Survey Verification
+
+Captured INSIDE the Survey Form.
+
+Examples
+
+• Aadhaar
+• PAN
+• Supporting Documents
+• Beneficiary Verification Images
+
+These belong to:
+
+Survey Response
+
+NOT
+
+Activity Documentation.
+
+These are separate concepts and should remain independent.
+
+================================================================================
+GEO TAGGING
+================================================================================
+
+Every image should attempt Geo Tagging.
+
+Store:
+
+Latitude
+
+Longitude
+
+Timestamp
+
+If GPS is unavailable:
+
+Upload should continue.
+
+Geo coordinates may remain NULL.
+
+Image upload should NEVER fail because location is unavailable.
+
+================================================================================
+TEAM LEAD
+================================================================================
+
+Design Philosophy
+
+A Team Lead is STILL a Volunteer.
+
+The Team Lead should inherit ALL Volunteer functionality.
+
+Instead of cluttering the Volunteer screen with additional controls,
+the Team Lead receives an additional Workspace.
+
+================================================================================
+TEAM LEAD HOME
+================================================================================
+
+Purpose
+
+Acts as a launchpad.
+
+NOT
+
+A dashboard full of statistics.
+
+================================================================================
+LAYOUT
+================================================================================
+
++----------------------------------------------------------+
+| Welcome Team Lead                    Logout              |
+| Camp Name                                               |
++----------------------------------------------------------+
+
++----------------------------------------------------------+
+| Volunteer Mode                                           |
+| Fill surveys and capture photos exactly like a           |
+| volunteer.                                               |
+|                                            Open          |
++----------------------------------------------------------+
+
++----------------------------------------------------------+
+| Survey Dashboard                                         |
+| Total Forms                                              |
+| Completed                                                |
+| Pending                                                  |
+|                                            Open          |
++----------------------------------------------------------+
+
++----------------------------------------------------------+
+| Activity Photos                                          |
+| View all volunteer photographs grouped by activity.      |
+|                                            Open          |
++----------------------------------------------------------+
+
++----------------------------------------------------------+
+| Survey Reports                                           |
+| Individual Reports                                       |
+| Camp Report                                              |
+|                                            Open          |
++----------------------------------------------------------+
+
++----------------------------------------------------------+
+| Budget                                                   |
+| Requested                                                 |
+| Spent                                                     |
+| Remaining                                                 |
+|                                            Open          |
++----------------------------------------------------------+
+
+================================================================================
+TEAM LEAD WORKFLOW
+================================================================================
+
+Login
+
+↓
+
+Team Lead Home
+
+↓
+
+Choose Workspace
+
+↓
+
+Volunteer Mode
+
+OR
+
+Survey Dashboard
+
+OR
+
+Activity Photos
+
+OR
+
+Reports
+
+OR
+
+Budget
+
+================================================================================
+VOLUNTEER MODE
+================================================================================
+
+Volunteer Mode is IDENTICAL to the Volunteer Home Screen.
+
+The Team Lead should perform surveys and capture photographs using the
+same interface as a normal volunteer.
+
+The only additional navigation is:
+
+Back to Team Lead Workspace
+
+================================================================================
+ACTIVITY PHOTOS (TEAM LEAD)
+================================================================================
+
+Unlike Volunteers,
+
+Team Leads may view ALL photographs.
+
+Grouped by:
+
+Activity
+
+↓
+
+Volunteer
+
+The Team Lead may delete unwanted photographs before Faculty review.
+
+Purpose:
+
+Reduce Faculty workload by removing:
+
+• duplicates
+• blurred images
+• unnecessary photographs
+
+================================================================================
+UI PRINCIPLES
+================================================================================
+
+1.
+Volunteer screens must remain extremely simple.
+
+2.
+One screen = One primary purpose.
+
+3.
+Large touch-friendly cards instead of complicated menus.
+
+4.
+Desktop rearranges cards.
+Desktop does NOT redesign the UI.
+
+5.
+Role inheritance.
+
+Team Lead inherits Volunteer features.
+
+Additional responsibilities are separated into dedicated workspaces.
+
+6.
+Home screens act as launchpads.
+
+They should guide users into workspaces rather than display every
+possible feature on a single page.
+
+================================================================================
+REPORT ARCHITECTURE
+================================================================================
+
+The platform generates reports at multiple levels.
+
+The objective is to automate institutional documentation while minimizing
+manual effort by Faculty members.
+
+Reports are divided into four categories.
+
+================================================================================
+1. INDIVIDUAL BENEFICIARY REPORT
+================================================================================
+
+Owner
+
+Survey Module
+
+Generated
+
+Automatically
+
+Editable
+
+No
+
+Purpose
+
+Generate a detailed report for a single beneficiary after the survey has
+been completed.
+
+Contents
+
+• Beneficiary Details
+• Family Details
+• Survey Responses
+• Legal Issues
+• Verification Images
+• Volunteer Details
+• Timestamp
+• Geo Location (if available)
+
+================================================================================
+2. CONSOLIDATED SURVEY REPORT
+================================================================================
+
+Owner
+
+Survey Module
+
+Generated
+
+Automatically
+
+Editable
+
+No
+
+Purpose
+
+Summarize all survey responses collected during a camp.
+
+Typical Information
+
+• Total Beneficiaries
+• Male / Female Distribution
+• Occupation Statistics
+• Education Statistics
+• Legal Issue Categories
+• Government Scheme Awareness
+• Other Survey Statistics
+
+================================================================================
+3. BUDGET REPORT
+================================================================================
+
+Owner
+
+Budget Module
+
+Generated
+
+Automatically
+
+Editable
+
+No
+
+Purpose
+
+Provide a financial summary of the camp.
+
+Typical Information
+
+• Requested Budget
+• Approved Budget
+• Actual Expenses
+• Remaining Budget
+• Expense Categories
+
+================================================================================
+4. CAMP REPORT EDITOR (Draft Report)
+================================================================================
+
+Owner
+
+Report Module
+
+Generated
+
+Automatically
+
+Editable
+
+YES
+
+Purpose
+
+Generate a complete draft of the Camp Report using all collected data.
+
+This is the primary working document used by Faculty.
+
+The system automatically prepares the report.
+
+Faculty reviews, edits and improves the generated draft before producing
+the final report.
+
+Faculty may edit
+
+• Paragraphs
+• Sentences
+• Wording
+• Activity Narratives
+• Image Selection
+• Image Ordering
+• Image Captions
+• Report Sequence
+
+The system should minimize manual typing by generating as much content as
+possible automatically.
+
+================================================================================
+5. FINAL CAMP REPORT
+================================================================================
+
+Owner
+
+Report Module
+
+Generated From
+
+Camp Report Editor
+
+Editable
+
+No
+
+Purpose
+
+Official institutional report generated after Faculty approval.
+
+Export Formats (Future)
+
+• PDF
+• DOCX
+
+================================================================================
+ACTIVITY DOCUMENTATION
+================================================================================
+
+Activities DO NOT generate separate reports.
+
+Activities exist only for documentation purposes.
+
+Each Activity contains
+
+• Activity Name
+• Activity Description
+• Uploaded Photos
+• Selected Report Photos
+• Activity Statistics
+
+Example
+
+----------------------------------------------------
+
+Legal Awareness Session
+
+Description
+
+[ Faculty Narrative ]
+
+--------------------------------------------
+
+Photos Uploaded
+
+18
+
+Selected for Report
+
+4
+
+Volunteers Contributed
+
+6
+
+--------------------------------------------
+
+Photo Gallery
+
+□ □ □ □ □ □ □
+
+----------------------------------------------------
+
+Activities ultimately contribute to the Camp Report.
+
+================================================================================
+REPORT WORKFLOW
+================================================================================
+
+Survey Data
+        │
+        ▼
+Individual Reports
+
+Survey Data
+        │
+        ▼
+Consolidated Survey Report
+
+Budget Data
+        │
+        ▼
+Budget Report
+
+Camp
+        │
+        ├── Activities
+        ├── Photos
+        ├── Surveys
+        ├── Budget
+        ├── Guests
+        ├── Volunteers
+        └── Faculty
+                │
+                ▼
+      Generate Camp Report Editor
+                │
+                ▼
+      Faculty Reviews & Edits
+                │
+                ▼
+       Generate Final Camp Report
+
+
+================================================================================
+FACULTY MODULE
+================================================================================
+
+The Faculty Module serves as the administrative control center of the platform.
+
+Faculty members are responsible for:
+
+• Managing the Permanent People Registry
+• Creating and Managing Camps
+• Assigning Participants
+• Managing Activities
+• Managing Budget
+• Reviewing Documentation
+• Reviewing Survey Data
+• Preparing and Finalizing Camp Reports
+
+The Faculty interface should prioritize simplicity and efficient workflows over
+complex dashboards.
+
+================================================================================
+FACULTY HOME
+================================================================================
+
+After successful authentication, Faculty members enter the Faculty Control
+Center.
+
+The Faculty Home intentionally contains only two primary workspaces.
+
+1. Camps
+2. People Registry
+
+All other operations are performed inside an individual Camp.
+
+This keeps the application's hierarchy simple and reflects the camp-centric
+architecture of the platform.
+
+Faculty Home Layout
+
+--------------------------------------------------------------
+
+Faculty Control Center
+
+--------------------------------------------------------------
+
+[ Camps ]
+
+Create, Schedule and Manage Camps
+
+--------------------------------------------------------------
+
+[ People Registry ]
+
+Manage Permanent Registry
+
+--------------------------------------------------------------
+
+Right Side Information Panel
+
+• Faculty Profile Picture
+• Faculty Name
+• Designation
+• Department
+• Email Address
+• Theme Toggle (Future)
+• Logout
+
+The right-side information panel exists primarily to improve the visual balance
+of the page while providing useful account information.
+
+================================================================================
+PEOPLE REGISTRY
+================================================================================
+
+The People Registry is a permanent database of all participants.
+
+The registry exists independently of any Camp.
+
+People are NOT created separately for each Camp.
+
+The registry contains four categories.
+
+• Guests
+• Faculty
+• Team Leads
+• Volunteers
+
+================================================================================
+SELF REGISTRATION
+================================================================================
+
+Faculty members should not manually enter dozens of names into the registry.
+
+Instead, the system provides a registration link.
+
+Faculty
+        │
+        ▼
+Share Registration Link
+        │
+        ▼
+Participant completes registration form
+        │
+        ▼
+Pending Approval
+        │
+        ▼
+Faculty Accepts / Rejects
+        │
+        ▼
+Permanent Registry
+
+Guests are an exception.
+
+Guest records are entered manually by Faculty since external guests generally
+will not use the registration portal.
+
+================================================================================
+PENDING APPROVAL WORKFLOW
+================================================================================
+
+After registration, participants appear in a Pending Approval list.
+
+Faculty reviews each registration.
+
+For every registration Faculty may
+
+• Accept
+• Reject
+
+When accepting a participant, Faculty assigns the participant's role.
+
+Available Roles
+
+• Volunteer (Default)
+• Team Lead
+• Faculty
+
+Volunteer is pre-selected because most registrations are expected to be student
+volunteers.
+
+================================================================================
+PERMANENT REGISTRY
+================================================================================
+
+Once approved, participants become part of the permanent registry.
+
+Records remain available for future camps.
+
+Participants are assigned to Camps from the registry.
+
+The registry is never recreated for every new camp.
+
+================================================================================
+SEARCH AND FILTERS
+================================================================================
+
+The registry should support efficient searching.
+
+Search
+
+• Name
+• Roll Number
+• Email
+
+Filters (Future)
+
+• Batch
+• Department
+
+Roll numbers should be sortable in ascending and descending order.
+
+This helps Faculty quickly locate active student batches while older graduated
+batches remain archived in the registry.
+
+================================================================================
+CAMPS MODULE
+================================================================================
+
+The Camp Module is the core of the platform.
+
+Every Camp functions as an independent workspace.
+
+Faculty Home
+        │
+        ▼
+Camps
+        │
+        ▼
+Create Camp
+        │
+        ▼
+Camp Workspace
+
+Initially, creating a Camp requires only basic information.
+
+Example
+
+• Camp Name
+• Date
+• Time
+• Location
+• Basic Description
+
+Activities and participant assignments are performed after the Camp has been
+created.
+
+================================================================================
+CAMP WORKSPACE
+================================================================================
+
+Every Camp contains its own management modules.
+
+Current modules include
+
+• General Information
+• Assign People
+• Activities
+• Budget
+• Documentation
+• Surveys
+• Camp Report
+
+Each module only manages information belonging to the currently selected Camp.
+
+================================================================================
+ASSIGN PEOPLE
+================================================================================
+
+Participants are assigned from the Permanent Registry.
+
+Faculty selects participants using checkboxes.
+
+Categories
+
+• Guests
+• Faculty
+• Team Leads
+• Volunteers
+
+Faculty may search and filter participants before assignment.
+
+Selected participants receive an email invitation.
+
+================================================================================
+CAMP INVITATION WORKFLOW
+================================================================================
+
+Faculty assigns participants
+        │
+        ▼
+Invitation Email Sent
+        │
+        ▼
+Participant Accepts Invitation
+        │
+        ▼
+Participant becomes part of the Camp
+
+Until the invitation is accepted, the participant is not considered part of
+the Camp.
+
+================================================================================
+VOLUNTEER EXPERIENCE BEFORE CAMP
+================================================================================
+
+Before the Camp becomes active, Volunteers should not have access to survey
+forms or documentation tools.
+
+Instead, the Volunteer Home displays a simple upcoming camp screen.
+
+Example
+
+Legal Awareness Camp
+
+Scheduled on
+
+15 August 2026
+
+No other actions are available.
+
+================================================================================
+VOLUNTEER EXPERIENCE DURING CAMP
+================================================================================
+
+When the Camp begins, the Volunteer interface automatically becomes active.
+
+The Volunteer Home then displays
+
+• Camp Name
+• Activity Selector
+• Personal Gallery
+• Photo Counter
+• Camera
+• Survey Form
+• Logout
+
+No manual activation is required.
+
+================================================================================
+ACTIVITY MANAGEMENT
+================================================================================
+
+Activities are created only by Faculty.
+
+Examples
+
+• Inauguration
+• Legal Awareness Session
+• Survey
+• Group Photo
+• Valedictory
+
+There are no manual status controls.
+
+Activities automatically become available when the Camp starts and become
+unavailable when the Camp ends.
+
+Faculty may edit activity names and descriptions whenever required.
+
+================================================================================
+BUDGET
+================================================================================
+
+Budget allocation is optional during Camp creation.
+
+Faculty may
+
+• Add Budget Later
+• Edit Allocated Budget
+• Record Expenses
+• Update Financial Information
+
+This reflects the actual workflow where many camps finalize budget allocation
+only after expenses become known.
+
+================================================================================
+REPORT ARCHITECTURE
+================================================================================
+
+The platform currently defines the following reports.
+
+Survey Module
+
+• Individual Beneficiary Report
+• Consolidated Survey Report
+
+Budget Module
+
+• Budget Report
+
+Activity Module
+
+Activities do not generate independent reports.
+
+Each Activity only maintains
+
+• Description
+• Uploaded Photos
+• Selected Report Photos
+• Activity Statistics
+
+Report Module
+
+• Camp Report Editor (Editable Draft)
+• Final Camp Report
+
+The Camp Report Editor is the primary working document used by Faculty before
+producing the official Final Camp Report.
+
+================================================================================
+CORE DESIGN PRINCIPLES
+================================================================================
+
+The platform is CAMP-CENTRIC.
+
+Everything belongs to a Camp.
+
+People belong to the Permanent Registry first and are then assigned to Camps.
+
+Activities exist only for documentation.
+
+Reports are generated from Camp data.
+
+Faculty review and refine automatically generated content rather than creating
+reports manually from scratch.
+
+The platform should minimize repetitive administrative work wherever possible.
+
+
+
+================================================================================
+ATTENDANCE MODULE
+================================================================================
+
+The Attendance Module is responsible for recording the physical presence of
+participants during a Camp.
+
+Attendance is managed separately from Activities and Surveys because it
+represents the beginning of the Camp execution workflow.
+
+Attendance is performed only after participants have accepted their Camp
+invitation.
+
+================================================================================
+ATTENDANCE WORKFLOW
+================================================================================
+
+Camp Created
+        │
+        ▼
+Participants Assigned
+        │
+        ▼
+Participants Accept Invitation
+        │
+        ▼
+Faculty Starts Attendance
+        │
+        ▼
+Attendance Verification
+        │
+        ▼
+Activities & Survey Collection
+
+Attendance always occurs before documentation activities begin.
+
+================================================================================
+ATTENDANCE MODULE LOCATION
+================================================================================
+
+The Attendance Module is available inside every individual Camp.
+
+Camp Workspace
+
+• General Information
+• Assign People
+• Attendance
+• Activities
+• Budget
+• Documentation
+• Surveys
+• Camp Report
+
+================================================================================
+STARTING ATTENDANCE
+================================================================================
+
+Attendance can only be started by Faculty.
+
+When Faculty selects "Start Attendance", the system first requests the Faculty's
+current GPS location.
+
+The Faculty does not need to manually enter the exact Camp address.
+
+The Faculty only enters the general Camp location (Village/Area) while creating
+the Camp.
+
+The actual Attendance Location is captured live when Attendance begins.
+
+Workflow
+
+Faculty clicks
+
+Start Attendance
+
+↓
+
+System requests Faculty GPS
+
+↓
+
+Faculty confirms detected location
+
+↓
+
+Attendance Session is created
+
+================================================================================
+ATTENDANCE SESSION
+================================================================================
+
+An Attendance Session stores
+
+• Faculty Member
+• Start Time
+• End Time
+• GPS Coordinates
+• Attendance Radius
+
+The Attendance Location is temporary and belongs only to that Attendance
+Session.
+
+================================================================================
+ATTENDANCE RADIUS
+================================================================================
+
+Attendance verification is performed using the Faculty's live GPS location.
+
+Default Radius
+
+300 metres
+
+Every Volunteer must be physically located within the Attendance Radius in
+order to successfully mark attendance.
+
+The radius may become configurable in future versions if required.
+
+================================================================================
+VOLUNTEER ATTENDANCE
+================================================================================
+
+Only participants who have accepted the Camp Invitation are allowed to mark
+attendance.
+
+Workflow
+
+Volunteer opens application
+
+↓
+
+Attendance Session detected
+
+↓
+
+Press "Mark Attendance"
+
+↓
+
+System requests Volunteer GPS
+
+↓
+
+Distance from Attendance Centre calculated
+
+↓
+
+Within 300 metres
+
+YES
+
+↓
+
+Attendance Recorded
+
+NO
+
+↓
+
+Attendance Not Verified
+
+================================================================================
+ATTENDANCE STATUS
+================================================================================
+
+Each participant belongs to one of three attendance categories.
+
+• Present
+• Absent
+• Invitation Pending
+
+Definitions
+
+Present
+
+Participant accepted the invitation and successfully verified attendance within
+the permitted Attendance Radius.
+
+Absent
+
+Participant accepted the invitation but failed to complete attendance before
+the Attendance Session closed.
+
+Invitation Pending
+
+Participant never accepted the Camp Invitation and therefore could not
+participate in Attendance.
+
+================================================================================
+PRE-CAMP VOLUNTEER EXPERIENCE
+================================================================================
+
+Before the Camp becomes active, Volunteers do not have access to the normal
+Volunteer interface.
+
+Instead, the application displays a simple Upcoming Camp screen.
+
+Example
+
+Legal Awareness Camp
+
+Scheduled on
+
+15 August 2026
+
+No other actions are available until the Camp becomes active.
+
+================================================================================
+ACTIVE CAMP
+================================================================================
+
+Once the Camp becomes active, the Volunteer interface automatically unlocks.
+
+The Volunteer Home displays
+
+• Camp Name
+• Activity Selector
+• Personal Gallery
+• Photo Counter
+• Camera
+• Survey Form
+• Logout
+
+No manual activation is required.
+
+================================================================================
+DESIGN CONSIDERATIONS
+================================================================================
+
+Attendance is intended to verify physical presence at the Camp location.
+
+The system intentionally uses the Faculty's live GPS location instead of a
+manually entered Camp address because many Camps are created using only a
+Village or Area name.
+
+Using the Faculty's real-time GPS location provides a more accurate attendance
+reference point.
+
+================================================================================
+CURRENT LIMITATIONS
+================================================================================
+
+The current MVP does not attempt to completely prevent credential sharing.
+
+The design assumes that
+
+• Faculty members are physically present during the Camp.
+• Faculty are familiar with the participating students.
+• Attendance is only one component of overall participation.
+• Survey submissions and documentation provide additional evidence of
+  participation when required.
+
+This limitation is considered acceptable for the MVP and may be revisited in
+future versions if stronger identity verification becomes necessary.
+
+
+================================================================================
+PRODUCT LANGUAGE & TERMINOLOGY
+================================================================================
+
+The platform intentionally uses a consistent and distinctive vocabulary that
+reflects its purpose while remaining intuitive for first-time users.
+
+Examples
+
+• Edit → Design
+• Editor → Designer
+• Dashboard → Workspace
+• Faculty Home → Faculty Control Center
+• Team Lead Home → Team Lead Workspace
+• Report Editor → Report Designer
+
+The objective is to create a professional product identity while ensuring that
+every term clearly communicates its function.
+
+Terminology should remain consistent throughout the application, documentation,
+and user interface.
+
+================================================================================
+FACULTY CONTROL CENTER
+================================================================================
+
+The Faculty Control Center serves as the administrative entry point of the
+platform.
+
+Faculty Home intentionally contains only two primary modules.
+
+• Camps
+• People Registry
+
+The application follows a Camp-Centric architecture.
+
+Everything else belongs inside an individual Camp.
+
+Faculty Home Layout
+
+--------------------------------------------------------------
+
+Faculty Control Center
+
+--------------------------------------------------------------
+
+[ Camps ]
+
+Create and Manage Camps
+
+--------------------------------------------------------------
+
+[ People Registry ]
+
+Manage Permanent Registry
+
+--------------------------------------------------------------
+
+Right Information Panel
+
+• Faculty Profile Picture
+• Faculty Name
+• Designation
+• Department
+• Email
+• Theme Toggle (Future)
+• Logout
+
+The right-side panel exists to improve visual balance while providing quick
+access to account information.
+
+================================================================================
+PERMANENT PEOPLE REGISTRY
+================================================================================
+
+The registry is permanent.
+
+People are never recreated for every Camp.
+
+People are approved once and reused across future Camps.
+
+Registry Categories
+
+• Guests
+• Faculty
+• Team Leads
+• Volunteers
+
+================================================================================
+REGISTRATION WORKFLOW
+================================================================================
+
+Faculty shares registration link.
+
+↓
+
+Participant fills registration form.
+
+↓
+
+Pending Approval.
+
+↓
+
+Faculty reviews registration.
+
+↓
+
+Accept / Reject.
+
+↓
+
+Assign Role.
+
+↓
+
+Permanent Registry.
+
+Guest records are entered manually by Faculty.
+
+================================================================================
+REGISTRY SEARCH
+================================================================================
+
+Search
+
+• Name
+• Roll Number
+• Email
+
+Sorting
+
+• Ascending
+• Descending
+
+Future Filters
+
+• Batch
+• Department
+
+================================================================================
+CAMPS
+================================================================================
+
+Creating a Camp initially requires only basic information.
+
+Example
+
+• Camp Name
+• Date
+• Time
+• Location
+• Description
+
+Activities and participant assignment occur after Camp creation.
+
+================================================================================
+CAMP WORKSPACE
+================================================================================
+
+Every Camp behaves as an independent workspace.
+
+Current Modules
+
+• Camp Information
+• Assign People
+• Attendance
+• Activities
+• Budget
+• Documentation
+• Surveys
+• Report Studio
+
+================================================================================
+ASSIGN PEOPLE
+================================================================================
+
+Participants are selected from the Permanent Registry.
+
+Categories
+
+• Guests
+• Faculty
+• Team Leads
+• Volunteers
+
+Faculty selects participants using checkboxes.
+
+Assigned participants receive invitation emails.
+
+================================================================================
+INVITATION WORKFLOW
+================================================================================
+
+Faculty Assigns Participant
+
+↓
+
+Invitation Email
+
+↓
+
+Participant Accepts
+
+↓
+
+Participant becomes Camp Member
+
+Before accepting the invitation, participants cannot interact with the Camp.
+
+================================================================================
+VOLUNTEER EXPERIENCE
+================================================================================
+
+Before Camp
+
+Volunteer Home displays only
+
+• Camp Name
+• Scheduled Date
+
+No other functionality is available.
+
+During Camp
+
+Volunteer Home displays
+
+• Camp Name
+• Activity Selector
+• Personal Gallery
+• Photo Counter
+• Camera
+• Survey Form
+• Logout
+
+================================================================================
+ATTENDANCE
+================================================================================
+
+Attendance is managed separately from Activities.
+
+Workflow
+
+Faculty
+
+↓
+
+Start Attendance
+
+↓
+
+Faculty GPS captured
+
+↓
+
+Attendance Centre established
+
+↓
+
+Accepted Volunteers mark attendance
+
+↓
+
+GPS Verification
+
+↓
+
+Attendance Recorded
+
+Attendance Radius
+
+Default
+
+300 metres
+
+Only participants who accepted the invitation may mark attendance.
+
+Attendance Categories
+
+• Present
+• Absent
+• Invitation Pending
+
+Attendance is based on the Faculty's live GPS location rather than the Camp
+address entered during Camp creation.
+
+================================================================================
+ACTIVITIES
+================================================================================
+
+Activities are created only by Faculty.
+
+Examples
+
+• Inauguration
+• Survey
+• Legal Awareness Session
+• Group Photo
+• Valedictory
+
+Activities automatically become available when the Camp starts and become
+unavailable when the Camp ends.
+
+There are no manual Active / Completed controls.
+
+================================================================================
+DOCUMENTATION
+================================================================================
+
+Volunteers upload photographs under Activities.
+
+Faculty reviews all photographs.
+
+Faculty selects photographs that will appear inside the Final Camp Report.
+
+Activity pages contain
+
+• Description
+• Photo Gallery
+• Selected Report Photos
+• Activity Statistics
+
+Activities themselves do not generate separate reports.
+
+================================================================================
+SURVEYS
+================================================================================
+
+Survey Module generates
+
+• Individual Beneficiary Reports
+• Consolidated Survey Report
+
+Survey statistics become part of the Final Camp Report.
+
+================================================================================
+BUDGET
+================================================================================
+
+Budget allocation is optional during Camp creation.
+
+Faculty may
+
+• Allocate Budget
+• Modify Budget
+• Record Expenses
+
+Budget Module generates Budget Report.
+
+================================================================================
+REPORT STUDIO
+================================================================================
+
+The Report Studio is the flagship feature of the platform.
+
+Workflow
+
+Generate Draft
+
+↓
+
+Open Designer
+
+↓
+
+Design Report
+
+↓
+
+Publish Final Report
+
+The Designer is NOT a standalone module.
+
+The Designer opens only after a Draft Report has been generated.
+
+================================================================================
+DRAFT REPORT
+================================================================================
+
+The system automatically generates a draft by collecting information from
+
+• Camp Information
+• Activities
+• Documentation
+• Surveys
+• Budget
+• People
+
+The Faculty does not create the report manually.
+
+The Faculty designs and refines the generated draft.
+
+================================================================================
+REPORT DESIGNER
+================================================================================
+
+The Report Designer is a visual document designer.
+
+The objective is not to provide a blank document but to generate a completed
+draft that Faculty can improve.
+
+The Designer should support
+
+• Text Widgets
+• Image Widgets
+• Table Widgets
+• Heading Widgets
+• Paragraph Widgets
+
+Faculty may
+
+• Modify wording
+• Replace images
+• Resize images
+• Add tables
+• Edit paragraphs
+• Rearrange report sections
+
+Future versions may support drag-and-drop widgets and advanced page design.
+
+================================================================================
+PRODUCT TERMINOLOGY
+================================================================================
+
+The application intentionally uses unique but intuitive terminology.
+
+Examples
+
+Dashboard
+→ Workspace
+
+Editor
+→ Designer
+
+Edit
+→ Design
+
+Report Editor
+→ Report Designer
+
+Faculty Home
+→ Faculty Control Center
+
+Team Lead Home
+→ Team Lead Workspace
+
+The same terminology should remain consistent throughout the application and
+documentation.
+
+================================================================================
+DESIGN PHILOSOPHY
+================================================================================
+
+The application follows a Camp-Centric architecture.
+
+Everything belongs to a Camp.
+
+The interface should prioritize simplicity while maintaining a premium visual
+experience.
+
+Design inspiration
+
+• Apple Pages
+• Apple Keynote
+• Apple Numbers
+
+UI Principles
+
+• Rounded cards
+• Soft shadows
+• Smooth animations
+• Colorful interface
+• Right-side information panel
+• Non-uniform widget layout
+• Strong visual hierarchy
+
+The Camp Workspace should avoid a traditional dashboard grid.
+
+Instead, it should use an asymmetric card layout.
+
+Camp Information occupies a larger vertical card.
+
+Report Studio occupies a horizontal card beneath Camp Information.
+
+All remaining workspace cards use equal dimensions and align perfectly within
+the overall layout.
+
+The layout should remain balanced without any overflowing or misaligned cards.

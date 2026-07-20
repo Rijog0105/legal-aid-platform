@@ -20,8 +20,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 7 — Budget & Narrative Sections |
+| **Current Active Task** | Implementation 001 — Role-Based Workspaces (In Progress: Deliverables 1–4 Complete) |
 | **Last Completed Phase** | Phase 6 — Photo Documentation |
+| **Next Planned Phase** | Phase 7 — Budget & Narrative Sections |
 | **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass |
 
 ---
@@ -142,6 +143,14 @@
 - Custom hooks: `useMyCampAssignment`, `useActivityPhotos`, `useMyPhotos`, and `useCampPhotos`
 - Barrel export module created at `src/features/volunteer/index.ts`
 - Verified clean build (`npx tsc --noEmit` and `npm run build`)
+
+## Completed Work (Implementation 001 — Role-Based Workspaces)
+
+**Status:** ⏳ In Progress (Deliverables 1–4 Complete)
+- **Deliverable 1 (Role Auth & Routing)**: Smart post-login redirects (`RootRedirect`, `getHomeRoute`) routing users to assigned role workspaces (`/dashboard`, `/team-lead`, `/volunteer`) with strict role permission guards.
+- **Deliverable 2 (Volunteer Workspace)**: Mobile layout across 3 Camp Lifecycle States (*Upcoming*, *Active*, *Finished*). Top section, Activity selector, Gallery button, Photo counter (`X / 5`), and equal-split main action buttons (**CAMERA** & **SURVEY FORM**). Volunteer Gallery grouped by activity with self-deletion support.
+- **Deliverable 3 (Team Lead Workspace Integration)**: Launchpad cards (*Volunteer Mode*, *Survey Dashboard*, *Activity Photos*, *Survey Reports*, *Budget*). Integrated Team Lead Activity Photos view (`/team-lead/photos`) grouped by `Activity → Volunteer` with photo deletion capabilities before Faculty review. Preserved inherited Volunteer Mode with `Back to Team Lead Workspace` header.
+- **Deliverable 4 (Faculty Control Center & Camp Workspace Integration)**: Level 1 Faculty Control Center (`/dashboard`) featuring 2 primary cards (*Camps*, *People Registry*) and Right Information Panel. Level 2 Camp Workspace (`/camps/:campId`) operational hub with status transitions (`Mark Active`, `Mark Completed`, `Mark Archived`), tabbed module management (`Camp Info`, `Assign People`, `Attendance`, `Activities`, `Documentation`, `Surveys`, `Budget`, `Report Studio`), and integration of Phase 1–6 components.
 
 ## Pending Work (Next Phases)
 

@@ -18,7 +18,7 @@
 | 8 | Report Generation ⭐ | 🔲 Pending | Very High |
 | 9 | Dashboard, Polish & Deployment | 🔲 Pending | Medium |
 
-> **Note on implementation milestones:** Approved architectural improvements are sometimes delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). These are tracked separately in `docs/IMPLEMENTATION_MILESTONES.md`, with supporting rationale in `docs/IMPLEMENTATION_DECISIONS.md`. As of this writing, **Milestone 1 — People Registry & Camp Assignment Redesign** is planned between Phase 6 and Phase 7; it does not appear as a phase in the table above and does not block Phase 7 from starting.
+> **Note on implementation milestones:** Approved architectural improvements are delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). Implementation milestones are documented separately in `docs/IMPLEMENTATION_001_ROLE_BASED_WORKSPACES.md`. Currently, **Implementation 001 — Role-Based Workspaces** is actively in progress between Phase 6 and Phase 7, with **Deliverables 1 through 4 completed**.
 
 ---
 
