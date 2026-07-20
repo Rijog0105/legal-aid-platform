@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { ROUTES, APP_CONFIG } from '@/constants';
+import { ROUTES, ROLES, APP_CONFIG } from '@/constants';
 
 interface NavItem {
   label: string;
@@ -23,11 +23,18 @@ export function Sidebar() {
   const { logout, displayName, roleName } = useAuth();
   const navigate = useNavigate();
 
-  const navItems: NavItem[] = [
-    { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: <LayoutDashboard className="w-5 h-5" /> },
-    { label: 'Camps', path: ROUTES.CAMPS, icon: <Tent className="w-5 h-5" /> },
-    { label: 'People', path: ROUTES.PEOPLE, icon: <Users className="w-5 h-5" /> },
-  ];
+  const isTeamLead = roleName === ROLES.TEAM_LEAD;
+
+  const navItems: NavItem[] = isTeamLead
+    ? [
+        { label: 'Workspace', path: ROUTES.TEAM_LEAD_WORKSPACE, icon: <LayoutDashboard className="w-5 h-5" /> },
+        { label: 'Activity Photos', path: ROUTES.TEAM_LEAD_PHOTOS, icon: <Tent className="w-5 h-5" /> },
+      ]
+    : [
+        { label: 'Control Center', path: ROUTES.DASHBOARD, icon: <LayoutDashboard className="w-5 h-5" /> },
+        { label: 'Camps', path: ROUTES.CAMPS, icon: <Tent className="w-5 h-5" /> },
+        { label: 'People', path: ROUTES.PEOPLE, icon: <Users className="w-5 h-5" /> },
+      ];
 
   const handleLogout = async () => {
     await logout();

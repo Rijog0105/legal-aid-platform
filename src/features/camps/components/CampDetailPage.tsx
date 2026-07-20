@@ -9,6 +9,7 @@ import { CampForm } from './CampForm';
 import { CampPeopleTab } from './CampPeopleTab';
 import { ActivitiesTab } from '@/features/activities';
 import { PhotosTab } from '@/features/volunteer';
+import { ReportPreparationTab } from './ReportPreparationTab';
 
 const STATUS_FLOW: Record<CampStatus, CampStatus[]> = {
   [CAMP_STATUS.DRAFT]: [CAMP_STATUS.ACTIVE],
@@ -249,21 +250,16 @@ export function CampDetailPage() {
         </Card>
       )}
 
-      {/* 8. Report Studio Placeholder Entry Point */}
+      {/* 8. Report Preparation Workspace */}
       {activeTab === 'report' && (
-        <Card className="p-8 text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
-            <FileText size={24} />
-          </div>
-          <h3 className="text-base font-bold text-surface-900">Report Studio</h3>
-          <p className="text-xs text-surface-500 max-w-md mx-auto leading-relaxed">
-            Automated institutional report generation combining camp metadata, activities, curating photos, and narrative sections.
-          </p>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">
-            <span>Roadmap Target:</span>
-            <span className="font-semibold text-amber-700">Phase 8 (Report Generation)</span>
-          </div>
-        </Card>
+        <ReportPreparationTab
+          campId={camp.id}
+          onNavigateTab={(tabKey) => {
+            if (tabKey === 'activities' || tabKey === 'photos') {
+              setActiveTab(tabKey);
+            }
+          }}
+        />
       )}
 
       {/* Edit Modal */}
