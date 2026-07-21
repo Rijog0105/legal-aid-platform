@@ -8,10 +8,10 @@
 -- IMPORTANT: Before running this, you must create auth users
 -- in the Supabase Auth dashboard or via the API:
 --
--- 1. faculty@lacp.test   / password: Faculty@123
--- 2. teamlead@lacp.test  / password: TeamLead@123
--- 3. volunteer1@lacp.test / password: Volunteer@123
--- 4. volunteer2@lacp.test / password: Volunteer@123
+-- 1. Faculty:   priya.sharma@university.edu / password: Faculty@123
+-- 2. Team Lead: arjun.mehta@student.edu    / password: TeamLead@123
+-- 3. Volunteer: sneha.patel@student.edu    / password: Volunteer@123
+-- 4. Volunteer: ravi.kumar@student.edu     / password: Volunteer@123
 --
 -- Then replace the auth_user_id values below with the actual UUIDs.
 -- ================================================================

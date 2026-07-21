@@ -18,7 +18,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 function getHomeRoute(roleName: string | null): string {
   if (roleName === ROLES.VOLUNTEER) return ROUTES.VOLUNTEER_HOME;
   if (roleName === ROLES.TEAM_LEAD) return ROUTES.TEAM_LEAD_WORKSPACE;
-  return ROUTES.DASHBOARD;
+  if (roleName === ROLES.FACULTY || roleName === ROLES.ADMIN) return ROUTES.DASHBOARD;
+  return ROUTES.UNAUTHORIZED;
 }
 
 /* ─── Stats (static display) ─────────────────────────────── */
@@ -30,7 +31,7 @@ const stats = [
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, isAuthenticated, isInitialized, roleName } = useAuth();
+  const { login, isAuthenticated, isInitialized, isLoading, roleName, authError, clearAuthError } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -42,15 +43,21 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  /* Redirect already-authenticated users */
+  /* Redirect already-authenticated users once profile and role are resolved */
   useEffect(() => {
-    if (isInitialized && isAuthenticated) {
-      navigate(getHomeRoute(roleName), { replace: true });
+    console.log('[LoginPage] useEffect RENDER CHECK — isInitialized:', isInitialized, '| isLoading:', isLoading, '| isAuthenticated:', isAuthenticated, '| roleName:', roleName);
+    if (isInitialized && !isLoading && isAuthenticated && roleName) {
+      const targetRoute = getHomeRoute(roleName);
+      console.log('[LoginPage] → EXECUTING NAVIGATION TO:', targetRoute, 'for roleName:', roleName);
+      navigate(targetRoute, { replace: true });
+    } else {
+      console.log('[LoginPage] → NOT NAVIGATING YET. Waiting for isInitialized && !isLoading && isAuthenticated && roleName');
     }
-  }, [isInitialized, isAuthenticated, roleName, navigate]);
+  }, [isInitialized, isLoading, isAuthenticated, roleName, navigate]);
 
   const onSubmit = async (values: LoginFormValues) => {
     setServerError(null);
+    clearAuthError();
     const result = await login(values.email, values.password);
     if (!result.success) {
       setServerError(result.error ?? 'Sign-in failed. Please try again.');
@@ -174,7 +181,7 @@ export function LoginPage() {
           </p>
 
           {/* Error alert */}
-          {serverError && (
+          {(serverError || authError) && (
             <div
               role="alert"
               style={{
@@ -184,7 +191,7 @@ export function LoginPage() {
               }}
             >
               <AlertCircle size={16} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <p style={{ color: '#991b1b', fontSize: '0.875rem', lineHeight: 1.5 }}>{serverError}</p>
+              <p style={{ color: '#991b1b', fontSize: '0.875rem', lineHeight: 1.5 }}>{serverError ?? authError}</p>
             </div>
           )}
 

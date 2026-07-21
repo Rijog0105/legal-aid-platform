@@ -11,63 +11,122 @@ export interface AuthResult {
  * Sign in with email and password.
  */
 export async function signIn(email: string, password: string): Promise<AuthResult> {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  console.log('[authService] signIn initiated for email:', email);
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      console.error('[authService] signIn failed:', error.message, error);
+      console.log('[authService] signIn returning success: false');
+      return { success: false, error: error.message };
+    }
+    console.log('[authService] signIn succeeded for user.id:', data.user?.id);
+    console.log('[authService] signIn returning success: true');
+    return { success: true };
+  } catch (err) {
+    console.error('[authService] signIn caught exception:', err);
+    console.log('[authService] signIn returning success: false due to exception');
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown sign-in error' };
+  }
 }
 
-/**
- * Sign up with email and password.
- */
 export async function signUp(email: string, password: string): Promise<AuthResult> {
-  const { error } = await supabase.auth.signUp({ email, password });
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  console.log('[authService] signUp initiated for email:', email);
+  try {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      console.error('[authService] signUp failed:', error.message, error);
+      console.log('[authService] signUp returning success: false');
+      return { success: false, error: error.message };
+    }
+    console.log('[authService] signUp succeeded for user.id:', data.user?.id);
+    console.log('[authService] signUp returning success: true');
+    return { success: true };
+  } catch (err) {
+    console.error('[authService] signUp caught exception:', err);
+    console.log('[authService] signUp returning success: false due to exception');
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown sign-up error' };
+  }
 }
 
-/**
- * Sign out the current user.
- */
 export async function signOut(): Promise<AuthResult> {
-  const { error } = await supabase.auth.signOut();
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  console.log('[authService] signOut initiated');
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('[authService] signOut failed:', error.message, error);
+      console.log('[authService] signOut returning success: false');
+      return { success: false, error: error.message };
+    }
+    console.log('[authService] signOut succeeded');
+    console.log('[authService] signOut returning success: true');
+    return { success: true };
+  } catch (err) {
+    console.error('[authService] signOut caught exception:', err);
+    console.log('[authService] signOut returning success: false due to exception');
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown sign-out error' };
+  }
 }
 
-/**
- * Get the current session.
- */
 export async function getSession(): Promise<Session | null> {
-  const { data } = await supabase.auth.getSession();
-  return data.session;
+  console.log('[authService] getSession called');
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('[authService] getSession error:', error.message, error);
+      console.log('[authService] getSession returning null');
+      return null;
+    }
+    console.log('[authService] getSession returning session for email:', data.session?.user?.email);
+    return data.session;
+  } catch (err) {
+    console.error('[authService] getSession caught exception:', err);
+    console.log('[authService] getSession returning null due to exception');
+    return null;
+  }
 }
 
-/**
- * Subscribe to auth state changes.
- */
 export function onAuthStateChange(
   callback: (event: string, session: Session | null) => void
 ) {
+  console.log('[authService] subscribing to onAuthStateChange');
   return supabase.auth.onAuthStateChange(callback);
 }
 
-/**
- * Fetch the full user profile (user + role + person) for a given auth user ID.
- */
 export async function fetchUserProfile(authUserId: string): Promise<UserWithDetails | null> {
-  const { data, error } = await supabase
-    .from('users')
-    .select(`
-      *,
-      role:roles(*),
-      person:persons(*)
-    `)
-    .eq('auth_user_id', authUserId)
-    .eq('is_active', true)
-    .single();
+  console.log('[authService] BEFORE fetchUserProfile() for authUserId:', authUserId);
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        *,
+        role:roles(*),
+        person:persons(*)
+      `)
+      .eq('auth_user_id', authUserId)
+      .eq('is_active', true)
+      .single();
 
-  if (error || !data) return null;
-  return data as UserWithDetails;
+    if (error) {
+      console.error('[authService] fetchUserProfile Supabase error returned:', error);
+    }
+
+    const typedData = data as UserWithDetails | null;
+    console.log('[authService] AFTER fetchUserProfile() returned profile:', typedData);
+    console.log('[authService] returned role:', typedData?.role);
+    console.log('[authService] returned person:', typedData?.person);
+
+    if (error || !data) {
+      console.log('[authService] fetchUserProfile returning null due to error or missing data');
+      return null;
+    }
+
+    console.log('[authService] fetchUserProfile returning valid UserWithDetails profile');
+    return typedData;
+  } catch (err) {
+    console.error('[authService] fetchUserProfile caught exception:', err);
+    console.log('[authService] fetchUserProfile returning null due to exception');
+    return null;
+  }
 }
 
 /**

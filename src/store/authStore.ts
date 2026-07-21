@@ -9,6 +9,7 @@ interface AuthState {
   profile: UserWithDetails | null;
   isLoading: boolean;
   isInitialized: boolean;
+  authError: string | null;
 
   /* Computed */
   isAuthenticated: boolean;
@@ -22,6 +23,8 @@ interface AuthState {
   setProfile: (profile: UserWithDetails | null) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
+  setAuthError: (authError: string | null) => void;
+  clearAuthError: () => void;
   reset: () => void;
 }
 
@@ -35,6 +38,7 @@ const initialState = {
   userId: null,
   personId: null,
   displayName: null,
+  authError: null,
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -60,6 +64,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setInitialized: (isInitialized) => {
     set({ isInitialized });
+  },
+
+  setAuthError: (authError) => {
+    set({ authError });
+  },
+
+  clearAuthError: () => {
+    set({ authError: null });
   },
 
   reset: () => {
