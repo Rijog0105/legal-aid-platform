@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Pencil, Calendar, MapPin, Clock, X, AlertCircle, FileText, Info } from 'lucide-react';
+import { ArrowLeft, Pencil, Calendar, MapPin, Clock, X, AlertCircle, FileText } from 'lucide-react';
 import { Button, Card, CampStatusBadge, Spinner } from '@/components/ui';
 import { CAMP_STATUS, ROUTES, type CampStatus } from '@/constants';
 import { useCamp } from '@/features/camps/hooks/useCamp';
@@ -10,6 +10,7 @@ import { CampPeopleTab } from './CampPeopleTab';
 import { ActivitiesTab } from '@/features/activities';
 import { PhotosTab } from '@/features/volunteer';
 import { ReportPreparationTab } from './ReportPreparationTab';
+import { BudgetTab } from '@/features/budget';
 
 const STATUS_FLOW: Record<CampStatus, CampStatus[]> = {
   [CAMP_STATUS.DRAFT]: [CAMP_STATUS.ACTIVE],
@@ -40,7 +41,7 @@ const TABS: { key: Tab; label: string; phase?: string }[] = [
 
 export function CampDetailPage() {
   const { campId } = useParams<{ campId: string }>();
-  const { camp, isLoading, error, setCamp } = useCamp(campId);
+  const { camp, isLoading, error, setCamp, reload } = useCamp(campId);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [showEdit, setShowEdit] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -233,21 +234,9 @@ export function CampDetailPage() {
         </Card>
       )}
 
-      {/* 7. Budget Placeholder */}
+      {/* 7. Budget Module */}
       {activeTab === 'budget' && (
-        <Card className="p-8 text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
-            <Info size={24} />
-          </div>
-          <h3 className="text-base font-bold text-surface-900">Camp Budget Module</h3>
-          <p className="text-xs text-surface-500 max-w-md mx-auto leading-relaxed">
-            Track requested, approved, and actual camp expenditure items for financial reporting.
-          </p>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-100 text-surface-600 text-xs font-medium">
-            <span>Roadmap Target:</span>
-            <span className="font-semibold text-primary-700">Phase 7 (Budget Module)</span>
-          </div>
-        </Card>
+        <BudgetTab campId={camp.id} camp={camp} onCampUpdate={reload} />
       )}
 
       {/* 8. Report Preparation Workspace */}

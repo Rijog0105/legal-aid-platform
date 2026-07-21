@@ -20,9 +20,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Active Task** | Implementation 001 — Role-Based Workspaces (In Progress: Deliverables 1–4 Complete) |
-| **Last Completed Phase** | Phase 6 — Photo Documentation |
-| **Next Planned Phase** | Phase 7 — Budget & Narrative Sections |
+| **Current Active Task** | Phase 7 — Budget Module (Complete) |
+| **Last Completed Phase** | Phase 7 — Budget Module |
+| **Next Planned Phase** | Phase 8 — Report Generation ⭐ |
 | **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass |
 
 ---
@@ -197,8 +197,8 @@
 | Camp People tab (assign/remove people to a camp) | ✅ Working | Phase 4 |
 | Activities (CRUD, reorder, status workflow) | ✅ Working | Phase 5, Milestones A + B complete |
 | Photos (Capture, Gallery, Faculty Review, Report Selection) | ✅ Working | Phase 6 complete |
-| Volunteer Dashboard & Submissions | ✅ Working | Phase 6 complete |
-| Expenses, Narratives, Reports | 🔲 Not started | Phases 7–8 |
+| Expenses & Budget Tracking | ✅ Working | Phase 7 complete (Allocated budget, Expense CRUD, Category breakdown, Standalone PDF report) |
+| Narratives & Reports | 🔲 In progress / Pending | Phase 7 (Narratives complete), Phase 8 (Reports pending) |
 | Dashboard statistics | 🔲 Not started | Placeholder cards only, no live queries |
 | Role-based navigation/UI (beyond faculty/volunteer split) | 🔲 Not started | See Deferred Issues |
 

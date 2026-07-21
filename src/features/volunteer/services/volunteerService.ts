@@ -11,14 +11,12 @@ export interface MyCampAssignment {
 }
 
 /**
- * Finds the volunteer's current camp assignment for documentation purposes —
- * the assigned camp with status 'active' (most recently dated, if more than
- * one is somehow active at once). Returns null if the volunteer has no
- * active camp assignment right now.
+ * Finds all camp assignments for a user (volunteer or team lead).
+ * Sorted by active status first, then camp_date descending.
  */
-export async function fetchMyActiveCampAssignment(
+export async function fetchAllMyCampAssignments(
   personId: string
-): Promise<MyCampAssignment | null> {
+): Promise<MyCampAssignment[]> {
   const { data, error } = await supabase
     .from('camp_people')
     .select('*, person:persons(*), camp:camps(*)')
@@ -27,13 +25,46 @@ export async function fetchMyActiveCampAssignment(
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as unknown as CampPersonWithCamp[];
-  const activeAssignments = rows
-    .filter((row) => row.camp?.status === 'active')
-    .sort((a, b) => (a.camp.camp_date < b.camp.camp_date ? 1 : -1));
+  const validRows = rows.filter((row) => Boolean(row.camp));
 
-  const match = activeAssignments[0];
-  if (!match) return null;
+  // Sort: active camps first, then by camp_date descending
+  validRows.sort((a, b) => {
+    if (a.camp.status === 'active' && b.camp.status !== 'active') return -1;
+    if (a.camp.status !== 'active' && b.camp.status === 'active') return 1;
+    return a.camp.camp_date < b.camp.camp_date ? 1 : -1;
+  });
 
-  const { camp, ...campPerson } = match;
-  return { campPerson, camp };
+  return validRows.map((row) => {
+    const { camp, ...campPerson } = row;
+    return { campPerson, camp };
+  });
+}
+
+/**
+ * Finds a specific camp assignment for a user by campId, or defaults to their primary/active assignment.
+ */
+export async function fetchMyCampAssignment(
+  personId: string,
+  targetCampId?: string | null
+): Promise<MyCampAssignment | null> {
+  const assignments = await fetchAllMyCampAssignments(personId);
+  if (assignments.length === 0) return null;
+
+  if (targetCampId) {
+    const found = assignments.find((item) => item.camp.id === targetCampId);
+    if (found) return found;
+  }
+
+  // Default to the first assignment (active first, then newest)
+  return assignments[0] ?? null;
+}
+
+/**
+ * Backwards-compatible wrapper: Finds the user's active camp assignment.
+ * If no active camp exists, falls back to their most recent assigned camp.
+ */
+export async function fetchMyActiveCampAssignment(
+  personId: string
+): Promise<MyCampAssignment | null> {
+  return await fetchMyCampAssignment(personId);
 }

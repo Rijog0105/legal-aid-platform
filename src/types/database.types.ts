@@ -62,6 +62,7 @@ export interface Camp {
   taluk: string;
   district: string;
   status: CampStatus;
+  allocated_budget?: number | null;
   report_settings: ReportSettings;
   created_by: string;
   created_at: string;
@@ -122,11 +123,14 @@ export interface Survey {
 export interface Expense {
   id: string;
   camp_id: string;
-  expense_type: string;
+  category: string;
+  description: string | null;
   unit_cost: number;
   quantity: number;
   total_amount: number;
+  expense_date: string;
   remarks: string | null;
+  receipt_url: string | null;
   created_by: string;
   created_at: string;
 }

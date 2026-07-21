@@ -19,6 +19,7 @@ import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
 import { VolunteerCapturePage, MySubmissionsPage, TeamLeadPhotosPage } from '@/features/volunteer';
 import { TeamLeadWorkspacePage } from '@/pages/TeamLeadWorkspacePage';
 import { TeamLeadPlaceholderPage } from '@/pages/TeamLeadPlaceholderPage';
+import { TeamLeadBudgetPage } from '@/pages/TeamLeadBudgetPage';
 
 export const router = createBrowserRouter([
   /* ─── Root: smart redirect ─── */
@@ -106,13 +107,11 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.TEAM_LEAD_BUDGET,
-        element: (
-          <TeamLeadPlaceholderPage
-            title="Budget"
-            description="Team lead view of requested, approved, and actual camp expenditure items."
-            targetPhase="Phase 7 (Budget Module)"
-          />
-        ),
+        element: <TeamLeadBudgetPage />,
+      },
+      {
+        path: ROUTES.TEAM_LEAD_BUDGET + '/:campId',
+        element: <TeamLeadBudgetPage />,
       },
     ],
   },
