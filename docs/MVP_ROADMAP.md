@@ -14,11 +14,11 @@
 | 4 | Camp Management | ✅ **Complete** | High |
 | 5 | Activity Management | ✅ **Complete** | Medium |
 | 6 | Photo Documentation | ✅ **Complete** | High |
-| 7 | Budget & Narrative Sections | 🔲 Pending (Next) | Medium |
+| 7 | Budget & Narrative Sections | ⏳ **Partially Completed** (Budget Complete, Narrative Pending) | Medium |
 | 8 | Report Generation ⭐ | 🔲 Pending | Very High |
 | 9 | Dashboard, Polish & Deployment | 🔲 Pending | Medium |
 
-> **Note on implementation milestones:** Approved architectural improvements are delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). Implementation milestones are documented separately in `docs/IMPLEMENTATION_001_ROLE_BASED_WORKSPACES.md`. Currently, **Implementation 001 — Role-Based Workspaces** is actively in progress between Phase 6 and Phase 7, with **Deliverables 1 through 4 completed**.
+> **Note on implementation milestones:** Approved architectural improvements are delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). Implementation milestones are documented separately in `docs/IMPLEMENTATION_001_ROLE_BASED_WORKSPACES.md`. Currently, **Implementation 001 — Role-Based Workspaces** is **Completed** (Deliverables 1 through 5 completed).
 
 ---
 
@@ -292,49 +292,39 @@ Build the photo capture and curation workflow — the bridge between field work 
 
 ## Phase 7 — Budget & Narrative Sections
 
-**Status:** 🔲 Pending
+**Status:** ⏳ **Partially Completed**
+- **Completed**: Budget Module
+- **Remaining**: Narrative Sections
 **Estimated Complexity:** Medium
 
 ### Objective
 
-Build the two remaining data-entry modules that feed directly into report content: expense tracking and narrative text blocks.
+Build the two data-entry modules feeding into report content: expense tracking and narrative text blocks.
 
-### Features
+### Scope & Breakdown
 
-#### Budget
-1. **Expense list** — Table of line items within camp
-2. **Expense create/edit** — Type, unit cost, quantity, total, remarks
-3. **Auto-totals** — Computed grand total across all expenses
-4. **Expense delete** — Remove line items
+#### Completed Deliverables (Budget Module)
+- **Budget Dashboard**: 4 financial metric cards (Allocated Budget, Total Spent, Remaining Budget, Expense Count).
+- **Expense CRUD**: Full management of expense items (`category`, `description`, `unit_cost`, `quantity`, `total_amount`, `expense_date`, `remarks`, `receipt_url`).
+- **Budget Reporting**: Client-side PDF statement generation (`jspdf`) with Legal Aid sign-off signature blocks (`Faculty Coordinator Signature`, `Student Team Lead Signature`).
+- **Workspace Integration**: Shared `BudgetTab` implementation integrated across both Faculty (`/camps/:campId`) and Team Lead (`/team-lead/budget`) workspaces.
+- **Budget RBAC**: Faculty control over `allocated_budget`, shared expense management for Faculty and Team Lead, complete restriction for Volunteers.
+- **Database Alignment**: Idempotent SQL migration `003_budget_schema_alignment.sql` with RLS policies updated for `admin`, `faculty`, and `team_lead`.
 
-#### Narratives
-5. **Section editor** — Rich text or textarea for each section type
-6. **Section types** — Synopsis, Objectives, Observations, Recommendations, Conclusion
-7. **Auto-save** — Save on blur or with debounce
-8. **Section preview** — Preview formatted content
-
-### Deliverables
-
-| Deliverable | Description |
-|-------------|-------------|
-| `ExpenseService` | CRUD for `expenses` table |
-| `BudgetTab` | Expense table within CampDetailPage |
-| `ExpenseFormModal` | Create/edit with validation |
-| `NarrativeService` | CRUD for `narrative_sections` table |
-| `NarrativesTab` | Section editors within CampDetailPage |
-| `NarrativeSectionEditor` | Individual section textarea with auto-save |
-
-### Dependencies
-
-- Phase 4 complete (camps)
+#### Pending Deliverables (Narrative Module)
+- **Narrative Section Editors**: Editors for 5 narrative section types (*Synopsis*, *Objectives*, *Observations*, *Recommendations*, *Conclusion*).
+- **Narrative Auto-Save**: Auto-save on blur or with debounce.
+- **Narrative Templates**: Pre-populated template blocks for institutional reporting.
+- **Report Integration**: Feeding narrative text into the composite Report Generator (Phase 8).
 
 ### Success Criteria
 
-- [ ] Faculty adds expense line items with validation
-- [ ] Grand total computes correctly
+- [x] Faculty sets allocated budget and adds expense line items with Zod validation
+- [x] Grand total, category breakdowns, and remaining budget compute automatically with safe fallback
+- [x] Team Lead accesses shared budget workspace with expense management enabled and allocated limit editing hidden
+- [x] RLS enforces strict role permissions across `admin`, `faculty`, and `team_lead`
 - [ ] All 5 narrative sections editable per camp
-- [ ] Auto-save persists changes without explicit submit
-- [ ] RLS enforces faculty/admin-only write access
+- [ ] Auto-save persists narrative changes without explicit submit
 
 ---
 

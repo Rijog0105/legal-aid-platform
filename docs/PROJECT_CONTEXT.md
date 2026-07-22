@@ -20,9 +20,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Active Task** | Phase 7 — Budget Module (Complete) |
-| **Last Completed Phase** | Phase 7 — Budget Module |
-| **Next Planned Phase** | Phase 8 — Report Generation ⭐ |
+| **Current Active Task** | Phase 7 — Budget & Narrative (Partially Completed) |
+| **Last Completed Module** | Phase 7 — Budget Module |
+| **Next Planned Work** | Phase 7 — Narrative Sections |
 | **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass |
 
 ---
@@ -146,17 +146,24 @@
 
 ## Completed Work (Implementation 001 — Role-Based Workspaces)
 
-**Status:** ⏳ In Progress (Deliverables 1–4 Complete)
+**Status:** ✅ Completed (Deliverables 1–5 Complete)
 - **Deliverable 1 (Role Auth & Routing)**: Smart post-login redirects (`RootRedirect`, `getHomeRoute`) routing users to assigned role workspaces (`/dashboard`, `/team-lead`, `/volunteer`) with strict role permission guards.
 - **Deliverable 2 (Volunteer Workspace)**: Mobile layout across 3 Camp Lifecycle States (*Upcoming*, *Active*, *Finished*). Top section, Activity selector, Gallery button, Photo counter (`X / 5`), and equal-split main action buttons (**CAMERA** & **SURVEY FORM**). Volunteer Gallery grouped by activity with self-deletion support.
 - **Deliverable 3 (Team Lead Workspace Integration)**: Launchpad cards (*Volunteer Mode*, *Survey Dashboard*, *Activity Photos*, *Survey Reports*, *Budget*). Integrated Team Lead Activity Photos view (`/team-lead/photos`) grouped by `Activity → Volunteer` with photo deletion capabilities before Faculty review. Preserved inherited Volunteer Mode with `Back to Team Lead Workspace` header.
 - **Deliverable 4 (Faculty Control Center & Camp Workspace Integration)**: Level 1 Faculty Control Center (`/dashboard`) featuring 2 primary cards (*Camps*, *People Registry*) and Right Information Panel. Level 2 Camp Workspace (`/camps/:campId`) operational hub with status transitions (`Mark Active`, `Mark Completed`, `Mark Archived`), tabbed module management (`Camp Info`, `Assign People`, `Attendance`, `Activities`, `Documentation`, `Surveys`, `Budget`, `Report Studio`), and integration of Phase 1–6 components.
+- **Deliverable 5 (Shared Budget Workspace Integration)**: Integrated Phase 7 Budget Module across both Faculty (`/camps/:campId`) and Team Lead (`/team-lead/budget`) workspaces with strict RBAC rules (`canEditAllocatedBudget` for Faculty, `canManageExpenses` for both Faculty & Team Lead).
 
-## Pending Work (Next Phases)
+## Work In Progress & Pending Phases
 
-### Phase 7 — Budget & Narrative Sections (Current)
-- Expense line items with auto-totals
-- 5 narrative section editors with auto-save
+### Phase 7 — Budget & Narrative Sections
+**Status:** ⏳ Partially Completed
+
+- **Completed:**
+  - ✓ Budget Module: Allocated camp budget management, Expense CRUD operations, Auto-total calculation, Category breakdown grid, 4 financial metric cards, and Standalone PDF Report generation with Legal Aid sign-offs (`Faculty Coordinator Signature`, `Student Team Lead Signature`).
+  - ✓ Shared Workspace Integration: Faculty Control Center and Team Lead Workspace share the exact same `BudgetTab` implementation backed by single-source-of-truth database querying.
+  - ✓ Database & RLS Alignment: Updated `expenses` table schema and RLS policies (`expenses_select`, `expenses_insert`, `expenses_update`, `expenses_delete`) supporting `admin`, `faculty`, and `team_lead`.
+- **Pending:**
+  - • Narrative Sections: 5 narrative section editors (Synopsis, Objectives, Observations, Recommendations, Conclusion) with auto-save and rich preview.
 
 ### Phase 8 — Report Generation ⭐ (Flagship)
 - Assemble all camp data into CampReportData
