@@ -1,6 +1,6 @@
 # Phase 6 — Photo Documentation & Volunteer Experience
 
-> Historical implementation record for Phase 6.
+> Historical implementation record and authoritative status for Phase 6.
 
 ---
 
@@ -18,6 +18,7 @@ Build the field photo capture and curation workflow — bridging volunteer groun
 - Storage object upload and signed URL resolution for private `camp-photos` bucket objects.
 - Faculty photo review grid (`PhotosTab`) integrated into `CampDetailPage`.
 - Faculty report photo selection toggle (`is_selected_for_report`) and photo deletion.
+- Team Lead pre-review photo curation (`TeamLeadPhotosPage`).
 
 ---
 
@@ -55,7 +56,9 @@ Build the field photo capture and curation workflow — bridging volunteer groun
 - `ActivitySelector.tsx` — Dropdown selector for active camp activities.
 - `PhotoCounter.tsx` — Per-activity photo count vs. max limit indicator.
 - `PhotoThumbnail.tsx` — Signed URL image loader component with fallback state.
+- `PhotoLightboxModal.tsx` — Full-resolution uncropped image preview modal with metadata overlay.
 - `PhotosTab.tsx` — Faculty photo review, filter, report toggle, and management tab.
+- `TeamLeadPhotosPage.tsx` — Team Lead pre-review photo curation workspace.
 
 ---
 
@@ -93,40 +96,63 @@ Build the field photo capture and curation workflow — bridging volunteer groun
 
 ---
 
-## Database Changes
+## Database & Storage Architecture
 
-- Uses existing `public.photos` table defined in `001_complete_schema.sql`.
-- Interacts with `camp-photos` Supabase Storage bucket.
+- Uses `public.photos` table defined in `001_complete_schema.sql`.
+- Interacts with private `camp-photos` Supabase Storage bucket.
+- Storage RLS policies defined in `supabase/migrations/004_photo_storage_policies.sql`.
 
 ---
 
 ## Build Verification
 
 - `npx tsc --noEmit`: Verified 0 errors.
-- `npm run build`: Production bundle generated successfully (`dist/assets/index-*.js`, `dist/assets/index-*.css`).
+- `npm run build`: Production bundle generated successfully.
 
 ---
 
-## Remaining Work
+## Post-Implementation Refinements
 
-- Execute storage bucket SQL policy execution on live Supabase instance if not already provisioned in cloud dashboard (`INSERT INTO storage.buckets...`).
+### 1. Volunteer Capture Workflow
+- **Workflow Streamlining**: Eliminated the redundant second click in the photo capture process.
+  - *Previous Workflow*: Select Activity $\rightarrow$ Navigate $\rightarrow$ Select Activity Again $\rightarrow$ Click Take Photo $\rightarrow$ Open Camera.
+  - *Refined Workflow*: Select Activity $\rightarrow$ Click Camera $\rightarrow$ Automatically launch file picker (Desktop) or device camera (Mobile).
+  - **State Preservation**: Passing `selectedActivity` and `autoTrigger: true` via `location.state` preserves the active selection across navigation boundaries.
 
----
+### 2. Photo Upload Infrastructure
+- **Finalized Infrastructure**:
+  - Private Supabase Storage bucket (`camp-photos`).
+  - Storage RLS policies on `storage.objects` restricting access to authenticated users.
+  - Secure authenticated file uploads and time-limited signed URL retrieval.
+  - **Migration Cleanliness**: Storage policies were isolated into `supabase/migrations/004_photo_storage_policies.sql` to maintain clean, single-concern migration history.
 
-## Deliverables
+### 3. Gallery Improvements
+- **Responsive CSS Grid Layout**: Transformed photo listings into responsive thumbnail galleries (`grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3`).
+- **Thumbnail Presentation**: Uniform 1:1 square thumbnails with rounded corners (`rounded-xl`) and subtle hover states.
+- **Click-to-Preview Lightbox**: Added `PhotoLightboxModal.tsx` across Faculty, Team Lead, and Volunteer workspaces, allowing users to view full-resolution, uncropped images without distortion alongside complete metadata overlays.
 
-- `src/features/volunteer/index.ts`
+### 4. Security Improvements
+- **Storage Row-Level Security (RLS)**: Enforced strict policies on `storage.objects` for the `camp-photos` bucket:
+  - `auth_users_upload_photos`: Authenticated `INSERT` permission.
+  - `auth_users_read_photos`: Authenticated `SELECT` permission.
+  - `auth_users_delete_photos`: Authenticated `DELETE` permission.
+- **Private Bucket Architecture**: Public access to `camp-photos` is disabled (`public = false`); all image rendering requires authenticated signed URL generation.
+
+### 5. Implementation Completion Status
+- **Status**: **Phase 6 implementation is now functionally complete.**
+- **Next Steps**: Remaining tasks consist solely of future UI micro-polish and staging deployment/mobile device testing.
+
+### 6. Files Modified During Refinement Pass
+- `src/pages/VolunteerHomePage.tsx`
 - `src/features/volunteer/components/VolunteerCapturePage.tsx`
-- `src/features/volunteer/components/MySubmissionsPage.tsx`
-- `src/features/volunteer/components/ActivitySelector.tsx`
-- `src/features/volunteer/components/PhotoCounter.tsx`
 - `src/features/volunteer/components/PhotoThumbnail.tsx`
+- `src/features/volunteer/components/PhotoLightboxModal.tsx` *(New)*
 - `src/features/volunteer/components/PhotosTab.tsx`
-- `src/features/volunteer/hooks/useMyCampAssignment.ts`
-- `src/features/volunteer/hooks/useActivityPhotos.ts`
-- `src/features/volunteer/hooks/useMyPhotos.ts`
-- `src/features/volunteer/hooks/useCampPhotos.ts`
-- `src/features/volunteer/services/photoService.ts`
-- `src/features/volunteer/services/volunteerService.ts`
-- `src/features/camps/components/CampDetailPage.tsx` (updated)
-- `src/app/routes.tsx` (updated)
+- `src/features/volunteer/components/TeamLeadPhotosPage.tsx`
+- `src/features/volunteer/components/MySubmissionsPage.tsx`
+- `supabase/migrations/004_photo_storage_policies.sql` *(New)*
+
+### 7. Lessons Learned & Architectural Decisions
+- **UUID-Based Storage Hierarchy**: Storage paths use structural UUID paths (`{camp_id}/{activity_id}/{filename}`) rather than human-readable activity names to ensure immutability when activities are renamed or edited.
+- **Implementation Detail Abstraction**: Storage bucket key structures remain internal implementation details; human-readable activity names and metadata are resolved dynamically from database relations.
+- **Migration Isolation**: Storage infrastructure DDL scripts were decoupled from feature migration scripts (`003_budget_schema_alignment.sql`) into a dedicated migration (`004_photo_storage_policies.sql`) to preserve idempotency and migration traceability.

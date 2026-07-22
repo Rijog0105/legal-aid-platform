@@ -1,5 +1,5 @@
-import { useRef, useState, type ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRef, useState, useEffect, type ChangeEvent } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Camera, ChevronLeft, MapPin, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
@@ -8,6 +8,7 @@ import { uploadPhoto } from '@/features/volunteer/services/photoService';
 import { ActivitySelector } from '@/features/volunteer/components/ActivitySelector';
 import { PhotoCounter } from '@/features/volunteer/components/PhotoCounter';
 import { PhotoThumbnail } from '@/features/volunteer/components/PhotoThumbnail';
+import { PhotoLightboxModal, type PhotoPreviewData } from '@/features/volunteer/components/PhotoLightboxModal';
 import { Card, Spinner, Button } from '@/components/ui';
 import { ROUTES, APP_CONFIG } from '@/constants';
 import type { Activity } from '@/types';
@@ -28,16 +29,21 @@ function getCurrentPosition(): Promise<{ latitude: number; longitude: number } |
 
 /**
  * Volunteer photo capture flow — select an activity, then capture/upload
- * a photo for it. Enforces the camp's per-activity photo limit client-side
- * (the same limit shown by PhotoCounter on the home page).
+ * a photo for it. Auto-triggers camera/file-picker if activity was selected prior to navigation.
  */
 export function VolunteerCapturePage() {
   const { personId, userId } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const locState = location.state as { selectedActivity?: Activity; autoTrigger?: boolean } | null;
+  const initialActivity = locState?.selectedActivity ?? null;
+  const shouldAutoTrigger = Boolean(locState?.autoTrigger || locState?.selectedActivity);
+
   const { camp, isLoading: campLoading, error: campError } = useMyCampAssignment(personId);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(initialActivity);
+  const [activePreviewPhoto, setActivePreviewPhoto] = useState<PhotoPreviewData | null>(null);
 
   const {
     photos,
@@ -53,6 +59,18 @@ export function VolunteerCapturePage() {
     camp?.report_settings?.max_photos_per_activity ?? APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY;
   const atLimit = photos.length >= maxPhotos;
   const canCapture = !!selectedActivity && !!camp && !!userId && !atLimit && !isUploading;
+
+  // Single-camera click optimization: immediately open picker if activity was pre-selected
+  const autoTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (shouldAutoTrigger && canCapture && !autoTriggeredRef.current) {
+      autoTriggeredRef.current = true;
+      const timer = setTimeout(() => {
+        fileInputRef.current?.click();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoTrigger, canCapture]);
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -183,29 +201,51 @@ export function VolunteerCapturePage() {
         )}
       </button>
 
-      {/* ─── This Activity's Photos ─── */}
+      {/* ─── This Activity's Photos (Responsive Thumbnail Gallery) ─── */}
       {selectedActivity && (
-        <div>
-          <h2 className="text-sm font-semibold text-surface-700 mb-2">
-            Captured for this activity
-          </h2>
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-surface-800">
+              Captured for this activity
+            </h2>
+            <span className="text-xs text-surface-400 font-medium">
+              Click thumbnail for full preview
+            </span>
+          </div>
+
           {photosLoading ? (
             <div className="flex justify-center py-8">
               <Spinner size="sm" />
             </div>
           ) : photos.length === 0 ? (
-            <p className="text-sm text-surface-400 text-center py-6">
+            <p className="text-xs text-surface-400 text-center py-6 bg-surface-50 rounded-xl border border-dashed border-surface-200">
               No photos captured for this activity yet.
             </p>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
               {photos.map((photo) => (
-                <PhotoThumbnail key={photo.id} path={photo.file_url} />
+                <PhotoThumbnail
+                  key={photo.id}
+                  path={photo.file_url}
+                  onClick={() =>
+                    setActivePreviewPhoto({
+                      ...photo,
+                      activity: { activity_name: selectedActivity.activity_name },
+                    })
+                  }
+                />
               ))}
             </div>
           )}
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <PhotoLightboxModal
+        photo={activePreviewPhoto}
+        isOpen={Boolean(activePreviewPhoto)}
+        onClose={() => setActivePreviewPhoto(null)}
+      />
     </div>
   );
 }

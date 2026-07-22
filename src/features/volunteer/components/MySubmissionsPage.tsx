@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Images, MapPin, AlertCircle, Trash2 } from 'lucide-react';
+import { ChevronLeft, Trash2, MapPin, AlertCircle, Images } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
 import { useMyPhotos } from '@/features/volunteer/hooks/useMyPhotos';
 import { deletePhoto, type PhotoWithActivityName } from '@/features/volunteer/services/photoService';
 import { PhotoThumbnail } from '@/features/volunteer/components/PhotoThumbnail';
-import { Spinner, Button, Card } from '@/components/ui';
+import { PhotoLightboxModal, type PhotoPreviewData } from '@/features/volunteer/components/PhotoLightboxModal';
+import { Card, Spinner, Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
 
-/**
- * Volunteer Personal Gallery (My Submissions)
- * Groups photos by Activity for the active camp and enables volunteers to view and delete
- * their own photos (e.g. blurry/accidental captures) before faculty review.
- */
 export function MySubmissionsPage() {
   const { personId, userId } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +21,7 @@ export function MySubmissionsPage() {
   );
 
   const [photoToDelete, setPhotoToDelete] = useState<PhotoWithActivityName | null>(null);
+  const [activePreviewPhoto, setActivePreviewPhoto] = useState<PhotoPreviewData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -35,7 +32,7 @@ export function MySubmissionsPage() {
     try {
       await deletePhoto(photoToDelete.id, photoToDelete.file_url);
       setPhotoToDelete(null);
-      reload();
+      await reload();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete photo');
     } finally {
@@ -143,24 +140,33 @@ export function MySubmissionsPage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                 {groupPhotos.map((photo) => (
                   <div
                     key={photo.id}
-                    className="group relative overflow-hidden bg-white rounded-2xl border border-surface-200 shadow-sm p-1.5 space-y-1.5"
+                    className="group relative overflow-hidden bg-white rounded-xl border border-surface-200 shadow-sm p-1 space-y-1"
                   >
-                    <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-surface-100">
-                      <PhotoThumbnail path={photo.file_url} alt={activityName} />
+                    <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-surface-100">
+                      <PhotoThumbnail
+                        path={photo.file_url}
+                        alt={activityName}
+                        onClick={() =>
+                          setActivePreviewPhoto({
+                            ...photo,
+                            activity: { activity_name: activityName },
+                          })
+                        }
+                      />
                       {/* Delete Button */}
                       <button
                         onClick={() => setPhotoToDelete(photo)}
                         title="Delete photo"
-                        className="absolute bottom-1.5 right-1.5 p-1.5 rounded-lg bg-slate-900/70 text-white/90 hover:text-red-400 hover:bg-slate-900 backdrop-blur-md opacity-90 transition-all cursor-pointer"
+                        className="absolute bottom-1 right-1 p-1.5 rounded-lg bg-slate-900/70 text-white/90 hover:text-red-400 hover:bg-slate-900 backdrop-blur-md opacity-90 transition-all cursor-pointer"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
-                    <p className="text-[11px] text-surface-400 px-1 text-center font-medium">
+                    <p className="text-[10px] text-surface-400 px-1 text-center font-medium truncate">
                       {new Date(photo.captured_at).toLocaleTimeString('en-IN', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -197,6 +203,15 @@ export function MySubmissionsPage() {
           </div>
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <PhotoLightboxModal
+        photo={activePreviewPhoto}
+        isOpen={Boolean(activePreviewPhoto)}
+        onClose={() => setActivePreviewPhoto(null)}
+        canDelete
+        onDelete={(p) => setPhotoToDelete(p as PhotoWithActivityName)}
+      />
     </div>
   );
 }

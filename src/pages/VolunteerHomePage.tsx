@@ -178,7 +178,7 @@ export function VolunteerHomePage() {
       <div className="grid grid-rows-2 gap-3 min-h-[320px]">
         {/* Upper Half: CAMERA */}
         <button
-          onClick={() => navigate(ROUTES.VOLUNTEER_CAPTURE)}
+          onClick={() => navigate(ROUTES.VOLUNTEER_CAPTURE, { state: { selectedActivity } })}
           disabled={!selectedActivity || atLimit || !isActive}
           className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 text-white font-bold text-lg shadow-lg shadow-primary-600/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
         >

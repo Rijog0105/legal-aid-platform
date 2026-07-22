@@ -6,6 +6,7 @@ import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignm
 import { useCampPhotos } from '@/features/volunteer/hooks/useCampPhotos';
 import { useActivities } from '@/features/activities/hooks/useActivities';
 import { PhotoThumbnail } from '@/features/volunteer/components/PhotoThumbnail';
+import { PhotoLightboxModal, type PhotoPreviewData } from '@/features/volunteer/components/PhotoLightboxModal';
 import { Card, Spinner, EmptyState, Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import type { PhotoWithDetails } from '@/features/volunteer/services/photoService';
@@ -28,6 +29,7 @@ export function TeamLeadPhotosPage() {
 
   const [selectedActivityId, setSelectedActivityId] = useState<string>('all');
   const [photoToDelete, setPhotoToDelete] = useState<PhotoWithDetails | null>(null);
+  const [activePreviewPhoto, setActivePreviewPhoto] = useState<PhotoPreviewData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -167,24 +169,33 @@ export function TeamLeadPhotosPage() {
                     <span className="text-surface-400 font-normal">({volunteerPhotos.length})</span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                     {volunteerPhotos.map((photo) => (
                       <div
                         key={photo.id}
-                        className="group relative overflow-hidden bg-white rounded-xl border border-surface-200 shadow-sm p-1.5 space-y-1.5"
+                        className="group relative overflow-hidden bg-white rounded-xl border border-surface-200 shadow-sm p-1 space-y-1"
                       >
                         <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-surface-100">
-                          <PhotoThumbnail path={photo.file_url} alt={activityName} />
+                          <PhotoThumbnail
+                            path={photo.file_url}
+                            alt={activityName}
+                            onClick={() =>
+                              setActivePreviewPhoto({
+                                ...photo,
+                                activity: { activity_name: activityName },
+                              })
+                            }
+                          />
                           {/* Delete photo button for Team Leads */}
                           <button
                             onClick={() => setPhotoToDelete(photo)}
                             title="Delete photo before faculty review"
-                            className="absolute bottom-1.5 right-1.5 p-1.5 rounded-lg bg-slate-900/70 text-white/90 hover:text-red-400 hover:bg-slate-900 backdrop-blur-md opacity-90 transition-all cursor-pointer"
+                            className="absolute bottom-1 right-1 p-1.5 rounded-lg bg-slate-900/70 text-white/90 hover:text-red-400 hover:bg-slate-900 backdrop-blur-md opacity-90 transition-all cursor-pointer"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={12} />
                           </button>
                         </div>
-                        <div className="px-1 text-[11px] text-surface-500 flex items-center justify-between">
+                        <div className="px-1 text-[10px] text-surface-500 flex items-center justify-between font-medium">
                           <span>
                             {new Date(photo.captured_at).toLocaleTimeString('en-IN', {
                               hour: '2-digit',
@@ -192,7 +203,7 @@ export function TeamLeadPhotosPage() {
                             })}
                           </span>
                           {photo.latitude && photo.longitude && (
-                            <span className="text-emerald-600 font-semibold" title="GPS Location Tagged">
+                            <span className="text-emerald-600 font-bold text-[9px]" title="GPS Location Tagged">
                               GPS
                             </span>
                           )}
@@ -230,6 +241,15 @@ export function TeamLeadPhotosPage() {
           </div>
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <PhotoLightboxModal
+        photo={activePreviewPhoto}
+        isOpen={Boolean(activePreviewPhoto)}
+        onClose={() => setActivePreviewPhoto(null)}
+        canDelete
+        onDelete={(p) => setPhotoToDelete(p as PhotoWithDetails)}
+      />
     </div>
   );
 }

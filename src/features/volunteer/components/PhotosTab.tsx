@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCampPhotos } from '@/features/volunteer/hooks/useCampPhotos';
 import { useActivities } from '@/features/activities/hooks/useActivities';
 import { PhotoThumbnail } from './PhotoThumbnail';
+import { PhotoLightboxModal, type PhotoPreviewData } from './PhotoLightboxModal';
 import { Card, Spinner, EmptyState, Button } from '@/components/ui';
 import { CheckCircle2, Circle, Trash2, MapPin, Calendar, User, Filter, AlertCircle } from 'lucide-react';
 import type { PhotoWithDetails } from '@/features/volunteer/services/photoService';
@@ -17,6 +18,7 @@ export function PhotosTab({ campId }: PhotosTabProps) {
   const [selectedActivityId, setSelectedActivityId] = useState<string>('all');
   const [reportFilter, setReportFilter] = useState<'all' | 'selected' | 'unselected'>('all');
   const [photoToDelete, setPhotoToDelete] = useState<PhotoWithDetails | null>(null);
+  const [activePreviewPhoto, setActivePreviewPhoto] = useState<PhotoPreviewData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -149,14 +151,18 @@ export function PhotosTab({ campId }: PhotosTabProps) {
             >
               {/* Photo Image */}
               <div className="relative aspect-video w-full overflow-hidden bg-surface-100">
-                <PhotoThumbnail path={photo.file_url} alt={photo.activity?.activity_name || 'Camp photo'} />
+                <PhotoThumbnail
+                  path={photo.file_url}
+                  alt={photo.activity?.activity_name || 'Camp photo'}
+                  onClick={() => setActivePreviewPhoto(photo)}
+                />
 
                 {/* Report selection badge toggle button */}
                 <button
                   type="button"
                   onClick={() => handleToggleReport(photo)}
                   title={photo.is_selected_for_report ? 'Deselect for Report' : 'Select for Report'}
-                  className={`absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md transition-all ${
+                  className={`absolute top-2 right-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md transition-all cursor-pointer ${
                     photo.is_selected_for_report
                       ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
                       : 'bg-slate-900/60 text-white hover:bg-slate-900/80'
@@ -178,7 +184,7 @@ export function PhotosTab({ campId }: PhotosTabProps) {
                   type="button"
                   onClick={() => setPhotoToDelete(photo)}
                   title="Delete photo"
-                  className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-slate-900/60 text-white/80 hover:text-red-400 hover:bg-slate-900/90 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-slate-900/60 text-white/80 hover:text-red-400 hover:bg-slate-900/90 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -251,6 +257,17 @@ export function PhotosTab({ campId }: PhotosTabProps) {
           </div>
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      <PhotoLightboxModal
+        photo={activePreviewPhoto}
+        isOpen={Boolean(activePreviewPhoto)}
+        onClose={() => setActivePreviewPhoto(null)}
+        canManageReportSelection
+        onToggleReportSelection={(p) => handleToggleReport(p as PhotoWithDetails)}
+        canDelete
+        onDelete={(p) => setPhotoToDelete(p as PhotoWithDetails)}
+      />
     </div>
   );
 }
