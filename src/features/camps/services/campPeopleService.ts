@@ -26,9 +26,26 @@ export async function assignPersonToCamp(
   return data as unknown as CampPersonWithDetails;
 }
 
+export async function assignMultiplePeopleToCamp(
+  campId: string,
+  personIds: string[],
+  campRole: CampRole
+): Promise<void> {
+  if (personIds.length === 0) return;
+  const rows = personIds.map((pId) => ({
+    camp_id: campId,
+    person_id: pId,
+    camp_role: campRole,
+  }));
+
+  const { error } = await supabase.from('camp_people').insert(rows);
+  if (error) throw new Error(error.message);
+}
+
 export async function updateCampPersonRole(
   campPersonId: string,
-  campRole: CampRole
+  campRole: CampRole,
+  personId?: string
 ): Promise<CampPersonWithDetails> {
   const { data, error } = await supabase
     .from('camp_people')
@@ -37,6 +54,30 @@ export async function updateCampPersonRole(
     .select('*, person:persons(*)')
     .single();
   if (error) throw new Error(error.message);
+
+  // Sync user table role for system access if personId is provided
+  if (personId) {
+    if (campRole === 'team_lead') {
+      const { data: roleData } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', 'team_lead')
+        .single();
+      if (roleData) {
+        await supabase.from('users').update({ role_id: roleData.id }).eq('person_id', personId);
+      }
+    } else if (campRole === 'volunteer') {
+      const { data: roleData } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', 'volunteer')
+        .single();
+      if (roleData) {
+        await supabase.from('users').update({ role_id: roleData.id }).eq('person_id', personId);
+      }
+    }
+  }
+
   return data as unknown as CampPersonWithDetails;
 }
 

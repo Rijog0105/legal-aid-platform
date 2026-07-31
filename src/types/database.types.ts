@@ -4,7 +4,7 @@
  * Feature-level types should extend/pick from these.
  * ──────────────────────────────────────────────────────────── */
 
-import type { CampStatus, ActivityStatus, ReportStatus, CampRole, PersonCategory, NarrativeSectionType, RoleName } from '@/constants';
+import type { CampStatus, ActivityStatus, ReportStatus, CampRole, PersonCategory, NarrativeSectionType, RoleName, RegistrationStatus } from '@/constants';
 
 /* ─── 1. roles ────────────────────────────────────────────── */
 
@@ -40,6 +40,11 @@ export interface Person {
   organization: string | null;
   phone: string | null;
   email: string | null;
+  usn_employee_id?: string | null;
+  department?: string | null;
+  semester?: string | null;
+  registration_status?: RegistrationStatus | null;
+  auth_user_id?: string | null;
   created_at: string;
 }
 

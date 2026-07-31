@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -302,8 +302,11 @@ export function LoginPage() {
             </button>
           </form>
 
-          <p style={{ color: '#94a3b8', fontSize: '0.8rem', textAlign: 'center', marginTop: '2rem' }}>
-            Contact your administrator to create an account.
+          <p style={{ color: '#64748b', fontSize: '0.85rem', textAlign: 'center', marginTop: '2rem' }}>
+            Don't have an account?{' '}
+            <Link to={ROUTES.REGISTER} style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>
+              Register here
+            </Link>
           </p>
         </div>
       </div>

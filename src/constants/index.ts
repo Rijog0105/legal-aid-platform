@@ -81,6 +81,16 @@ export const NARRATIVE_SECTION_LABELS: Record<NarrativeSectionType, string> = {
   [NARRATIVE_SECTION_TYPE.CONCLUSION]: 'Conclusion',
 };
 
+/* ─── Registration Status ────────────────────────────────── */
+
+export const REGISTRATION_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+} as const;
+
+export type RegistrationStatus = (typeof REGISTRATION_STATUS)[keyof typeof REGISTRATION_STATUS];
+
 /* ─── Predefined Activity Names ───────────────────────────── */
 
 export const PREDEFINED_ACTIVITIES = [
@@ -116,6 +126,7 @@ export const APP_CONFIG = {
 export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
+  REGISTER: '/register',
   UNAUTHORIZED: '/unauthorized',
   
   // Faculty / Admin routes
