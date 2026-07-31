@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { X, Search } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { CAMP_ROLE, type CampRole } from '@/constants';
-import type { Person, CampPersonWithDetails } from '@/types';
+import { X, Search, CheckSquare, Square } from 'lucide-react';
+import { Button, Badge, Spinner } from '@/components/ui';
+import { CAMP_ROLE, PERSON_CATEGORY, type CampRole, type PersonCategory } from '@/constants';
+import type { Person } from '@/types';
 import { fetchPeople } from '@/features/people/services/peopleService';
-import { assignPersonToCamp } from '@/features/camps/services/campPeopleService';
+import { assignMultiplePeopleToCamp } from '@/features/camps/services/campPeopleService';
 
+/* ─── Labels ─────────────────────────────────────────────── */
 const ROLE_LABELS: Record<CampRole, string> = {
   [CAMP_ROLE.FACULTY_COORDINATOR]: 'Faculty Coordinator',
   [CAMP_ROLE.GUEST]: 'Guest',
@@ -13,18 +14,35 @@ const ROLE_LABELS: Record<CampRole, string> = {
   [CAMP_ROLE.TEAM_LEAD]: 'Team Lead',
 };
 
-const roleValues = [
-  CAMP_ROLE.FACULTY_COORDINATOR,
-  CAMP_ROLE.GUEST,
-  CAMP_ROLE.VOLUNTEER,
-  CAMP_ROLE.TEAM_LEAD,
-] as const;
+const CATEGORY_BADGE: Record<PersonCategory, 'primary' | 'info' | 'default'> = {
+  [PERSON_CATEGORY.FACULTY]: 'primary',
+  [PERSON_CATEGORY.STUDENT]: 'info',
+  [PERSON_CATEGORY.EXTERNAL]: 'default',
+};
+
+const ROLE_SECTIONS: { role: CampRole; label: string; allowedCategories: PersonCategory[] }[] = [
+  {
+    role: CAMP_ROLE.FACULTY_COORDINATOR,
+    label: 'Faculty Coordinators',
+    allowedCategories: [PERSON_CATEGORY.FACULTY],
+  },
+  {
+    role: CAMP_ROLE.VOLUNTEER,
+    label: 'Student Volunteers',
+    allowedCategories: [PERSON_CATEGORY.STUDENT],
+  },
+  {
+    role: CAMP_ROLE.GUEST,
+    label: 'Guests',
+    allowedCategories: [PERSON_CATEGORY.EXTERNAL],
+  },
+];
 
 interface AssignPersonModalProps {
   campId: string;
   alreadyAssignedPersonIds: string[];
   onClose: () => void;
-  onAssigned: (campPerson: CampPersonWithDetails) => void;
+  onAssigned: () => void;
 }
 
 export function AssignPersonModal({
@@ -36,7 +54,7 @@ export function AssignPersonModal({
   const [people, setPeople] = useState<Person[]>([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [campRole, setCampRole] = useState<CampRole>(CAMP_ROLE.VOLUNTEER);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,21 +73,55 @@ export function AssignPersonModal({
     };
   }, [search]);
 
-  const availablePeople = people.filter((p) => !alreadyAssignedPersonIds.includes(p.id));
+  // People not already assigned, filtered by allowed category for the selected role
+  const section = ROLE_SECTIONS.find((s) => s.role === campRole);
+  const allowedCategories = section?.allowedCategories ?? [];
+
+  const availablePeople = people.filter(
+    (p) =>
+      !alreadyAssignedPersonIds.includes(p.id) &&
+      (allowedCategories.length === 0 || allowedCategories.includes(p.category))
+  );
+
+  const togglePerson = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === availablePeople.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(availablePeople.map((p) => p.id)));
+    }
+  };
 
   const handleAssign = async () => {
-    if (!selectedPersonId) return;
+    if (selectedIds.size === 0) return;
     setIsSaving(true);
     setError(null);
     try {
-      const result = await assignPersonToCamp(campId, selectedPersonId, campRole);
-      onAssigned(result);
+      await assignMultiplePeopleToCamp(campId, Array.from(selectedIds), campRole);
+      onAssigned();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to assign person');
+      setError(e instanceof Error ? e.message : 'Failed to assign people');
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Reset selections when role changes
+  const handleRoleChange = (role: CampRole) => {
+    setCampRole(role);
+    setSelectedIds(new Set());
+  };
+
+  const allSelected =
+    availablePeople.length > 0 && selectedIds.size === availablePeople.length;
 
   return (
     <div
@@ -77,9 +129,10 @@ export function AssignPersonModal({
       style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200">
-          <h2 className="text-lg font-semibold text-surface-900">Assign Person to Camp</h2>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-surface-900">Assign People to Camp</h2>
           <button
             type="button"
             onClick={onClose}
@@ -89,7 +142,38 @@ export function AssignPersonModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+          {/* Role selector tabs */}
+          <div>
+            <label className="block text-xs font-semibold text-surface-600 mb-2">
+              Assign as
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {ROLE_SECTIONS.map((s) => (
+                <button
+                  key={s.role}
+                  type="button"
+                  onClick={() => handleRoleChange(s.role)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                    campRole === s.role
+                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                      : 'bg-white text-surface-600 border-surface-300 hover:border-primary-400 hover:text-primary-600'
+                  }`}
+                >
+                  {ROLE_LABELS[s.role]}
+                </button>
+              ))}
+            </div>
+            {section && (
+              <p className="text-[11px] text-surface-400 mt-1.5">
+                Showing{' '}
+                {allowedCategories.map((c) => c).join(' / ')}{' '}
+                records only.
+              </p>
+            )}
+          </div>
+
+          {/* Search */}
           <div className="relative">
             <Search
               size={16}
@@ -99,73 +183,91 @@ export function AssignPersonModal({
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search people…"
+              placeholder="Search by name…"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-surface-300 text-sm bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
             />
           </div>
 
-          <div className="max-h-56 overflow-y-auto border border-surface-200 rounded-xl divide-y divide-surface-100">
-            {isLoading ? (
-              <p className="text-sm text-surface-400 px-4 py-6 text-center">Loading…</p>
-            ) : availablePeople.length === 0 ? (
-              <p className="text-sm text-surface-400 px-4 py-6 text-center">
-                No available people found.
-              </p>
-            ) : (
-              availablePeople.map((p) => (
-                <label
-                  key={p.id}
-                  className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm hover:bg-surface-50 ${
-                    selectedPersonId === p.id ? 'bg-primary-50' : ''
-                  }`}
+          {/* People list with checkboxes */}
+          <div className="border border-surface-200 rounded-xl overflow-hidden">
+            {/* Select-all header */}
+            {availablePeople.length > 1 && (
+              <label className="flex items-center gap-3 px-4 py-2.5 bg-surface-50 border-b border-surface-200 cursor-pointer hover:bg-surface-100 transition-colors">
+                <span
+                  onClick={toggleAll}
+                  className="text-primary-600 flex-shrink-0 cursor-pointer"
                 >
-                  <input
-                    type="radio"
-                    name="selected-person"
-                    checked={selectedPersonId === p.id}
-                    onChange={() => setSelectedPersonId(p.id)}
-                  />
-                  <span className="flex-1 truncate">
-                    {p.full_name}
-                    <span className="text-surface-400"> · {p.category}</span>
-                  </span>
-                </label>
-              ))
+                  {allSelected ? <CheckSquare size={18} /> : <Square size={18} className="text-surface-400" />}
+                </span>
+                <span className="text-xs font-semibold text-surface-700">
+                  {allSelected ? 'Deselect all' : `Select all (${availablePeople.length})`}
+                </span>
+              </label>
             )}
+
+            <div className="max-h-52 overflow-y-auto divide-y divide-surface-100">
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Spinner size="sm" />
+                </div>
+              ) : availablePeople.length === 0 ? (
+                <p className="text-sm text-surface-400 px-4 py-6 text-center">
+                  {search ? 'No matching people found.' : 'All eligible people are already assigned.'}
+                </p>
+              ) : (
+                availablePeople.map((p) => {
+                  const checked = selectedIds.has(p.id);
+                  return (
+                    <label
+                      key={p.id}
+                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm hover:bg-surface-50 transition-colors ${
+                        checked ? 'bg-primary-50' : ''
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => togglePerson(p.id)}
+                        className="w-4 h-4 rounded text-primary-600 border-surface-300 cursor-pointer"
+                      />
+                      <span className="flex-1 min-w-0">
+                        <span className="font-medium text-surface-900 truncate block">{p.full_name}</span>
+                        {p.usn_employee_id && (
+                          <span className="text-[11px] text-surface-400 font-mono">{p.usn_employee_id}</span>
+                        )}
+                      </span>
+                      <Badge variant={CATEGORY_BADGE[p.category]} className="flex-shrink-0 capitalize text-[10px]">
+                        {p.category}
+                      </Badge>
+                    </label>
+                  );
+                })
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="camp_role" className="text-sm font-medium text-surface-700">
-              Camp Role
-            </label>
-            <select
-              id="camp_role"
-              value={campRole}
-              onChange={(e) => setCampRole(e.target.value as CampRole)}
-              className="w-full px-4 py-2.5 rounded-xl border text-sm bg-white text-surface-900 border-surface-300 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-            >
-              {roleValues.map((val) => (
-                <option key={val} value={val}>
-                  {ROLE_LABELS[val]}
-                </option>
-              ))}
-            </select>
-          </div>
+          {selectedIds.size > 0 && (
+            <p className="text-xs text-primary-700 font-semibold">
+              {selectedIds.size} person{selectedIds.size !== 1 ? 's' : ''} selected as{' '}
+              {ROLE_LABELS[campRole]}
+            </p>
+          )}
 
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">{error}</p>}
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-200 bg-surface-50">
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-200 bg-surface-50 flex-shrink-0">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button
             type="button"
-            disabled={!selectedPersonId}
+            disabled={selectedIds.size === 0}
             isLoading={isSaving}
             onClick={handleAssign}
           >
-            Assign
+            Assign Selected ({selectedIds.size})
           </Button>
         </div>
       </div>

@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Active Task** | Phase 7 — Budget & Narrative (Partially Completed) |
-| **Last Completed Module** | Phase 7 — Budget Module |
-| **Next Planned Work** | Phase 7 — Narrative Sections |
-| **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass |
+| **Current Active Task** | Phase 8 — Survey & Report Automation (Planning Complete) |
+| **Last Completed Module** | Identity & Registration Module (pre-Phase 8 foundation) |
+| **Next Planned Work** | Phase 8A — Beneficiary Survey Form |
+| **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass (0 errors) |
 
 ---
 
@@ -153,19 +153,65 @@
 - **Deliverable 4 (Faculty Control Center & Camp Workspace Integration)**: Level 1 Faculty Control Center (`/dashboard`) featuring 2 primary cards (*Camps*, *People Registry*) and Right Information Panel. Level 2 Camp Workspace (`/camps/:campId`) operational hub with status transitions (`Mark Active`, `Mark Completed`, `Mark Archived`), tabbed module management (`Camp Info`, `Assign People`, `Attendance`, `Activities`, `Documentation`, `Surveys`, `Budget`, `Report Studio`), and integration of Phase 1–6 components.
 - **Deliverable 5 (Shared Budget Workspace Integration)**: Integrated Phase 7 Budget Module across both Faculty (`/camps/:campId`) and Team Lead (`/team-lead/budget`) workspaces with strict RBAC rules (`canEditAllocatedBudget` for Faculty, `canManageExpenses` for both Faculty & Team Lead).
 
+## Completed Work (Identity & Registration Module)
+
+**Status:** ✅ Complete — Pre-Phase 8 Foundation
+
+### Registration Workflow
+- Public `/register` route accessible without authentication.
+- `RegisterPage.tsx` — Full self-registration form: Full Name, College Email, Phone, USN/Employee ID, Department, Semester (optional for Faculty), Password, Confirm Password.
+- `registrationService.ts` — `registerUser()`: creates Supabase Auth user → inserts `persons` record with `registration_status = 'pending'` → signs out immediately.
+- Newly registered users receive **no application access** until approved.
+
+### Pending Registration Workflow (Faculty/Admin)
+- `PendingRegistrationsList.tsx` — Pending tab inside People Registry showing all `registration_status = 'pending'` records.
+- Approve action: updates `registration_status = 'approved'`, sets final category (Faculty or Student), creates `public.users` row granting system access.
+- Reject action: updates `registration_status = 'rejected'`.
+
+### People Registry Redesign
+- `PeoplePage.tsx` — Two-mode interface: **Active Registry** tab + **Pending Registrations** tab with live pending count badge.
+- Persons table extended: `usn_employee_id`, `department`, `semester`, `registration_status`, `auth_user_id` columns added via migration 005.
+- `PersonCategory` remains `faculty | student | external` — **Team Lead is NOT a registry category**.
+
+### Guest Management
+- `GuestFormModal.tsx` — Faculty-only modal to add Guest entries (Name, Designation, Organisation, Phone, Email).
+- Guests created with `category = 'external'` and `registration_status = 'approved'`. No Auth account created.
+- `+ Add Guest` button in People Registry header.
+
+### Camp Assignment — Checkbox Multi-Selection
+- `AssignPersonModal.tsx` — Rewritten with checkbox multi-select UI.
+- Role-based filtering: Faculty Coordinator tab shows only Faculty persons; Volunteer tab shows only Students; Guest tab shows only External persons.
+- Batch `assignMultiplePeopleToCamp()` service function — single INSERT for all selected persons.
+- Select-all checkbox, selected count display, filtered by registry category.
+
+### Team Lead — Camp-Level Promotion
+- Team Lead is **NOT** a permanent registry role. It is a camp-level assignment only.
+- `CampPeopleTab.tsx` — Crown (👑) button on Volunteer rows → **Promote to Team Lead**.
+- ShieldOff button on Team Lead rows → **Remove Team Lead** (demotes back to Volunteer).
+- `updateCampPersonRole()` syncs `public.users.role_id` when promoting/demoting.
+- Rows sorted: Faculty Coordinator → Team Lead → Volunteer → Guest.
+
+### Migration
+- `supabase/migrations/005_identity_registration_schema.sql` — Adds `usn_employee_id`, `department`, `semester`, `registration_status`, `auth_user_id` columns. Creates `persons_self_register` RLS policy, `users_insert`, `users_update` policies.
+
+### Route Addition
+- `ROUTES.REGISTER = '/register'` in `constants/index.ts`.
+- `/register` wired as public route in `src/app/routes.tsx`.
+- `LoginPage` updated with "Register here" link.
+
 ## Work In Progress & Pending Phases
 
 ### Phase 7 — Budget & Narrative Sections
-**Status:** ⏳ Partially Completed
+**Status:** ✅ Budget Complete / ⏳ Narratives Pending
 
 - **Completed:**
-  - ✓ Budget Module: Allocated camp budget management, Expense CRUD operations, Auto-total calculation, Category breakdown grid, 4 financial metric cards, and Standalone PDF Report generation with Legal Aid sign-offs (`Faculty Coordinator Signature`, `Student Team Lead Signature`).
-  - ✓ Shared Workspace Integration: Faculty Control Center and Team Lead Workspace share the exact same `BudgetTab` implementation backed by single-source-of-truth database querying.
-  - ✓ Database & RLS Alignment: Updated `expenses` table schema and RLS policies (`expenses_select`, `expenses_insert`, `expenses_update`, `expenses_delete`) supporting `admin`, `faculty`, and `team_lead`.
+  - ✓ Budget Module: Allocated camp budget management, Expense CRUD operations, Auto-total calculation, Category breakdown grid, 4 financial metric cards, and Standalone PDF Report generation.
+  - ✓ Shared Workspace Integration: Faculty and Team Lead Workspace share same `BudgetTab`.
+  - ✓ Database & RLS Alignment: `expenses` table schema and RLS policies for `admin`, `faculty`, and `team_lead`.
 - **Pending:**
-  - • Narrative Sections: 5 narrative section editors (Synopsis, Objectives, Observations, Recommendations, Conclusion) with auto-save and rich preview.
+  - • Narrative Sections: 5 section editors (Synopsis, Objectives, Observations, Recommendations, Conclusion).
 
-### Phase 8 — Report Generation ⭐ (Flagship)
+### Phase 8 — Survey & Report Automation ⭐ (Flagship)
 - Assemble all camp data into CampReportData
 - In-browser report preview
 - PDF generation (jsPDF + html2canvas)
@@ -199,24 +245,28 @@
 | Module | Status | Notes |
 |---|---|---|
 | Auth (login, session, role-based redirect) | ✅ Working | Phase 2 |
-| People registry (create, edit, list, search, filter) | ✅ Working | Create/edit/list/search/filter all work. Delete functionality currently exists; scheduled for removal per ADR-001. |
-| Camp management (create, edit, list, status transitions) | ✅ Working | Status transitions are manual (faculty-triggered); no automatic expiry |
-| Camp People tab (assign/remove people to a camp) | ✅ Working | Phase 4 |
+| **Public Registration** | ✅ Working | Self-registration with pending approval flow |
+| **People Registry** (enhanced) | ✅ Working | Pending registrations tab, Guest modal, multi-category display |
+| **Camp Multi-Assign** | ✅ Working | Checkbox multi-select, category-filtered role assignment |
+| **Team Lead Promotion** | ✅ Working | Camp-level promote/demote with role sync |
+| Camp management (create, edit, list, status transitions) | ✅ Working | Status transitions are manual (faculty-triggered) |
 | Activities (CRUD, reorder, status workflow) | ✅ Working | Phase 5, Milestones A + B complete |
 | Photos (Capture, Gallery, Faculty Review, Report Selection) | ✅ Working | Phase 6 complete |
-| Expenses & Budget Tracking | ✅ Working | Phase 7 complete (Allocated budget, Expense CRUD, Category breakdown, Standalone PDF report) |
-| Narratives & Reports | 🔲 In progress / Pending | Phase 7 (Narratives complete), Phase 8 (Reports pending) |
-| Dashboard statistics | 🔲 Not started | Placeholder cards only, no live queries |
-| Role-based navigation/UI (beyond faculty/volunteer split) | 🔲 Not started | See Deferred Issues |
+| Expenses & Budget Tracking | ✅ Working | Phase 7 complete |
+| Narratives & Reports | 🔲 Pending | Phase 8 |
+| Dashboard statistics | 🔲 Not started | Placeholder cards only |
+| Survey Engine | 🔲 Not started | Phase 8A–8C |
 
 ---
 
 ## Current Database Status
 
-- Schema: `supabase/migrations/001_complete_schema.sql` — 11 tables (roles, persons, users, camps, camp_people, activities, photos, surveys, expenses, narrative_sections, reports), unchanged since Phase 1
-- RLS enabled on all tables; helper functions `get_user_role()` / `get_app_user_id()` in place
-- Storage bucket policies: SQL commands for `camp-photos` bucket creation and RLS policies documented in `001_complete_schema.sql` (to be executed on live Supabase instance)
-- No new tables, columns, or migrations have been added since Phase 1's initial schema
+- Schema: `supabase/migrations/001_complete_schema.sql` — 11 tables (roles, persons, users, camps, camp_people, activities, photos, surveys, expenses, narrative_sections, reports)
+- **Migration 002**: `002_persons_delete_policy.sql` — Adds `persons_delete` RLS policy for admin/faculty.
+- **Migration 003**: `003_budget_schema_alignment.sql` — Budget Module DDL/RLS.
+- **Migration 004**: `004_photo_storage_policies.sql` — `camp-photos` storage bucket + RLS policies.
+- **Migration 005**: `005_identity_registration_schema.sql` — Extends `persons` with `usn_employee_id`, `department`, `semester`, `registration_status`, `auth_user_id`; adds `persons_self_register`, `users_insert`, `users_update` RLS policies.
+- RLS enabled on all tables; helper functions `get_user_role()` / `get_app_user_id()` in place.
 
 ---
 

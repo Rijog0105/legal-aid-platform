@@ -14,11 +14,12 @@
 | 4 | Camp Management | ✅ **Complete** | High |
 | 5 | Activity Management | ✅ **Complete** | Medium |
 | 6 | Photo Documentation | ✅ **Complete** | High |
-| 7 | Budget & Narrative Sections | ⏳ **Partially Completed** (Budget Complete, Narrative Pending) | Medium |
-| 8 | Report Generation ⭐ | 🔲 Pending | Very High |
+| 7 | Budget Module | ✅ **Complete** | Medium |
+| — | **Identity & Registration Module** (Pre-Phase 8 Foundation) | ✅ **Complete** | Medium |
+| 8 | Survey & Report Automation ⭐ | 🔲 Pending | Very High |
 | 9 | Dashboard, Polish & Deployment | 🔲 Pending | Medium |
 
-> **Note on implementation milestones:** Approved architectural improvements are delivered *between* Blueprint phases, without changing this roadmap's phase numbering or sequence (no phases are renumbered or split, e.g. no "Phase 5.5"). Implementation milestones are documented separately in `docs/IMPLEMENTATION_001_ROLE_BASED_WORKSPACES.md`. Currently, **Implementation 001 — Role-Based Workspaces** is **Completed** (Deliverables 1 through 5 completed).
+> **Note on implementation milestones:** Approved architectural improvements are delivered *between* Blueprint phases. **Implementation 001 — Role-Based Workspaces** is **Completed** (Deliverables 1–5). The **Identity & Registration Module** was implemented as a pre-Phase 8 foundation without disrupting the phase numbering.
 
 ---
 
@@ -481,9 +482,112 @@ graph TD
 | Phase 3 ✅ | Complete | — |
 | Phase 4 ✅ | Complete | — |
 | Phase 5 ✅ | Complete | — |
-| Phase 6 | 2 sessions | 2 sessions |
-| Phase 7 | 1 session | 3 sessions |
-| Phase 8 | 2–3 sessions | 5–6 sessions |
-| Phase 9 | 1–2 sessions | 6–8 sessions |
+| Phase 6 ✅ | Complete | — |
+| Phase 7 ✅ | Complete | — |
+| Identity & Registration ✅ | Complete | — |
+| Phase 8 | 2–3 sessions | 2–3 sessions |
+| Phase 9 | 1–2 sessions | 3–5 sessions |
 
 *"Session" = one focused development cycle with AI assistance.*
+
+---
+
+## Identity & Registration Module (Pre-Phase 8 Foundation)
+
+**Status:** ✅ Complete
+**Implemented:** Between Phase 7 and Phase 8
+
+### Objective
+
+Enable Faculty and Students to self-register using a public `/register` link instead of requiring administrators to manually create users inside Supabase.
+
+### Deliverables
+
+| Deliverable | Status |
+|-------------|--------|
+| Public `/register` route | ✅ |
+| `RegisterPage.tsx` — full registration form | ✅ |
+| `registrationService.ts` — Auth + Person row creation | ✅ |
+| `PendingRegistrationsList.tsx` — Faculty approval UI | ✅ |
+| People Registry redesign (Active + Pending tabs) | ✅ |
+| Guest management via `GuestFormModal.tsx` | ✅ |
+| Checkbox multi-select camp assignment | ✅ |
+| Team Lead camp-level promote / demote | ✅ |
+| `campPeopleService` — `assignMultiplePeopleToCamp` | ✅ |
+| Migration `005_identity_registration_schema.sql` | ✅ |
+| `LoginPage` — "Register here" link | ✅ |
+
+### Registration Workflow
+
+```
+Public /register page
+        ↓
+User fills: Name, College Email, Phone, USN/EmpID, Dept, Semester, Password
+        ↓
+supabase.auth.signUp() → Auth user created
+        ↓
+persons table INSERT → registration_status = 'pending'
+        ↓
+User signed out immediately (no app access yet)
+        ↓
+Faculty/Admin opens People Registry → Pending Registrations tab
+        ↓
+Faculty reviews: Approve (assigns Faculty or Student role) or Reject
+        ↓
+Approve → persons.registration_status = 'approved', public.users row created
+        ↓
+User can now sign in with their registered credentials
+```
+
+### Guest Management Workflow
+
+```
+Faculty opens People Registry → Clicks "+ Add Guest"
+        ↓
+GuestFormModal: Name, Designation, Organisation, Phone (optional), Email (optional)
+        ↓
+persons INSERT: category = 'external', registration_status = 'approved'
+        ↓
+Guest entry available immediately for camp assignment (no Auth account)
+```
+
+### Team Lead Workflow
+
+```
+Students assigned to camp as 'volunteer'
+        ↓
+Faculty opens Camp → Assign People tab
+        ↓
+Crown (👑) button on a Volunteer row → Promote to Team Lead
+        ↓
+camp_people.camp_role updated to 'team_lead'
+public.users.role_id updated to 'team_lead' role
+        ↓
+User logs in → directed to /team-lead workspace
+        ↓
+ShieldOff button → Remove Team Lead → reverts to Volunteer
+```
+
+### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/features/auth/components/RegisterPage.tsx` | Public registration form with pending success screen |
+| `src/features/auth/services/registrationService.ts` | Auth signup + person record creation |
+| `src/features/people/components/GuestFormModal.tsx` | Faculty-only guest creation modal |
+| `src/features/people/components/PendingRegistrationsList.tsx` | Pending registration management table |
+| `supabase/migrations/005_identity_registration_schema.sql` | Schema extension + RLS policies |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/app/routes.tsx` | Added `/register` public route |
+| `src/constants/index.ts` | Added `ROUTES.REGISTER`, `REGISTRATION_STATUS` |
+| `src/types/database.types.ts` | Extended `Person` with new fields |
+| `src/features/people/services/peopleService.ts` | Added pending registration + guest functions |
+| `src/features/people/components/PeoplePage.tsx` | Redesigned with Active/Pending tabs + Guest button |
+| `src/features/camps/services/campPeopleService.ts` | Added `assignMultiplePeopleToCamp`, `updateCampPersonRole` |
+| `src/features/camps/components/AssignPersonModal.tsx` | Rewritten with checkbox multi-select |
+| `src/features/camps/components/CampPeopleTab.tsx` | Added Team Lead promote/demote actions |
+| `src/features/auth/components/LoginPage.tsx` | Added "Register here" link |

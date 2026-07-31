@@ -11,6 +11,7 @@ import { RootRedirect } from '@/components/guards/RootRedirect';
 
 /* Pages */
 import { LoginPage } from '@/features/auth/components/LoginPage';
+import { RegisterPage } from '@/features/auth/components/RegisterPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PeoplePage } from '@/features/people';
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.LOGIN,
     element: <LoginPage />,
+  },
+  {
+    path: ROUTES.REGISTER,
+    element: <RegisterPage />,
   },
   {
     path: ROUTES.UNAUTHORIZED,

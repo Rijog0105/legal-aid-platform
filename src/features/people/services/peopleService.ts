@@ -59,16 +59,22 @@ export async function approvePendingRegistration(
   personId: string,
   assignedCategory: PersonCategory
 ): Promise<Person> {
-  // 1. Fetch person record to obtain auth_user_id if present
-  const { data: person, error: fetchErr } = await supabase
-    .from('persons')
-    .select('*')
-    .eq('id', personId)
+  // ── Step 1: Resolve the target role for this category ────────
+  // 'faculty' category → 'faculty' system role
+  // 'student' category → 'volunteer' system role
+  const targetRoleName = assignedCategory === 'faculty' ? 'faculty' : 'volunteer';
+
+  const { data: rolesData, error: roleErr } = await supabase
+    .from('roles')
+    .select('id')
+    .eq('name', targetRoleName)
     .single();
 
-  if (fetchErr || !person) throw new Error('Person record not found');
+  if (roleErr || !rolesData) {
+    throw new Error(`Role "${targetRoleName}" not found in database.`);
+  }
 
-  // 2. Mark person as approved with assigned category
+  // ── Step 2: Approve the person record ────────────────────────
   const { data: updatedPerson, error: updateErr } = await supabase
     .from('persons')
     .update({
@@ -79,42 +85,43 @@ export async function approvePendingRegistration(
     .select()
     .single();
 
-  if (updateErr) throw new Error(updateErr.message);
+  if (updateErr || !updatedPerson) {
+    throw new Error(updateErr?.message ?? 'Failed to approve person record.');
+  }
 
-  // 3. Create public.users record if auth_user_id exists
-  if (person.auth_user_id) {
-    const targetRoleName = assignedCategory === 'faculty' ? 'faculty' : 'volunteer';
+  // ── Step 3: Activate the existing public.users row ───────────
+  // The users row was created during self-registration with is_active=false.
+  // We find it by person_id, then set is_active=true and assign the correct role.
+  const { data: existingUser, error: userFetchErr } = await supabase
+    .from('users')
+    .select('id')
+    .eq('person_id', personId)
+    .maybeSingle();
 
-    const { data: rolesData, error: roleErr } = await supabase
-      .from('roles')
-      .select('id')
-      .eq('name', targetRoleName)
-      .single();
+  if (userFetchErr) {
+    throw new Error(`Failed to look up user record: ${userFetchErr.message}`);
+  }
 
-    if (roleErr || !rolesData) {
-      throw new Error(`Role "${targetRoleName}" not found in database.`);
-    }
+  if (existingUser) {
+    // Self-registered user — activate their account with the assigned role
+    const { error: userUpdateErr } = await supabase
+      .from('users')
+      .update({
+        role_id: rolesData.id,
+        is_active: true,
+      })
+      .eq('id', existingUser.id);
 
-    const { error: userInsertErr } = await supabase.from('users').upsert(
-      [
-        {
-          auth_user_id: person.auth_user_id,
-          role_id: rolesData.id,
-          person_id: personId,
-          is_active: true,
-        },
-      ],
-      { onConflict: 'auth_user_id' }
-    );
-
-    if (userInsertErr) {
-      console.error('[peopleService] user record creation error:', userInsertErr);
-      throw new Error(`Approved person, but failed to create user access: ${userInsertErr.message}`);
+    if (userUpdateErr) {
+      throw new Error(`Approved person, but failed to activate user access: ${userUpdateErr.message}`);
     }
   }
+  // If no users row exists, this was a manually-added person (not self-registered).
+  // In that case, no users row needs activation — they remain a registry-only entry.
 
   return updatedPerson as Person;
 }
+
 
 export async function rejectPendingRegistration(personId: string): Promise<Person> {
   const { data, error } = await supabase

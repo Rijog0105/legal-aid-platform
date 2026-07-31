@@ -44,7 +44,6 @@ export interface Person {
   department?: string | null;
   semester?: string | null;
   registration_status?: RegistrationStatus | null;
-  auth_user_id?: string | null;
   created_at: string;
 }
 
