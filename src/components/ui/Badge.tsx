@@ -1,4 +1,4 @@
-import type { CampStatus, ActivityStatus, ReportStatus } from '@/constants';
+import type { ProjectStatus, ActivityStatus, ReportStatus } from '@/constants';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary';
 
@@ -34,7 +34,7 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
 
 /* ─── Status-specific badge helpers ─── */
 
-const campStatusVariants: Record<CampStatus, BadgeVariant> = {
+const projectStatusVariants: Record<ProjectStatus, BadgeVariant> = {
   draft: 'default',
   active: 'success',
   completed: 'info',
@@ -53,9 +53,9 @@ const reportStatusVariants: Record<ReportStatus, BadgeVariant> = {
   final: 'success',
 };
 
-export function CampStatusBadge({ status }: { status: CampStatus }) {
+export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
   return (
-    <Badge variant={campStatusVariants[status]}>
+    <Badge variant={projectStatusVariants[status]}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </Badge>
   );

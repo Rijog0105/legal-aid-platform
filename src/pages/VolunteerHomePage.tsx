@@ -1,31 +1,31 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
+import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { useMyPhotos } from '@/features/volunteer/hooks/useMyPhotos';
 import { ActivitySelector } from '@/features/volunteer/components/ActivitySelector';
 import { PhotoCounter } from '@/features/volunteer/components/PhotoCounter';
 import { Card, Spinner, Button } from '@/components/ui';
 import { Camera, Images, MapPin, Calendar, ClipboardList, CheckCircle } from 'lucide-react';
-import { ROUTES, APP_CONFIG, CAMP_STATUS } from '@/constants';
+import { ROUTES, APP_CONFIG, PROJECT_STATUS } from '@/constants';
 import type { Activity } from '@/types';
 
 /**
  * Volunteer Workspace Home Page
- * Implements the Volunteer Home workflow for Upcoming, Active, and Finished camp states
+ * Implements the Volunteer Home workflow for Upcoming, Active, and Finished project states
  * per the Mobile UI Workflow Specification.
  */
 export function VolunteerHomePage() {
   const { personId, userId } = useAuth();
   const navigate = useNavigate();
 
-  const { camp, isLoading: campLoading, error: campError } = useMyCampAssignment(personId);
-  const { photos } = useMyPhotos(camp?.id ?? null, userId);
+  const { project, isLoading: projectLoading, error: projectError } = useMyProjectAssignment(personId);
+  const { photos } = useMyPhotos(project?.id ?? null, userId);
 
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
   /* ─── Loading ─── */
-  if (campLoading) {
+  if (projectLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" />
@@ -34,24 +34,24 @@ export function VolunteerHomePage() {
   }
 
   /* ─── Error ─── */
-  if (campError) {
+  if (projectError) {
     return (
       <Card>
-        <p className="text-sm text-red-600 text-center py-6">{campError}</p>
+        <p className="text-sm text-red-600 text-center py-6">{projectError}</p>
       </Card>
     );
   }
 
-  /* ─── No assigned camp ─── */
-  if (!camp) {
+  /* ─── No assigned project ─── */
+  if (!project) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center">
           <MapPin className="w-8 h-8 text-surface-400" />
         </div>
-        <p className="text-base font-semibold text-surface-800">No active camp assigned</p>
+        <p className="text-base font-semibold text-surface-800">No active project assigned</p>
         <p className="text-sm text-surface-500">
-          You are not currently assigned to an active camp.
+          You are not currently assigned to an active project.
           <br />
           Contact your faculty coordinator.
         </p>
@@ -59,34 +59,34 @@ export function VolunteerHomePage() {
     );
   }
 
-  const isUpcoming = camp.status === CAMP_STATUS.DRAFT;
-  const isFinished = camp.status === CAMP_STATUS.COMPLETED || camp.status === CAMP_STATUS.ARCHIVED;
-  const isActive = camp.status === CAMP_STATUS.ACTIVE;
+  const isUpcoming = project.status === PROJECT_STATUS.DRAFT;
+  const isFinished = project.status === PROJECT_STATUS.COMPLETED || project.status === PROJECT_STATUS.ARCHIVED;
+  const isActive = project.status === PROJECT_STATUS.ACTIVE;
 
-  /* ─── 1. UPCOMING CAMP STATE ─── */
+  /* ─── 1. UPCOMING PROJECT STATE ─── */
   if (isUpcoming) {
     return (
       <div className="space-y-6 max-w-md mx-auto py-6">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-blue-600/20 text-center space-y-3">
           <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-semibold uppercase tracking-wider">
-            Upcoming Camp
+            Upcoming Project
           </span>
-          <h2 className="text-xl font-bold">{camp.camp_name}</h2>
+          <h2 className="text-xl font-bold">{project.camp_name}</h2>
           <div className="flex items-center justify-center gap-2 text-blue-100 text-sm">
             <Calendar size={16} />
-            <span>Scheduled on {new Date(camp.camp_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span>Scheduled on {new Date(project.camp_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
           <div className="flex items-center justify-center gap-1.5 text-blue-200 text-xs">
             <MapPin size={14} />
-            <span>{camp.village_name}, {camp.district}</span>
+            <span>{project.village_name}, {project.district}</span>
           </div>
         </div>
 
         <Card>
           <div className="text-center py-6 space-y-2">
-            <p className="text-sm font-semibold text-surface-800">Documentation Unlocks at Camp Start</p>
+            <p className="text-sm font-semibold text-surface-800">Documentation Unlocks at Project Start</p>
             <p className="text-xs text-surface-500">
-              Camera photo capture and survey forms will automatically activate once faculty starts the camp.
+              Camera photo capture and survey forms will automatically activate once faculty starts the project.
             </p>
           </div>
         </Card>
@@ -94,7 +94,7 @@ export function VolunteerHomePage() {
     );
   }
 
-  /* ─── 2. FINISHED CAMP STATE ─── */
+  /* ─── 2. FINISHED PROJECT STATE ─── */
   if (isFinished) {
     return (
       <div className="space-y-6 max-w-md mx-auto py-6">
@@ -103,11 +103,11 @@ export function VolunteerHomePage() {
             <CheckCircle className="w-6 h-6 text-white" />
           </div>
           <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-semibold uppercase tracking-wider">
-            Camp Concluded
+            Project Concluded
           </span>
-          <h2 className="text-xl font-bold">{camp.camp_name}</h2>
+          <h2 className="text-xl font-bold">{project.camp_name}</h2>
           <p className="text-xs text-emerald-100">
-            Thank you for your active participation in documenting this camp.
+            Thank you for your active participation in documenting this project.
           </p>
         </div>
 
@@ -115,7 +115,7 @@ export function VolunteerHomePage() {
           <div className="text-center py-4 space-y-3">
             <p className="text-sm font-semibold text-surface-800">Participation Summary</p>
             <p className="text-xs text-surface-500">
-              You submitted <span className="font-bold text-emerald-600">{photos.length}</span> documentation photos for this camp.
+              You submitted <span className="font-bold text-emerald-600">{photos.length}</span> documentation photos for this project.
             </p>
             <Button size="sm" variant="outline" onClick={() => navigate(ROUTES.VOLUNTEER_SUBMISSIONS)}>
               View Submission Gallery
@@ -126,21 +126,21 @@ export function VolunteerHomePage() {
     );
   }
 
-  /* ─── 3. ACTIVE CAMP STATE (Primary Working Screen) ─── */
+  /* ─── 3. ACTIVE PROJECT STATE (Primary Working Screen) ─── */
   const activityPhotoCount = photos.filter(
     (p) => p.activity_id === selectedActivity?.id
   ).length;
-  const maxPhotos = camp.report_settings?.max_photos_per_activity ?? APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY;
+  const maxPhotos = project.report_settings?.max_photos_per_activity ?? APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY;
   const atLimit = activityPhotoCount >= maxPhotos;
 
   return (
     <div className="space-y-4 max-w-md mx-auto">
-      {/* ── Top Section (~10%): Active Camp Header ── */}
+      {/* ── Top Section (~10%): Active Project Header ── */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-4 text-white shadow-md shadow-primary-600/20 flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-primary-200">Active Camp</span>
-          <h2 className="text-base font-bold leading-tight">{camp.camp_name}</h2>
-          <p className="text-xs text-primary-200 mt-0.5">{camp.village_name}, {camp.district}</p>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-primary-200">Active Project</span>
+          <h2 className="text-base font-bold leading-tight">{project.camp_name}</h2>
+          <p className="text-xs text-primary-200 mt-0.5">{project.village_name}, {project.district}</p>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export function VolunteerHomePage() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1">
             <ActivitySelector
-              campId={camp.id}
+              campId={project.id}
               selectedActivityId={selectedActivity?.id ?? null}
               onSelect={setSelectedActivity}
             />
@@ -174,7 +174,7 @@ export function VolunteerHomePage() {
         )}
       </Card>
 
-      {/* ── Main Area (~70%): Equal Split Large Action Buttons ── */}
+      {/* ── Main Area (~70%): Equal Split Action Buttons ── */}
       <div className="grid grid-rows-2 gap-3 min-h-[320px]">
         {/* Upper Half: CAMERA */}
         <button

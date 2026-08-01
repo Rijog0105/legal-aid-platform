@@ -25,16 +25,16 @@ export function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-surface-900">Faculty Control Center</h1>
         <p className="text-sm text-surface-500 mt-1">
-          Central management for legal aid camps, student delegations, and institutional registries.
+          Central management for legal aid projects, student delegations, and institutional registries.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* ─── Left 2 Columns: Primary Cards ─── */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Card 1: Camps */}
+          {/* Card 1: Projects */}
           <div
-            onClick={() => navigate(ROUTES.CAMPS)}
+            onClick={() => navigate(ROUTES.PROJECTS)}
             className="group relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 rounded-3xl p-6 text-white cursor-pointer shadow-lg shadow-primary-700/20 hover:shadow-xl hover:shadow-primary-700/30 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between min-h-[220px]"
           >
             <div className="absolute top-0 right-0 w-36 h-36 bg-white/5 rounded-full -translate-y-10 translate-x-10 group-hover:scale-110 transition-transform" />
@@ -43,14 +43,14 @@ export function DashboardPage() {
               <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-4">
                 <Tent className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-xl font-bold mb-1">Camps</h2>
+              <h2 className="text-xl font-bold mb-1">Legal Aid Projects</h2>
               <p className="text-primary-100 text-xs leading-relaxed">
-                Create, schedule, assign delegations, and monitor camp documentation & reporting.
+                Create, schedule, assign delegations, and monitor project documentation & reporting.
               </p>
             </div>
 
             <div className="pt-4 flex items-center justify-between text-xs font-semibold text-primary-200 group-hover:text-white transition-colors">
-              <span>Open Camp Registry →</span>
+              <span>Open Project Registry →</span>
             </div>
           </div>
 

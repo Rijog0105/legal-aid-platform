@@ -1,56 +1,56 @@
 import { useState } from 'react';
 import { UserPlus, Trash2, Users, AlertCircle, Crown, ShieldOff } from 'lucide-react';
 import { Button, Badge, EmptyState, Spinner } from '@/components/ui';
-import { CAMP_ROLE, type CampRole } from '@/constants';
-import type { CampPersonWithDetails } from '@/types';
-import { useCampPeople } from '@/features/camps/hooks/useCampPeople';
+import { PROJECT_ROLE, type ProjectRole } from '@/constants';
+import type { ProjectPersonWithDetails } from '@/types';
+import { useProjectPeople } from '@/features/projects/hooks/useProjectPeople';
 import {
-  removePersonFromCamp,
-  updateCampPersonRole,
-} from '@/features/camps/services/campPeopleService';
+  removePersonFromProject,
+  updateProjectPersonRole,
+} from '@/features/projects/services/projectPeopleService';
 import { AssignPersonModal } from './AssignPersonModal';
 
 /* ─── Labels & Style ──────────────────────────────────────── */
-const ROLE_LABELS: Record<CampRole, string> = {
-  [CAMP_ROLE.FACULTY_COORDINATOR]: 'Faculty Coordinator',
-  [CAMP_ROLE.GUEST]: 'Guest',
-  [CAMP_ROLE.VOLUNTEER]: 'Volunteer',
-  [CAMP_ROLE.TEAM_LEAD]: 'Team Lead',
+const ROLE_LABELS: Record<ProjectRole, string> = {
+  [PROJECT_ROLE.FACULTY_COORDINATOR]: 'Faculty Coordinator',
+  [PROJECT_ROLE.GUEST]: 'Guest',
+  [PROJECT_ROLE.VOLUNTEER]: 'Volunteer',
+  [PROJECT_ROLE.TEAM_LEAD]: 'Team Lead',
 };
 
-const ROLE_BADGE_VARIANT: Record<CampRole, 'primary' | 'warning' | 'info' | 'default'> = {
-  [CAMP_ROLE.FACULTY_COORDINATOR]: 'primary',
-  [CAMP_ROLE.TEAM_LEAD]: 'warning',
-  [CAMP_ROLE.VOLUNTEER]: 'info',
-  [CAMP_ROLE.GUEST]: 'default',
+const ROLE_BADGE_VARIANT: Record<ProjectRole, 'primary' | 'warning' | 'info' | 'default'> = {
+  [PROJECT_ROLE.FACULTY_COORDINATOR]: 'primary',
+  [PROJECT_ROLE.TEAM_LEAD]: 'warning',
+  [PROJECT_ROLE.VOLUNTEER]: 'info',
+  [PROJECT_ROLE.GUEST]: 'default',
 };
 
 /** Sections define the display order in the table. */
-const SECTION_ORDER: CampRole[] = [
-  CAMP_ROLE.FACULTY_COORDINATOR,
-  CAMP_ROLE.TEAM_LEAD,
-  CAMP_ROLE.VOLUNTEER,
-  CAMP_ROLE.GUEST,
+const SECTION_ORDER: ProjectRole[] = [
+  PROJECT_ROLE.FACULTY_COORDINATOR,
+  PROJECT_ROLE.TEAM_LEAD,
+  PROJECT_ROLE.VOLUNTEER,
+  PROJECT_ROLE.GUEST,
 ];
 
-interface CampPeopleTabProps {
-  campId: string;
+interface ProjectPeopleTabProps {
+  campId: string; // Keep prop signature as campId or projectId (or support both for compatibility). Let's use campId to match how ProjectDetailPage calls it.
 }
 
-export function CampPeopleTab({ campId }: CampPeopleTabProps) {
-  const { campPeople, isLoading, error, reload } = useCampPeople(campId);
+export function ProjectPeopleTab({ campId: projectId }: ProjectPeopleTabProps) {
+  const { projectPeople, isLoading, error, reload } = useProjectPeople(projectId);
   const [showAssign, setShowAssign] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [promotingId, setPromotingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   /* ─── Remove ──────────────────────────────────────────── */
-  const handleRemove = async (cp: CampPersonWithDetails) => {
-    if (!window.confirm(`Remove "${cp.person?.full_name}" from this camp?`)) return;
+  const handleRemove = async (cp: ProjectPersonWithDetails) => {
+    if (!window.confirm(`Remove "${cp.person?.full_name}" from this project?`)) return;
     setRemovingId(cp.id);
     setActionError(null);
     try {
-      await removePersonFromCamp(cp.id);
+      await removePersonFromProject(cp.id);
       reload();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Failed to remove person');
@@ -60,17 +60,17 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
   };
 
   /* ─── Promote / Demote Team Lead ─────────────────────── */
-  const handlePromoteToTeamLead = async (cp: CampPersonWithDetails) => {
+  const handlePromoteToTeamLead = async (cp: ProjectPersonWithDetails) => {
     if (
       !window.confirm(
-        `Promote "${cp.person?.full_name}" to Team Lead for this camp?\n\nThis changes their system role to Team Lead.`
+        `Promote "${cp.person?.full_name}" to Team Lead for this project?\n\nThis changes their system role to Team Lead.`
       )
     )
       return;
     setPromotingId(cp.id);
     setActionError(null);
     try {
-      await updateCampPersonRole(cp.id, CAMP_ROLE.TEAM_LEAD, cp.person_id);
+      await updateProjectPersonRole(cp.id, PROJECT_ROLE.TEAM_LEAD, cp.person_id);
       reload();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Failed to promote to Team Lead');
@@ -79,7 +79,7 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
     }
   };
 
-  const handleDemoteTeamLead = async (cp: CampPersonWithDetails) => {
+  const handleDemoteTeamLead = async (cp: ProjectPersonWithDetails) => {
     if (
       !window.confirm(
         `Remove Team Lead role from "${cp.person?.full_name}"?\n\nThey will revert to Volunteer.`
@@ -89,7 +89,7 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
     setPromotingId(cp.id);
     setActionError(null);
     try {
-      await updateCampPersonRole(cp.id, CAMP_ROLE.VOLUNTEER, cp.person_id);
+      await updateProjectPersonRole(cp.id, PROJECT_ROLE.VOLUNTEER, cp.person_id);
       reload();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Failed to remove Team Lead');
@@ -99,7 +99,7 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
   };
 
   /* ─── Sorted People ───────────────────────────────────── */
-  const sortedPeople = [...campPeople].sort(
+  const sortedPeople = [...projectPeople].sort(
     (a, b) =>
       SECTION_ORDER.indexOf(a.camp_role) - SECTION_ORDER.indexOf(b.camp_role)
   );
@@ -109,7 +109,7 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-surface-900">
-          Assigned People ({campPeople.length})
+          Assigned People ({projectPeople.length})
         </h3>
         <Button size="sm" leftIcon={<UserPlus size={15} />} onClick={() => setShowAssign(true)}>
           Assign People
@@ -125,11 +125,11 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
       )}
 
       {/* Team Lead info banner */}
-      {campPeople.length > 0 && (
+      {projectPeople.length > 0 && (
         <div className="mb-4 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
           <Crown size={14} className="text-amber-600 shrink-0" />
           <span>
-            Team Lead is a <strong>camp-level role</strong>. Use the{' '}
+            Team Lead is a <strong>project-level role</strong>. Use the{' '}
             <Crown size={12} className="inline" /> button on a Volunteer row to promote them.
           </span>
         </div>
@@ -139,12 +139,12 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
         <div className="flex justify-center py-12">
           <Spinner size="lg" />
         </div>
-      ) : campPeople.length === 0 ? (
+      ) : projectPeople.length === 0 ? (
         <div className="bg-white rounded-2xl border border-surface-200 shadow-sm">
           <EmptyState
             icon={<Users size={28} />}
             title="No people assigned"
-            description="Assign faculty, guests, and students to this camp."
+            description="Assign faculty, guests, and students to this project."
             action={
               <Button leftIcon={<UserPlus size={15} />} onClick={() => setShowAssign(true)}>
                 Assign People
@@ -158,7 +158,7 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
             <thead>
               <tr className="border-b border-surface-100 bg-surface-50">
                 <th className="text-left px-5 py-3.5 font-medium text-surface-600">Name</th>
-                <th className="text-left px-5 py-3.5 font-medium text-surface-600">Camp Role</th>
+                <th className="text-left px-5 py-3.5 font-medium text-surface-600">Project Role</th>
                 <th className="text-left px-5 py-3.5 font-medium text-surface-600 hidden sm:table-cell">
                   Registry Category
                 </th>
@@ -170,8 +170,8 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
             </thead>
             <tbody className="divide-y divide-surface-100">
               {sortedPeople.map((cp) => {
-                const isTeamLead = cp.camp_role === CAMP_ROLE.TEAM_LEAD;
-                const isVolunteer = cp.camp_role === CAMP_ROLE.VOLUNTEER;
+                const isTeamLead = cp.camp_role === PROJECT_ROLE.TEAM_LEAD;
+                const isVolunteer = cp.camp_role === PROJECT_ROLE.VOLUNTEER;
                 const isActioning = removingId === cp.id || promotingId === cp.id;
 
                 return (
@@ -241,11 +241,11 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
                           </button>
                         )}
 
-                        {/* Remove from camp */}
+                        {/* Remove from project */}
                         <button
                           onClick={() => handleRemove(cp)}
                           disabled={isActioning}
-                          title="Remove from camp"
+                          title="Remove from project"
                           className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 opacity-0 group-hover:opacity-100 cursor-pointer"
                         >
                           {removingId === cp.id ? (
@@ -266,8 +266,8 @@ export function CampPeopleTab({ campId }: CampPeopleTabProps) {
 
       {showAssign && (
         <AssignPersonModal
-          campId={campId}
-          alreadyAssignedPersonIds={campPeople.map((cp) => cp.person_id)}
+          campId={projectId}
+          alreadyAssignedPersonIds={projectPeople.map((cp) => cp.person_id)}
           onClose={() => setShowAssign(false)}
           onAssigned={() => {
             setShowAssign(false);

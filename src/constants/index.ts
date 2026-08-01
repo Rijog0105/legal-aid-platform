@@ -9,16 +9,16 @@ export const ROLES = {
 
 export type RoleName = (typeof ROLES)[keyof typeof ROLES];
 
-/* ─── Camp Status ─────────────────────────────────────────── */
+/* ─── Project Status ───────────────────────────────────────── */
 
-export const CAMP_STATUS = {
+export const PROJECT_STATUS = {
   DRAFT: 'draft',
   ACTIVE: 'active',
   COMPLETED: 'completed',
   ARCHIVED: 'archived',
 } as const;
 
-export type CampStatus = (typeof CAMP_STATUS)[keyof typeof CAMP_STATUS];
+export type ProjectStatus = (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS];
 
 /* ─── Activity Status ─────────────────────────────────────── */
 
@@ -40,16 +40,16 @@ export const REPORT_STATUS = {
 
 export type ReportStatus = (typeof REPORT_STATUS)[keyof typeof REPORT_STATUS];
 
-/* ─── Camp People Roles ───────────────────────────────────── */
+/* ─── Project People Roles ─────────────────────────────────── */
 
-export const CAMP_ROLE = {
+export const PROJECT_ROLE = {
   FACULTY_COORDINATOR: 'faculty_coordinator',
   GUEST: 'guest',
   VOLUNTEER: 'volunteer',
   TEAM_LEAD: 'team_lead',
 } as const;
 
-export type CampRole = (typeof CAMP_ROLE)[keyof typeof CAMP_ROLE];
+export type ProjectRole = (typeof PROJECT_ROLE)[keyof typeof PROJECT_ROLE];
 
 /* ─── Person Category ─────────────────────────────────────── */
 
@@ -111,9 +111,9 @@ export const PREDEFINED_ACTIVITIES = [
 /* ─── App Config ──────────────────────────────────────────── */
 
 export const APP_CONFIG = {
-  APP_NAME: 'Legal Aid Camp Platform',
-  APP_SHORT_NAME: 'LACP',
-  APP_DESCRIPTION: 'Legal Aid Camp Documentation & Report Automation',
+  APP_NAME: 'Legal Aid Project Platform',
+  APP_SHORT_NAME: 'LAPP',
+  APP_DESCRIPTION: 'Legal Aid Project Documentation & Report Automation',
   MAX_PHOTO_SIZE_MB: 10,
   MAX_PHOTOS_PER_UPLOAD: 5,
   DEFAULT_MAX_PHOTOS_PER_ACTIVITY: 4,
@@ -131,15 +131,15 @@ export const ROUTES = {
   
   // Faculty / Admin routes
   DASHBOARD: '/dashboard',
-  CAMPS: '/camps',
-  CAMP_CREATE: '/camps/new',
-  CAMP_DETAIL: '/camps/:campId',
-  CAMP_ACTIVITIES: '/camps/:campId/activities',
-  CAMP_PHOTOS: '/camps/:campId/photos',
-  CAMP_BUDGET: '/camps/:campId/budget',
-  CAMP_NARRATIVES: '/camps/:campId/narratives',
-  CAMP_REPORT: '/camps/:campId/report',
-  CAMP_PEOPLE: '/camps/:campId/people',
+  PROJECTS: '/projects',
+  PROJECT_CREATE: '/projects/new',
+  PROJECT_DETAIL: '/projects/:projectId',
+  PROJECT_ACTIVITIES: '/projects/:projectId/activities',
+  PROJECT_PHOTOS: '/projects/:projectId/photos',
+  PROJECT_BUDGET: '/projects/:projectId/budget',
+  PROJECT_NARRATIVES: '/projects/:projectId/narratives',
+  PROJECT_REPORT: '/projects/:projectId/report',
+  PROJECT_PEOPLE: '/projects/:projectId/people',
   PEOPLE: '/people',
   
   // Volunteer & Team Lead routes

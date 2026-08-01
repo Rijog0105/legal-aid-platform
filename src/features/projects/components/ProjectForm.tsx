@@ -4,14 +4,14 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input } from '@/components/ui';
 import { APP_CONFIG } from '@/constants';
-import type { Camp } from '@/types';
+import type { Project } from '@/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { createCamp, updateCamp } from '@/features/camps/services/campService';
+import { createProject, updateProject } from '@/features/projects/services/projectService';
 
 const schema = z.object({
-  camp_name: z.string().min(2, 'Camp name must be at least 2 characters'),
+  camp_name: z.string().min(2, 'Project name must be at least 2 characters'),
   description: z.string().optional(),
-  camp_date: z.string().min(1, 'Camp date is required'),
+  camp_date: z.string().min(1, 'Project date is required'),
   start_time: z.string().optional(),
   end_time: z.string().optional(),
   village_name: z.string().min(1, 'Village is required'),
@@ -24,14 +24,14 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-interface CampFormProps {
-  camp?: Camp | null;
+interface ProjectFormProps {
+  project?: Project | null;
   onCancel: () => void;
-  onSaved: (camp: Camp) => void;
+  onSaved: (project: Project) => void;
 }
 
-export function CampForm({ camp, onCancel, onSaved }: CampFormProps) {
-  const isEdit = !!camp;
+export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
+  const isEdit = !!project;
   const { userId } = useAuth();
 
   const {
@@ -57,24 +57,24 @@ export function CampForm({ camp, onCancel, onSaved }: CampFormProps) {
   });
 
   useEffect(() => {
-    if (camp) {
+    if (project) {
       reset({
-        camp_name: camp.camp_name,
-        description: camp.description ?? '',
-        camp_date: camp.camp_date,
-        start_time: camp.start_time ?? '',
-        end_time: camp.end_time ?? '',
-        village_name: camp.village_name,
-        taluk: camp.taluk,
-        district: camp.district,
-        include_budget: camp.report_settings?.include_budget ?? true,
-        include_survey_stats: camp.report_settings?.include_survey_stats ?? true,
+        camp_name: project.camp_name,
+        description: project.description ?? '',
+        camp_date: project.camp_date,
+        start_time: project.start_time ?? '',
+        end_time: project.end_time ?? '',
+        village_name: project.village_name,
+        taluk: project.taluk,
+        district: project.district,
+        include_budget: project.report_settings?.include_budget ?? true,
+        include_survey_stats: project.report_settings?.include_survey_stats ?? true,
         max_photos_per_activity:
-          camp.report_settings?.max_photos_per_activity ??
+          project.report_settings?.max_photos_per_activity ??
           APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY,
       });
     }
-  }, [camp, reset]);
+  }, [project, reset]);
 
   const onSubmit = async (values: FormValues) => {
     const payload = {
@@ -94,9 +94,9 @@ export function CampForm({ camp, onCancel, onSaved }: CampFormProps) {
     };
 
     const saved =
-      isEdit && camp
-        ? await updateCamp(camp.id, payload)
-        : await createCamp({ ...payload, created_by: userId ?? '' });
+      isEdit && project
+        ? await updateProject(project.id, payload)
+        : await createProject({ ...payload, created_by: userId ?? '' });
     onSaved(saved);
   };
 
@@ -104,9 +104,9 @@ export function CampForm({ camp, onCancel, onSaved }: CampFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="space-y-5">
         <Input
-          label="Camp Name *"
+          label="Project Name *"
           id="camp_name"
-          placeholder="Rural Legal Awareness Camp"
+          placeholder="Rural Legal Awareness Project"
           error={errors.camp_name?.message}
           {...register('camp_name')}
         />
@@ -118,7 +118,7 @@ export function CampForm({ camp, onCancel, onSaved }: CampFormProps) {
           <textarea
             id="description"
             rows={3}
-            placeholder="Brief description of the camp…"
+            placeholder="Brief description of the project…"
             className="w-full px-4 py-2.5 rounded-xl border text-sm bg-white text-surface-900 border-surface-300 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
             {...register('description')}
           />
@@ -126,7 +126,7 @@ export function CampForm({ camp, onCancel, onSaved }: CampFormProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input
-            label="Camp Date *"
+            label="Project Date *"
             id="camp_date"
             type="date"
             error={errors.camp_date?.message}
@@ -202,7 +202,7 @@ export function CampForm({ camp, onCancel, onSaved }: CampFormProps) {
           Cancel
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          {isEdit ? 'Save Changes' : 'Create Camp'}
+          {isEdit ? 'Save Changes' : 'Create Project'}
         </Button>
       </div>
     </form>

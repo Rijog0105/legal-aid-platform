@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, type ChangeEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Camera, ChevronLeft, MapPin, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
+import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { useActivityPhotos } from '@/features/volunteer/hooks/useActivityPhotos';
 import { uploadPhoto } from '@/features/volunteer/services/photoService';
 import { ActivitySelector } from '@/features/volunteer/components/ActivitySelector';
@@ -41,7 +41,7 @@ export function VolunteerCapturePage() {
   const initialActivity = locState?.selectedActivity ?? null;
   const shouldAutoTrigger = Boolean(locState?.autoTrigger || locState?.selectedActivity);
 
-  const { camp, isLoading: campLoading, error: campError } = useMyCampAssignment(personId);
+  const { project, isLoading: projectLoading, error: projectError } = useMyProjectAssignment(personId);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(initialActivity);
   const [activePreviewPhoto, setActivePreviewPhoto] = useState<PhotoPreviewData | null>(null);
 
@@ -56,9 +56,9 @@ export function VolunteerCapturePage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const maxPhotos =
-    camp?.report_settings?.max_photos_per_activity ?? APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY;
+    project?.report_settings?.max_photos_per_activity ?? APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY;
   const atLimit = photos.length >= maxPhotos;
-  const canCapture = !!selectedActivity && !!camp && !!userId && !atLimit && !isUploading;
+  const canCapture = !!selectedActivity && !!project && !!userId && !atLimit && !isUploading;
 
   // Single-camera click optimization: immediately open picker if activity was pre-selected
   const autoTriggeredRef = useRef(false);
@@ -75,7 +75,7 @@ export function VolunteerCapturePage() {
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !camp || !selectedActivity || !userId) return;
+    if (!file || !project || !selectedActivity || !userId) return;
 
     if (file.size > APP_CONFIG.MAX_PHOTO_SIZE_MB * 1024 * 1024) {
       setUploadError(`Photo must be smaller than ${APP_CONFIG.MAX_PHOTO_SIZE_MB}MB`);
@@ -87,7 +87,7 @@ export function VolunteerCapturePage() {
     try {
       const position = await getCurrentPosition();
       await uploadPhoto({
-        campId: camp.id,
+        projectId: project.id,
         activityId: selectedActivity.id,
         uploadedBy: userId,
         file,
@@ -103,7 +103,7 @@ export function VolunteerCapturePage() {
   };
 
   /* ─── Loading ─── */
-  if (campLoading) {
+  if (projectLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" />
@@ -111,16 +111,16 @@ export function VolunteerCapturePage() {
     );
   }
 
-  /* ─── Error / no camp ─── */
-  if (campError || !camp) {
+  /* ─── Error / no project ─── */
+  if (projectError || !project) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center">
           <MapPin className="w-8 h-8 text-surface-400" />
         </div>
-        <p className="text-base font-semibold text-surface-800">No active camp</p>
+        <p className="text-base font-semibold text-surface-800">No active project</p>
         <p className="text-sm text-surface-500">
-          {campError ?? 'You are not currently assigned to an active camp.'}
+          {projectError ?? 'You are not currently assigned to an active project.'}
         </p>
         <Button variant="secondary" size="sm" onClick={() => navigate(ROUTES.VOLUNTEER_HOME)}>
           Back to Home
@@ -142,13 +142,13 @@ export function VolunteerCapturePage() {
 
       <div>
         <h1 className="text-lg font-bold text-surface-900">Capture Photo</h1>
-        <p className="text-sm text-surface-500 mt-0.5">{camp.camp_name}</p>
+        <p className="text-sm text-surface-500 mt-0.5">{project.camp_name}</p>
       </div>
 
       {/* ─── Activity Selector + Counter ─── */}
       <Card>
         <ActivitySelector
-          campId={camp.id}
+          campId={project.id}
           selectedActivityId={selectedActivity?.id ?? null}
           onSelect={setSelectedActivity}
         />

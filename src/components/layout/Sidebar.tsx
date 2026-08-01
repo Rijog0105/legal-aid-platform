@@ -32,7 +32,7 @@ export function Sidebar() {
       ]
     : [
         { label: 'Control Center', path: ROUTES.DASHBOARD, icon: <LayoutDashboard className="w-5 h-5" /> },
-        { label: 'Camps', path: ROUTES.CAMPS, icon: <Tent className="w-5 h-5" /> },
+        { label: 'Legal Aid Projects', path: ROUTES.PROJECTS, icon: <Tent className="w-5 h-5" /> },
         { label: 'People', path: ROUTES.PEOPLE, icon: <Users className="w-5 h-5" /> },
       ];
 

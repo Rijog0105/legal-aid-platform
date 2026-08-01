@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Trash2, MapPin, User, Filter, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
-import { useCampPhotos } from '@/features/volunteer/hooks/useCampPhotos';
+import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
+import { useProjectPhotos } from '@/features/volunteer/hooks/useProjectPhotos';
 import { useActivities } from '@/features/activities/hooks/useActivities';
 import { PhotoThumbnail } from '@/features/volunteer/components/PhotoThumbnail';
 import { PhotoLightboxModal, type PhotoPreviewData } from '@/features/volunteer/components/PhotoLightboxModal';
@@ -21,11 +21,11 @@ export function TeamLeadPhotosPage() {
   const { personId } = useAuth();
   const navigate = useNavigate();
 
-  const { camp, isLoading: campLoading, error: campError } = useMyCampAssignment(personId);
-  const { photos, isLoading: photosLoading, error: photosError, removePhoto } = useCampPhotos(
-    camp?.id ?? null
+  const { project, isLoading: projectLoading, error: projectError } = useMyProjectAssignment(personId);
+  const { photos, isLoading: photosLoading, error: photosError, removePhoto } = useProjectPhotos(
+    project?.id ?? null
   );
-  const { activities } = useActivities(camp?.id);
+  const { activities } = useActivities(project?.id);
 
   const [selectedActivityId, setSelectedActivityId] = useState<string>('all');
   const [photoToDelete, setPhotoToDelete] = useState<PhotoWithDetails | null>(null);
@@ -54,7 +54,7 @@ export function TeamLeadPhotosPage() {
     }
   };
 
-  if (campLoading || photosLoading) {
+  if (projectLoading || photosLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" />
@@ -62,15 +62,15 @@ export function TeamLeadPhotosPage() {
     );
   }
 
-  if (campError || !camp) {
+  if (projectError || !project) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center">
           <MapPin className="w-8 h-8 text-surface-400" />
         </div>
-        <p className="text-base font-semibold text-surface-800">No active camp assigned</p>
+        <p className="text-base font-semibold text-surface-800">No active project assigned</p>
         <p className="text-sm text-surface-500">
-          {campError ?? 'You are not assigned to an active camp.'}
+          {projectError ?? 'You are not assigned to an active project.'}
         </p>
         <Button variant="secondary" size="sm" onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}>
           Back to Workspace
@@ -129,7 +129,7 @@ export function TeamLeadPhotosPage() {
 
       <div>
         <h1 className="text-xl font-bold text-surface-900">Activity Photos</h1>
-        <p className="text-sm text-surface-500 mt-0.5">{camp.camp_name}</p>
+        <p className="text-sm text-surface-500 mt-0.5">{project.camp_name}</p>
       </div>
 
       {(photosError || actionError) && (

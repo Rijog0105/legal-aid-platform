@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Expense, Camp } from '@/types';
+import type { Expense, Project } from '@/types';
 import {
   fetchExpenses,
   createExpense,
@@ -60,7 +60,7 @@ export function useExpenses(campId: string, allocatedBudget?: number | null) {
   }, []);
 
   const setAllocatedBudget = useCallback(
-    async (newBudget: number): Promise<Camp> => {
+    async (newBudget: number): Promise<Project> => {
       return await updateAllocatedBudget(campId, newBudget);
     },
     [campId]

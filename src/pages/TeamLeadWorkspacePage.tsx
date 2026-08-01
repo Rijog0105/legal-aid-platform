@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
+import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { Card, Spinner, Button } from '@/components/ui';
 import { Camera, ClipboardList, Image as ImageIcon, FileText, DollarSign, MapPin } from 'lucide-react';
 import { ROUTES } from '@/constants';
@@ -8,9 +8,9 @@ import { ROUTES } from '@/constants';
 export function TeamLeadWorkspacePage() {
   const { displayName, personId } = useAuth();
   const navigate = useNavigate();
-  const { camp, isLoading: campLoading, error: campError } = useMyCampAssignment(personId);
+  const { project, isLoading: projectLoading, error: projectError } = useMyProjectAssignment(personId);
 
-  if (campLoading) {
+  if (projectLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" />
@@ -27,7 +27,7 @@ export function TeamLeadWorkspacePage() {
             Welcome, {displayName || 'Team Lead'}
           </h1>
           <p className="text-sm text-surface-500 mt-0.5">
-            {camp ? camp.camp_name : 'Team Lead Workspace'}
+            {project ? project.camp_name : 'Team Lead Workspace'}
           </p>
         </div>
         <div className="px-3 py-1 rounded-full bg-accent-100 text-accent-800 text-xs font-semibold">
@@ -35,18 +35,18 @@ export function TeamLeadWorkspacePage() {
         </div>
       </div>
 
-      {campError && (
+      {projectError && (
         <Card>
-          <p className="text-sm text-red-600 text-center py-4">{campError}</p>
+          <p className="text-sm text-red-600 text-center py-4">{projectError}</p>
         </Card>
       )}
 
-      {!camp && !campLoading && (
+      {!project && !projectLoading && (
         <Card>
           <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
             <MapPin className="w-8 h-8 text-surface-400" />
-            <p className="text-sm font-semibold text-surface-800">No active camp assigned</p>
-            <p className="text-xs text-surface-500">Contact your faculty coordinator for camp assignment.</p>
+            <p className="text-sm font-semibold text-surface-800">No active project assigned</p>
+            <p className="text-xs text-surface-500">Contact your faculty coordinator for project assignment.</p>
           </div>
         </Card>
       )}
@@ -111,7 +111,7 @@ export function TeamLeadWorkspacePage() {
               size="sm"
               variant="outline"
               onClick={() => navigate(ROUTES.TEAM_LEAD_PHOTOS)}
-              disabled={!camp}
+              disabled={!project}
             >
               Open
             </Button>
@@ -128,7 +128,7 @@ export function TeamLeadWorkspacePage() {
               <div>
                 <h3 className="text-base font-semibold text-surface-900">Survey Reports</h3>
                 <p className="text-xs text-surface-500 mt-0.5">
-                  Access individual beneficiary reports and camp survey metrics.
+                  Access individual beneficiary reports and project survey metrics.
                 </p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export function TeamLeadWorkspacePage() {
               <div>
                 <h3 className="text-base font-semibold text-surface-900">Budget</h3>
                 <p className="text-xs text-surface-500 mt-0.5">
-                  Monitor requested, spent, and remaining camp budget allocation.
+                  Monitor requested, spent, and remaining project budget allocation.
                 </p>
               </div>
             </div>

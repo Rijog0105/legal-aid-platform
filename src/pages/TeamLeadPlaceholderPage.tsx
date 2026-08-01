@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Info, MapPin } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
+import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { Card, Button, Spinner } from '@/components/ui';
 import { ROUTES } from '@/constants';
 
@@ -18,7 +18,7 @@ export function TeamLeadPlaceholderPage({
 }: TeamLeadPlaceholderPageProps) {
   const { personId } = useAuth();
   const navigate = useNavigate();
-  const { camp, isLoading } = useMyCampAssignment(personId);
+  const { project, isLoading } = useMyProjectAssignment(personId);
 
   if (isLoading) {
     return (
@@ -41,7 +41,7 @@ export function TeamLeadPlaceholderPage({
 
       <div>
         <h1 className="text-xl font-bold text-surface-900">{title}</h1>
-        <p className="text-sm text-surface-500 mt-0.5">{camp ? camp.camp_name : 'Team Lead Module'}</p>
+        <p className="text-sm text-surface-500 mt-0.5">{project ? project.camp_name : 'Team Lead Module'}</p>
       </div>
 
       <Card className="p-6 text-center space-y-4">
@@ -59,10 +59,10 @@ export function TeamLeadPlaceholderPage({
           <span className="font-semibold text-primary-700">{targetPhase}</span>
         </div>
 
-        {camp && (
+        {project && (
           <div className="flex items-center justify-center gap-1.5 text-xs text-surface-400 pt-2 border-t border-surface-100">
             <MapPin size={13} />
-            <span>{camp.village_name}, {camp.district}</span>
+            <span>{project.village_name}, {project.district}</span>
           </div>
         )}
       </Card>

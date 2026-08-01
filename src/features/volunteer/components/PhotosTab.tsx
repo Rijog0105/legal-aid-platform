@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useCampPhotos } from '@/features/volunteer/hooks/useCampPhotos';
+import { useProjectPhotos } from '@/features/volunteer/hooks/useProjectPhotos';
 import { useActivities } from '@/features/activities/hooks/useActivities';
 import { PhotoThumbnail } from './PhotoThumbnail';
 import { PhotoLightboxModal, type PhotoPreviewData } from './PhotoLightboxModal';
@@ -11,9 +11,9 @@ interface PhotosTabProps {
   campId: string;
 }
 
-export function PhotosTab({ campId }: PhotosTabProps) {
-  const { photos, isLoading, error, toggleReportSelection, removePhoto } = useCampPhotos(campId);
-  const { activities } = useActivities(campId);
+export function PhotosTab({ campId: projectId }: PhotosTabProps) {
+  const { photos, isLoading, error, toggleReportSelection, removePhoto } = useProjectPhotos(projectId);
+  const { activities } = useActivities(projectId);
 
   const [selectedActivityId, setSelectedActivityId] = useState<string>('all');
   const [reportFilter, setReportFilter] = useState<'all' | 'selected' | 'unselected'>('all');

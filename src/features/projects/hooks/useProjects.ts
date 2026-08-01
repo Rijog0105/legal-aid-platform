@@ -1,23 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchCamps } from '@/features/camps/services/campService';
-import type { Camp } from '@/types';
-import type { CampStatus } from '@/constants';
+import { fetchProjects } from '@/features/projects/services/projectService';
+import type { Project } from '@/types';
+import type { ProjectStatus } from '@/constants';
 
-export function useCamps() {
-  const [camps, setCamps] = useState<Camp[]>([]);
+export function useProjects() {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CampStatus | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ProjectStatus | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchCamps({ search, status: statusFilter });
-      setCamps(data);
+      const data = await fetchProjects({ search, status: statusFilter });
+      setProjects(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load camps');
+      setError(e instanceof Error ? e.message : 'Failed to load projects');
     } finally {
       setIsLoading(false);
     }
@@ -29,7 +29,7 @@ export function useCamps() {
   }, [load, search]);
 
   return {
-    camps,
+    projects,
     isLoading,
     error,
     search,

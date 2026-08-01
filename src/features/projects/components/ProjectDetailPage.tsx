@@ -1,35 +1,35 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Pencil, Calendar, MapPin, Clock, X, AlertCircle, FileText } from 'lucide-react';
-import { Button, Card, CampStatusBadge, Spinner } from '@/components/ui';
-import { CAMP_STATUS, ROUTES, type CampStatus } from '@/constants';
-import { useCamp } from '@/features/camps/hooks/useCamp';
-import { updateCampStatus } from '@/features/camps/services/campService';
-import { CampForm } from './CampForm';
-import { CampPeopleTab } from './CampPeopleTab';
+import { Button, Card, ProjectStatusBadge, Spinner } from '@/components/ui';
+import { PROJECT_STATUS, ROUTES, type ProjectStatus } from '@/constants';
+import { useProject } from '@/features/projects/hooks/useProject';
+import { updateProjectStatus } from '@/features/projects/services/projectService';
+import { ProjectForm } from './ProjectForm';
+import { ProjectPeopleTab } from './ProjectPeopleTab';
 import { ActivitiesTab } from '@/features/activities';
 import { PhotosTab } from '@/features/volunteer';
 import { ReportPreparationTab } from './ReportPreparationTab';
 import { BudgetTab } from '@/features/budget';
 
-const STATUS_FLOW: Record<CampStatus, CampStatus[]> = {
-  [CAMP_STATUS.DRAFT]: [CAMP_STATUS.ACTIVE],
-  [CAMP_STATUS.ACTIVE]: [CAMP_STATUS.COMPLETED],
-  [CAMP_STATUS.COMPLETED]: [CAMP_STATUS.ARCHIVED],
-  [CAMP_STATUS.ARCHIVED]: [],
+const STATUS_FLOW: Record<ProjectStatus, ProjectStatus[]> = {
+  [PROJECT_STATUS.DRAFT]: [PROJECT_STATUS.ACTIVE],
+  [PROJECT_STATUS.ACTIVE]: [PROJECT_STATUS.COMPLETED],
+  [PROJECT_STATUS.COMPLETED]: [PROJECT_STATUS.ARCHIVED],
+  [PROJECT_STATUS.ARCHIVED]: [],
 };
 
-const STATUS_LABELS: Record<CampStatus, string> = {
-  [CAMP_STATUS.DRAFT]: 'Draft',
-  [CAMP_STATUS.ACTIVE]: 'Active',
-  [CAMP_STATUS.COMPLETED]: 'Completed',
-  [CAMP_STATUS.ARCHIVED]: 'Archived',
+const STATUS_LABELS: Record<ProjectStatus, string> = {
+  [PROJECT_STATUS.DRAFT]: 'Draft',
+  [PROJECT_STATUS.ACTIVE]: 'Active',
+  [PROJECT_STATUS.COMPLETED]: 'Completed',
+  [PROJECT_STATUS.ARCHIVED]: 'Archived',
 };
 
 type Tab = 'overview' | 'people' | 'attendance' | 'activities' | 'photos' | 'surveys' | 'budget' | 'report';
 
 const TABS: { key: Tab; label: string; phase?: string }[] = [
-  { key: 'overview', label: 'Camp Info' },
+  { key: 'overview', label: 'Project Info' },
   { key: 'people', label: 'Assign People' },
   { key: 'attendance', label: 'Attendance' },
   { key: 'activities', label: 'Activities' },
@@ -39,21 +39,21 @@ const TABS: { key: Tab; label: string; phase?: string }[] = [
   { key: 'report', label: 'Report Studio', phase: 'Phase 8' },
 ];
 
-export function CampDetailPage() {
-  const { campId } = useParams<{ campId: string }>();
-  const { camp, isLoading, error, setCamp, reload } = useCamp(campId);
+export function ProjectDetailPage() {
+  const { projectId } = useParams<{ projectId: string }>();
+  const { project, isLoading, error, setProject, reload } = useProject(projectId);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [showEdit, setShowEdit] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
 
-  const handleStatusChange = async (status: CampStatus) => {
-    if (!camp) return;
+  const handleStatusChange = async (status: ProjectStatus) => {
+    if (!project) return;
     setStatusUpdating(true);
     setStatusError(null);
     try {
-      const updated = await updateCampStatus(camp.id, status);
-      setCamp(updated);
+      const updated = await updateProjectStatus(project.id, status);
+      setProject(updated);
     } catch (e) {
       setStatusError(e instanceof Error ? e.message : 'Failed to update status');
     } finally {
@@ -69,47 +69,47 @@ export function CampDetailPage() {
     );
   }
 
-  if (error || !camp) {
+  if (error || !project) {
     return (
       <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
         <AlertCircle size={16} className="flex-shrink-0" />
-        {error ?? 'Camp not found'}
+        {error ?? 'Project not found'}
       </div>
     );
   }
 
-  const nextStatuses = STATUS_FLOW[camp.status];
+  const nextStatuses = STATUS_FLOW[project.status];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* ─── Back Link ─── */}
       <Link
-        to={ROUTES.CAMPS}
+        to={ROUTES.PROJECTS}
         className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-surface-700 transition-colors"
       >
-        <ArrowLeft size={15} /> Back to Camps
+        <ArrowLeft size={15} /> Back to Projects
       </Link>
 
-      {/* ─── Camp Header ─── */}
+      {/* ─── Project Header ─── */}
       <div className="flex flex-wrap items-start justify-between gap-4 bg-white p-6 rounded-3xl border border-surface-200 shadow-sm">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-surface-900">{camp.camp_name}</h1>
-            <CampStatusBadge status={camp.status} />
+            <h1 className="text-2xl font-bold text-surface-900">{project.camp_name}</h1>
+            <ProjectStatusBadge status={project.status} />
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-sm text-surface-500">
             <span className="flex items-center gap-1.5">
-              <Calendar size={14} className="text-surface-400" /> {camp.camp_date}
+              <Calendar size={14} className="text-surface-400" /> {project.camp_date}
             </span>
-            {(camp.start_time || camp.end_time) && (
+            {(project.start_time || project.end_time) && (
               <span className="flex items-center gap-1.5">
                 <Clock size={14} className="text-surface-400" />
-                {camp.start_time ?? '—'} – {camp.end_time ?? '—'}
+                {project.start_time ?? '—'} – {project.end_time ?? '—'}
               </span>
             )}
             <span className="flex items-center gap-1.5">
               <MapPin size={14} className="text-surface-400" />
-              {camp.village_name}, {camp.taluk}, {camp.district}
+              {project.village_name}, {project.taluk}, {project.district}
             </span>
           </div>
         </div>
@@ -140,7 +140,7 @@ export function CampDetailPage() {
         </div>
       )}
 
-      {/* ─── Camp Workspace Modules (Tabs Navigation) ─── */}
+      {/* ─── Project Workspace Modules (Tabs Navigation) ─── */}
       <div className="flex items-center gap-1 border-b border-surface-200 overflow-x-auto">
         {TABS.map((tab) => (
           <button
@@ -159,13 +159,13 @@ export function CampDetailPage() {
 
       {/* ─── Tab Content Views ─── */}
 
-      {/* 1. Camp Info Overview */}
+      {/* 1. Project Info Overview */}
       {activeTab === 'overview' && (
         <div className="space-y-4">
-          {camp.description && (
+          {project.description && (
             <Card>
-              <h3 className="text-sm font-bold text-surface-900 mb-1">Camp Description</h3>
-              <p className="text-sm text-surface-600 leading-relaxed">{camp.description}</p>
+              <h3 className="text-sm font-bold text-surface-900 mb-1">Project Description</h3>
+              <p className="text-sm text-surface-600 leading-relaxed">{project.description}</p>
             </Card>
           )}
 
@@ -175,19 +175,19 @@ export function CampDetailPage() {
               <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
                 <p className="text-xs text-surface-400">Include Budget in Report</p>
                 <p className="text-surface-900 font-semibold mt-0.5">
-                  {camp.report_settings?.include_budget ? 'Yes' : 'No'}
+                  {project.report_settings?.include_budget ? 'Yes' : 'No'}
                 </p>
               </div>
               <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
                 <p className="text-xs text-surface-400">Include Survey Statistics</p>
                 <p className="text-surface-900 font-semibold mt-0.5">
-                  {camp.report_settings?.include_survey_stats ? 'Yes' : 'No'}
+                  {project.report_settings?.include_survey_stats ? 'Yes' : 'No'}
                 </p>
               </div>
               <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
                 <p className="text-xs text-surface-400">Max Photos / Activity</p>
                 <p className="text-surface-900 font-semibold mt-0.5">
-                  {camp.report_settings?.max_photos_per_activity}
+                  {project.report_settings?.max_photos_per_activity}
                 </p>
               </div>
             </div>
@@ -196,26 +196,26 @@ export function CampDetailPage() {
       )}
 
       {/* 2. Assign People */}
-      {activeTab === 'people' && <CampPeopleTab campId={camp.id} />}
+      {activeTab === 'people' && <ProjectPeopleTab campId={project.id} />}
 
       {/* 3. Attendance */}
       {activeTab === 'attendance' && (
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-base font-bold text-surface-900">Camp Attendance</h3>
+            <h3 className="text-base font-bold text-surface-900">Project Attendance</h3>
             <span className="text-xs text-surface-500 font-normal">
               (Derived from assigned delegation roster)
             </span>
           </div>
-          <CampPeopleTab campId={camp.id} />
+          <ProjectPeopleTab campId={project.id} />
         </Card>
       )}
 
       {/* 4. Activities */}
-      {activeTab === 'activities' && <ActivitiesTab campId={camp.id} />}
+      {activeTab === 'activities' && <ActivitiesTab campId={project.id} />}
 
       {/* 5. Documentation (Photos Curation) */}
-      {activeTab === 'photos' && <PhotosTab campId={camp.id} />}
+      {activeTab === 'photos' && <PhotosTab campId={project.id} />}
 
       {/* 6. Surveys Placeholder */}
       {activeTab === 'surveys' && (
@@ -236,13 +236,13 @@ export function CampDetailPage() {
 
       {/* 7. Budget Module */}
       {activeTab === 'budget' && (
-        <BudgetTab campId={camp.id} camp={camp} onCampUpdate={reload} />
+        <BudgetTab campId={project.id} camp={project} onCampUpdate={reload} />
       )}
 
       {/* 8. Report Preparation Workspace */}
       {activeTab === 'report' && (
         <ReportPreparationTab
-          campId={camp.id}
+          projectId={project.id}
           onNavigateTab={(tabKey) => {
             if (tabKey === 'activities' || tabKey === 'photos') {
               setActiveTab(tabKey);
@@ -260,7 +260,7 @@ export function CampDetailPage() {
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200">
-              <h2 className="text-lg font-semibold text-surface-900">Edit Camp</h2>
+              <h2 className="text-lg font-semibold text-surface-900">Edit Project</h2>
               <button
                 type="button"
                 onClick={() => setShowEdit(false)}
@@ -270,11 +270,11 @@ export function CampDetailPage() {
               </button>
             </div>
             <div className="px-6 py-5 max-h-[75vh] overflow-y-auto">
-              <CampForm
-                camp={camp}
+              <ProjectForm
+                project={project}
                 onCancel={() => setShowEdit(false)}
                 onSaved={(updated) => {
-                  setCamp(updated);
+                  setProject(updated);
                   setShowEdit(false);
                 }}
               />

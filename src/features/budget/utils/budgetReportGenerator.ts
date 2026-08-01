@@ -1,9 +1,9 @@
 import { jsPDF } from 'jspdf';
-import type { Camp, Expense } from '@/types';
+import type { Project, Expense } from '@/types';
 import { formatCurrency, formatDate } from '@/utils';
 
 export interface BudgetReportOptions {
-  camp: Camp;
+  camp: Project;
   expenses: Expense[];
   allocatedBudget: number;
   totalSpent: number;
@@ -39,16 +39,16 @@ export function generateBudgetReportPDF(options: BudgetReportOptions): void {
 
   y = 36;
 
-  // Camp Details Section
+  // Project Details Section
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
-  doc.text('1. Camp Metadata', 14, y);
+  doc.text('1. Project Metadata', 14, y);
   y += 6;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.text(`Camp Name: ${camp.camp_name}`, 14, y);
+  doc.text(`Project Name: ${camp.camp_name}`, 14, y);
   doc.text(`Date: ${formatDate(camp.camp_date)}`, 120, y);
   y += 5;
   doc.text(`Location: ${camp.village_name}, ${camp.taluk}, ${camp.district}`, 14, y);

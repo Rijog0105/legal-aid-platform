@@ -11,7 +11,7 @@
 | 1 | Project Setup & Foundation | ✅ **Complete** | Medium |
 | 2 | Authentication & Session Management | ✅ **Complete** | Medium |
 | 3 | People Registry | ✅ **Complete** | Low–Medium |
-| 4 | Camp Management | ✅ **Complete** | High |
+| 4 | Project Management (previously Camp Management) | ✅ **Complete** | High |
 | 5 | Activity Management | ✅ **Complete** | Medium |
 | 6 | Photo Documentation | ✅ **Complete** | High |
 | 7 | Budget Module | ✅ **Complete** | Medium |

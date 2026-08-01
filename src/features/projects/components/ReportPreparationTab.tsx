@@ -2,19 +2,19 @@ import { useState } from 'react';
 import { Card, Button, Badge, Spinner } from '@/components/ui';
 import { CheckCircle2, AlertCircle, FileText, Camera, Calendar, ArrowRight, Sparkles } from 'lucide-react';
 import { useActivities } from '@/features/activities/hooks/useActivities';
-import { useCampPhotos } from '@/features/volunteer/hooks/useCampPhotos';
+import { useProjectPhotos } from '@/features/volunteer/hooks/useProjectPhotos';
 import { useNarratives } from '../hooks/useNarratives';
 import { NarrativesTab } from './NarrativesTab';
 
 interface ReportPreparationTabProps {
-  campId: string;
+  projectId: string;
   onNavigateTab: (tabKey: 'activities' | 'photos' | 'narratives') => void;
 }
 
-export function ReportPreparationTab({ campId, onNavigateTab }: ReportPreparationTabProps) {
-  const { activities, isLoading: activitiesLoading } = useActivities(campId);
-  const { photos, isLoading: photosLoading } = useCampPhotos(campId);
-  const { narratives, isLoading: narrativesLoading } = useNarratives(campId);
+export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPreparationTabProps) {
+  const { activities, isLoading: activitiesLoading } = useActivities(projectId);
+  const { photos, isLoading: photosLoading } = useProjectPhotos(projectId);
+  const { narratives, isLoading: narrativesLoading } = useNarratives(projectId);
 
   const [activeSubView, setActiveSubView] = useState<'checklist' | 'narratives'>('checklist');
 
@@ -174,7 +174,7 @@ export function ReportPreparationTab({ campId, onNavigateTab }: ReportPreparatio
       </div>
 
       {/* ─── Narrative Editors View ─── */}
-      {activeSubView === 'narratives' && <NarrativesTab campId={campId} />}
+      {activeSubView === 'narratives' && <NarrativesTab campId={projectId} />}
     </div>
   );
 }

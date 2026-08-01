@@ -1,8 +1,8 @@
 import { supabase } from '@/services/supabase';
-import type { Camp, ReportSettings } from '@/types';
-import type { CampStatus } from '@/constants';
+import type { Project, ReportSettings } from '@/types';
+import type { ProjectStatus } from '@/constants';
 
-export interface CampPayload {
+export interface ProjectPayload {
   camp_name: string;
   description?: string | null;
   camp_date: string;
@@ -15,12 +15,12 @@ export interface CampPayload {
   created_by: string;
 }
 
-export interface CampFilters {
+export interface ProjectFilters {
   search?: string;
-  status?: CampStatus | null;
+  status?: ProjectStatus | null;
 }
 
-export async function fetchCamps(filters: CampFilters = {}): Promise<Camp[]> {
+export async function fetchProjects(filters: ProjectFilters = {}): Promise<Project[]> {
   let query = supabase
     .from('camps')
     .select('*')
@@ -36,33 +36,33 @@ export async function fetchCamps(filters: CampFilters = {}): Promise<Camp[]> {
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return (data ?? []) as Camp[];
+  return (data ?? []) as Project[];
 }
 
-export async function fetchCamp(id: string): Promise<Camp | null> {
+export async function fetchProject(id: string): Promise<Project | null> {
   const { data, error } = await supabase
     .from('camps')
     .select('*')
     .eq('id', id)
     .single();
   if (error) return null;
-  return data as Camp;
+  return data as Project;
 }
 
-export async function createCamp(payload: CampPayload): Promise<Camp> {
+export async function createProject(payload: ProjectPayload): Promise<Project> {
   const { data, error } = await supabase
     .from('camps')
     .insert([{ ...payload, status: 'draft' }])
     .select()
     .single();
   if (error) throw new Error(error.message);
-  return data as Camp;
+  return data as Project;
 }
 
-export async function updateCamp(
+export async function updateProject(
   id: string,
-  payload: Partial<Omit<CampPayload, 'created_by'>>
-): Promise<Camp> {
+  payload: Partial<Omit<ProjectPayload, 'created_by'>>
+): Promise<Project> {
   const { data, error } = await supabase
     .from('camps')
     .update(payload)
@@ -70,10 +70,10 @@ export async function updateCamp(
     .select()
     .single();
   if (error) throw new Error(error.message);
-  return data as Camp;
+  return data as Project;
 }
 
-export async function updateCampStatus(id: string, status: CampStatus): Promise<Camp> {
+export async function updateProjectStatus(id: string, status: ProjectStatus): Promise<Project> {
   const { data, error } = await supabase
     .from('camps')
     .update({ status })
@@ -81,10 +81,10 @@ export async function updateCampStatus(id: string, status: CampStatus): Promise<
     .select()
     .single();
   if (error) throw new Error(error.message);
-  return data as Camp;
+  return data as Project;
 }
 
-export async function deleteCamp(id: string): Promise<void> {
+export async function deleteProject(id: string): Promise<void> {
   const { error } = await supabase.from('camps').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }

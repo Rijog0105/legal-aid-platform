@@ -1,5 +1,5 @@
 import { supabase } from '@/services/supabase';
-import type { Expense, Camp } from '@/types';
+import type { Expense, Project } from '@/types';
 
 export interface CreateExpensePayload {
   camp_id: string;
@@ -109,9 +109,9 @@ export async function deleteExpense(id: string): Promise<void> {
 }
 
 /**
- * Update allocated budget for a camp.
+ * Update allocated budget for a project.
  */
-export async function updateAllocatedBudget(campId: string, allocatedBudget: number): Promise<Camp> {
+export async function updateAllocatedBudget(campId: string, allocatedBudget: number): Promise<Project> {
   const { data, error } = await supabase
     .from('camps')
     .update({ allocated_budget: allocatedBudget })
@@ -120,5 +120,5 @@ export async function updateAllocatedBudget(campId: string, allocatedBudget: num
     .single();
 
   if (error) throw new Error(error.message);
-  return data as Camp;
+  return data as Project;
 }

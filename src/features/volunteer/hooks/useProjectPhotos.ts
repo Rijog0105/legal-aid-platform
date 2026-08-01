@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  fetchCampPhotos,
+  fetchProjectPhotos,
   togglePhotoReportSelection,
   deletePhoto,
   type PhotoWithDetails,
 } from '@/features/volunteer/services/photoService';
 
-export function useCampPhotos(campId: string | null) {
+export function useProjectPhotos(projectId: string | null) {
   const [photos, setPhotos] = useState<PhotoWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!campId) {
+    if (!projectId) {
       setPhotos([]);
       setIsLoading(false);
       return;
@@ -20,14 +20,14 @@ export function useCampPhotos(campId: string | null) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchCampPhotos(campId);
+      const data = await fetchProjectPhotos(projectId);
       setPhotos(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch camp photos');
+      setError(err instanceof Error ? err.message : 'Failed to fetch project photos');
     } finally {
       setIsLoading(false);
     }
-  }, [campId]);
+  }, [projectId]);
 
   useEffect(() => {
     load();

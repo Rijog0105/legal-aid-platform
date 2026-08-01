@@ -7,7 +7,7 @@ export interface PhotoWithActivityName extends Photo {
 }
 
 export interface UploadPhotoInput {
-  campId: string;
+  projectId: string;
   activityId: string;
   uploadedBy: string;
   file: File;
@@ -15,10 +15,10 @@ export interface UploadPhotoInput {
   longitude?: number | null;
 }
 
-function buildStoragePath(campId: string, activityId: string, file: File): string {
+function buildStoragePath(projectId: string, activityId: string, file: File): string {
   const ext = file.name.split('.').pop() || 'jpg';
   const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  return `${campId}/${activityId}/${unique}.${ext}`;
+  return `${projectId}/${activityId}/${unique}.${ext}`;
 }
 
 /**
@@ -27,14 +27,14 @@ function buildStoragePath(campId: string, activityId: string, file: File): strin
  * the uploaded storage object is removed so orphaned files don't accumulate.
  */
 export async function uploadPhoto({
-  campId,
+  projectId,
   activityId,
   uploadedBy,
   file,
   latitude = null,
   longitude = null,
 }: UploadPhotoInput): Promise<Photo> {
-  const path = buildStoragePath(campId, activityId, file);
+  const path = buildStoragePath(projectId, activityId, file);
 
   const { error: uploadError } = await supabase.storage
     .from(APP_CONFIG.PHOTO_BUCKET)
@@ -45,7 +45,7 @@ export async function uploadPhoto({
     .from('photos')
     .insert([
       {
-        camp_id: campId,
+        camp_id: projectId,
         activity_id: activityId,
         uploaded_by: uploadedBy,
         file_url: path,
@@ -83,17 +83,17 @@ export async function fetchMyPhotosForActivity(
 }
 
 /**
- * All photos captured by a specific volunteer within one camp, with the
+ * All photos captured by a specific volunteer within one project, with the
  * activity name embedded — used for the volunteer's Personal Gallery.
  */
 export async function fetchMyPhotos(
-  campId: string,
+  projectId: string,
   uploadedBy: string
 ): Promise<PhotoWithActivityName[]> {
   const { data, error } = await supabase
     .from('photos')
     .select('*, activity:activities(activity_name)')
-    .eq('camp_id', campId)
+    .eq('camp_id', projectId)
     .eq('uploaded_by', uploadedBy)
     .order('captured_at', { ascending: false });
   if (error) throw new Error(error.message);
@@ -124,10 +124,10 @@ export interface PhotoWithDetails extends Photo {
 }
 
 /**
- * All photos captured for a camp — used by faculty to review, toggle report selection,
+ * All photos captured for a project — used by faculty to review, toggle report selection,
  * and manage photos.
  */
-export async function fetchCampPhotos(campId: string): Promise<PhotoWithDetails[]> {
+export async function fetchProjectPhotos(projectId: string): Promise<PhotoWithDetails[]> {
   const { data, error } = await supabase
     .from('photos')
     .select(`
@@ -137,7 +137,7 @@ export async function fetchCampPhotos(campId: string): Promise<PhotoWithDetails[
         person:persons(full_name)
       )
     `)
-    .eq('camp_id', campId)
+    .eq('camp_id', projectId)
     .order('captured_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -181,4 +181,3 @@ export async function deletePhoto(photoId: string, filePath: string): Promise<vo
     console.warn(`Failed to delete storage file ${filePath}: ${storageError.message}`);
   }
 }
-

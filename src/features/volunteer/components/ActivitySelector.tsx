@@ -31,7 +31,7 @@ export function ActivitySelector({ campId, selectedActivityId, onSelect }: Activ
   if (activities.length === 0) {
     return (
       <p className="text-sm text-surface-500">
-        No activities have been added to this camp yet. Ask faculty to add one before capturing photos.
+        No activities have been added to this project yet. Ask faculty to add one before capturing photos.
       </p>
     );
   }

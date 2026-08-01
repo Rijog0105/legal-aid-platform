@@ -15,7 +15,7 @@ import { RegisterPage } from '@/features/auth/components/RegisterPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PeoplePage } from '@/features/people';
-import { CampListPage, CampCreatePage, CampDetailPage } from '@/features/camps';
+import { ProjectListPage, ProjectCreatePage, ProjectDetailPage } from '@/features/projects';
 import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
 import { VolunteerCapturePage, MySubmissionsPage, TeamLeadPhotosPage } from '@/features/volunteer';
 import { TeamLeadWorkspacePage } from '@/pages/TeamLeadWorkspacePage';
@@ -60,16 +60,16 @@ export const router = createBrowserRouter([
         element: <PeoplePage />,
       },
       {
-        path: ROUTES.CAMPS,
-        element: <CampListPage />,
+        path: ROUTES.PROJECTS,
+        element: <ProjectListPage />,
       },
       {
-        path: ROUTES.CAMP_CREATE,
-        element: <CampCreatePage />,
+        path: ROUTES.PROJECT_CREATE,
+        element: <ProjectCreatePage />,
       },
       {
-        path: ROUTES.CAMP_DETAIL,
-        element: <CampDetailPage />,
+        path: ROUTES.PROJECT_DETAIL,
+        element: <ProjectDetailPage />,
       },
     ],
   },

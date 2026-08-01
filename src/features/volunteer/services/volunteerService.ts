@@ -1,22 +1,22 @@
 import { supabase } from '@/services/supabase';
-import type { Camp, CampPersonWithDetails } from '@/types';
+import type { Project, ProjectPersonWithDetails } from '@/types';
 
-interface CampPersonWithCamp extends CampPersonWithDetails {
-  camp: Camp;
+interface ProjectPersonWithProject extends ProjectPersonWithDetails {
+  camp: Project;
 }
 
-export interface MyCampAssignment {
-  campPerson: CampPersonWithDetails;
-  camp: Camp;
+export interface MyProjectAssignment {
+  campPerson: ProjectPersonWithDetails;
+  camp: Project;
 }
 
 /**
- * Finds all camp assignments for a user (volunteer or team lead).
+ * Finds all project assignments for a user (volunteer or team lead).
  * Sorted by active status first, then camp_date descending.
  */
-export async function fetchAllMyCampAssignments(
+export async function fetchAllMyProjectAssignments(
   personId: string
-): Promise<MyCampAssignment[]> {
+): Promise<MyProjectAssignment[]> {
   const { data, error } = await supabase
     .from('camp_people')
     .select('*, person:persons(*), camp:camps(*)')
@@ -24,10 +24,10 @@ export async function fetchAllMyCampAssignments(
 
   if (error) throw new Error(error.message);
 
-  const rows = (data ?? []) as unknown as CampPersonWithCamp[];
+  const rows = (data ?? []) as unknown as ProjectPersonWithProject[];
   const validRows = rows.filter((row) => Boolean(row.camp));
 
-  // Sort: active camps first, then by camp_date descending
+  // Sort: active projects first, then by camp_date descending
   validRows.sort((a, b) => {
     if (a.camp.status === 'active' && b.camp.status !== 'active') return -1;
     if (a.camp.status !== 'active' && b.camp.status === 'active') return 1;
@@ -41,17 +41,17 @@ export async function fetchAllMyCampAssignments(
 }
 
 /**
- * Finds a specific camp assignment for a user by campId, or defaults to their primary/active assignment.
+ * Finds a specific project assignment for a user by projectId, or defaults to their primary/active assignment.
  */
-export async function fetchMyCampAssignment(
+export async function fetchMyProjectAssignment(
   personId: string,
-  targetCampId?: string | null
-): Promise<MyCampAssignment | null> {
-  const assignments = await fetchAllMyCampAssignments(personId);
+  targetProjectId?: string | null
+): Promise<MyProjectAssignment | null> {
+  const assignments = await fetchAllMyProjectAssignments(personId);
   if (assignments.length === 0) return null;
 
-  if (targetCampId) {
-    const found = assignments.find((item) => item.camp.id === targetCampId);
+  if (targetProjectId) {
+    const found = assignments.find((item) => item.camp.id === targetProjectId);
     if (found) return found;
   }
 
@@ -60,11 +60,11 @@ export async function fetchMyCampAssignment(
 }
 
 /**
- * Backwards-compatible wrapper: Finds the user's active camp assignment.
- * If no active camp exists, falls back to their most recent assigned camp.
+ * Backwards-compatible wrapper: Finds the user's active project assignment.
+ * If no active project exists, falls back to their most recent assigned project.
  */
-export async function fetchMyActiveCampAssignment(
+export async function fetchMyActiveProjectAssignment(
   personId: string
-): Promise<MyCampAssignment | null> {
-  return await fetchMyCampAssignment(personId);
+): Promise<MyProjectAssignment | null> {
+  return await fetchMyProjectAssignment(personId);
 }

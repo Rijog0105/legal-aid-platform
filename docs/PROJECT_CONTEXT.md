@@ -20,9 +20,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Active Task** | Phase 8 — Survey & Report Automation (Planning Complete) |
+| **Current Active Task** | V2 Architectural Restructure — Phase 1 Terminology Rename |
 | **Last Completed Module** | Identity & Registration Module (pre-Phase 8 foundation) |
-| **Next Planned Work** | Phase 8A — Beneficiary Survey Form |
+| **Next Planned Work** | Phase 1 Rename and Phase 2 Sub-Tabs Implementation |
 | **Build Status** | ✅ Verified — `npx tsc --noEmit` and `npm run build` both pass (0 errors) |
 
 ---
@@ -102,16 +102,16 @@
 - `/people` route wired into AppShell
 - See `docs/PHASE_03_PEOPLE.md` for full details
 
-## Completed Work (Phase 4)
+## Completed Work (Phase 4 — Project Management)
 
-- `campService.ts` / `campPeopleService.ts` — Supabase CRUD for camps and camp_people
-- `CampListPage`, `CampCreatePage`, `CampDetailPage`, `CampPeopleTab`, `AssignPersonModal`, `CampForm`
+- `projectService.ts` / `projectPeopleService.ts` — Supabase CRUD for projects and project_people (maps to database tables `camps` and `camp_people`)
+- `ProjectListPage`, `ProjectCreatePage`, `ProjectDetailPage`, `ProjectPeopleTab`, `AssignPersonModal`, `ProjectForm`
 - Status transitions: draft → active → completed → archived
-- People assignment to camps with camp roles
+- People assignment to projects with project roles
 - TypeScript verification and production build confirmed passing
 - Supabase project created; `001_complete_schema.sql` executed; database tables and roles confirmed
 - Frontend connects to Supabase; login page confirmed reaching Supabase Auth
-- See `docs/PHASE_04_CAMPS.md` for full details
+- See `docs/PROJECT_RESTRUCTURE_V2.md` and `docs/PHASE_04_CAMPS.md` for details
 
 ## Completed Work (Phase 5)
 
@@ -231,12 +231,12 @@
 ## Current Architecture
 
 - **Pattern:** `service → hook → component`, repeated per feature module. Each feature under `src/features/<name>/` owns its own `services/`, `hooks/`, and `components/`, plus a barrel `index.ts`.
-- **Feature modules implemented so far:** `auth`, `people`, `camps` (includes the People tab, status transitions), `activities` (CRUD, drag-and-drop reorder, status workflow), `volunteer` (photo capture, submission gallery, faculty photo review & report selection).
-- **Shared UI primitives** (`src/components/ui/`): `Button`, `Input`, `Card`, `Badge` (with camp/activity status variants), `Spinner`, `EmptyState` — reused by every feature module.
-- **State:** Zustand only where needed (`authStore`); most feature state lives in local hooks (`usePeople`, `useCamp`, `useActivities`, `useCampPhotos`, `useMyPhotos`, `useMyCampAssignment`).
-- **Data layer:** Supabase client (`src/services/supabase.ts`) accessed directly from feature services — no repository/ORM abstraction layer.
+- **Feature modules implemented so far:** `auth`, `people`, `projects` (previously `camps`, includes the People tab, status transitions), `activities` (CRUD, drag-and-drop reorder, status workflow), `volunteer` (photo capture, submission gallery, faculty photo review & report selection).
+- **Shared UI primitives** (`src/components/ui/`): `Button`, `Input`, `Card`, `Badge` (with project/activity status variants), `Spinner`, `EmptyState` — reused by every feature module.
+- **State:** Zustand only where needed (`authStore`); most feature state lives in local hooks (`usePeople`, `useProject`, `useActivities`, `useProjectPhotos`, `useMyPhotos`, `useMyProjectAssignment`).
+- **Data layer:** Supabase client (`src/services/supabase.ts`) accessed directly from feature services — maps frontend project terminology to backend SQL schema (`camps` and `camp_people` tables).
 - **Drag-and-drop:** `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`, used in Phase 5 for activity reordering.
-- **Routing:** React Router v7, faculty routes under the sidebar `AppShell`, volunteer routes under `VolunteerLayout`; `activities` and `photos` have no dedicated routes for faculty — they are tabs within `CampDetailPage`.
+- **Routing:** React Router v7, faculty routes under the sidebar `AppShell`, volunteer routes under `VolunteerLayout`; `activities` and `photos` have no dedicated routes for faculty — they are tabs within `ProjectDetailPage`.
 
 ---
 

@@ -4,7 +4,7 @@
  * Feature-level types should extend/pick from these.
  * ──────────────────────────────────────────────────────────── */
 
-import type { CampStatus, ActivityStatus, ReportStatus, CampRole, PersonCategory, NarrativeSectionType, RoleName, RegistrationStatus } from '@/constants';
+import type { ProjectStatus, ActivityStatus, ReportStatus, ProjectRole, PersonCategory, NarrativeSectionType, RoleName, RegistrationStatus } from '@/constants';
 
 /* ─── 1. roles ────────────────────────────────────────────── */
 
@@ -55,7 +55,7 @@ export interface ReportSettings {
   max_photos_per_activity: number;
 }
 
-export interface Camp {
+export interface Project {
   id: string;
   camp_name: string;
   description: string | null;
@@ -65,7 +65,7 @@ export interface Camp {
   village_name: string;
   taluk: string;
   district: string;
-  status: CampStatus;
+  status: ProjectStatus;
   allocated_budget?: number | null;
   report_settings: ReportSettings;
   created_by: string;
@@ -74,15 +74,15 @@ export interface Camp {
 
 /* ─── 5. camp_people ──────────────────────────────────────── */
 
-export interface CampPerson {
+export interface ProjectPerson {
   id: string;
   camp_id: string;
   person_id: string;
-  camp_role: CampRole;
+  camp_role: ProjectRole;
   assigned_at: string;
 }
 
-export interface CampPersonWithDetails extends CampPerson {
+export interface ProjectPersonWithDetails extends ProjectPerson {
   person: Person;
 }
 
@@ -165,17 +165,17 @@ export interface Report {
 
 /* ─── Composite / View Types ──────────────────────────────── */
 
-export interface CampWithCounts extends Camp {
+export interface ProjectWithCounts extends Project {
   activity_count?: number;
   photo_count?: number;
   volunteer_count?: number;
 }
 
-export interface CampReportData {
-  camp: Camp;
-  faculty: CampPersonWithDetails[];
-  guests: CampPersonWithDetails[];
-  volunteers: CampPersonWithDetails[];
+export interface ProjectReportData {
+  camp: Project;
+  faculty: ProjectPersonWithDetails[];
+  guests: ProjectPersonWithDetails[];
+  volunteers: ProjectPersonWithDetails[];
   activities: Activity[];
   photos: Photo[];
   expenses: Expense[];

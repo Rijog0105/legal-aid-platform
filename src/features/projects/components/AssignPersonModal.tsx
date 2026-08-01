@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { X, Search, CheckSquare, Square } from 'lucide-react';
 import { Button, Badge, Spinner } from '@/components/ui';
-import { CAMP_ROLE, PERSON_CATEGORY, type CampRole, type PersonCategory } from '@/constants';
+import { PROJECT_ROLE, PERSON_CATEGORY, type ProjectRole, type PersonCategory } from '@/constants';
 import type { Person } from '@/types';
 import { fetchPeople } from '@/features/people/services/peopleService';
-import { assignMultiplePeopleToCamp } from '@/features/camps/services/campPeopleService';
+import { assignMultiplePeopleToProject } from '@/features/projects/services/projectPeopleService';
 
 /* ─── Labels ─────────────────────────────────────────────── */
-const ROLE_LABELS: Record<CampRole, string> = {
-  [CAMP_ROLE.FACULTY_COORDINATOR]: 'Faculty Coordinator',
-  [CAMP_ROLE.GUEST]: 'Guest',
-  [CAMP_ROLE.VOLUNTEER]: 'Volunteer',
-  [CAMP_ROLE.TEAM_LEAD]: 'Team Lead',
+const ROLE_LABELS: Record<ProjectRole, string> = {
+  [PROJECT_ROLE.FACULTY_COORDINATOR]: 'Faculty Coordinator',
+  [PROJECT_ROLE.GUEST]: 'Guest',
+  [PROJECT_ROLE.VOLUNTEER]: 'Volunteer',
+  [PROJECT_ROLE.TEAM_LEAD]: 'Team Lead',
 };
 
 const CATEGORY_BADGE: Record<PersonCategory, 'primary' | 'info' | 'default'> = {
@@ -20,33 +20,33 @@ const CATEGORY_BADGE: Record<PersonCategory, 'primary' | 'info' | 'default'> = {
   [PERSON_CATEGORY.EXTERNAL]: 'default',
 };
 
-const ROLE_SECTIONS: { role: CampRole; label: string; allowedCategories: PersonCategory[] }[] = [
+const ROLE_SECTIONS: { role: ProjectRole; label: string; allowedCategories: PersonCategory[] }[] = [
   {
-    role: CAMP_ROLE.FACULTY_COORDINATOR,
+    role: PROJECT_ROLE.FACULTY_COORDINATOR,
     label: 'Faculty Coordinators',
     allowedCategories: [PERSON_CATEGORY.FACULTY],
   },
   {
-    role: CAMP_ROLE.VOLUNTEER,
+    role: PROJECT_ROLE.VOLUNTEER,
     label: 'Student Volunteers',
     allowedCategories: [PERSON_CATEGORY.STUDENT],
   },
   {
-    role: CAMP_ROLE.GUEST,
+    role: PROJECT_ROLE.GUEST,
     label: 'Guests',
     allowedCategories: [PERSON_CATEGORY.EXTERNAL],
   },
 ];
 
 interface AssignPersonModalProps {
-  campId: string;
+  campId: string; // campId is expected by ProjectPeopleTab to match the interface, let's keep it but internalize it as projectId
   alreadyAssignedPersonIds: string[];
   onClose: () => void;
   onAssigned: () => void;
 }
 
 export function AssignPersonModal({
-  campId,
+  campId: projectId,
   alreadyAssignedPersonIds,
   onClose,
   onAssigned,
@@ -55,7 +55,7 @@ export function AssignPersonModal({
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [campRole, setCampRole] = useState<CampRole>(CAMP_ROLE.VOLUNTEER);
+  const [projectRole, setProjectRole] = useState<ProjectRole>(PROJECT_ROLE.VOLUNTEER);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,7 +74,7 @@ export function AssignPersonModal({
   }, [search]);
 
   // People not already assigned, filtered by allowed category for the selected role
-  const section = ROLE_SECTIONS.find((s) => s.role === campRole);
+  const section = ROLE_SECTIONS.find((s) => s.role === projectRole);
   const allowedCategories = section?.allowedCategories ?? [];
 
   const availablePeople = people.filter(
@@ -105,7 +105,7 @@ export function AssignPersonModal({
     setIsSaving(true);
     setError(null);
     try {
-      await assignMultiplePeopleToCamp(campId, Array.from(selectedIds), campRole);
+      await assignMultiplePeopleToProject(projectId, Array.from(selectedIds), projectRole);
       onAssigned();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to assign people');
@@ -115,8 +115,8 @@ export function AssignPersonModal({
   };
 
   // Reset selections when role changes
-  const handleRoleChange = (role: CampRole) => {
-    setCampRole(role);
+  const handleRoleChange = (role: ProjectRole) => {
+    setProjectRole(role);
     setSelectedIds(new Set());
   };
 
@@ -132,7 +132,7 @@ export function AssignPersonModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-surface-900">Assign People to Camp</h2>
+          <h2 className="text-lg font-semibold text-surface-900">Assign People to Project</h2>
           <button
             type="button"
             onClick={onClose}
@@ -155,7 +155,7 @@ export function AssignPersonModal({
                   type="button"
                   onClick={() => handleRoleChange(s.role)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                    campRole === s.role
+                    projectRole === s.role
                       ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
                       : 'bg-white text-surface-600 border-surface-300 hover:border-primary-400 hover:text-primary-600'
                   }`}
@@ -249,7 +249,7 @@ export function AssignPersonModal({
           {selectedIds.size > 0 && (
             <p className="text-xs text-primary-700 font-semibold">
               {selectedIds.size} person{selectedIds.size !== 1 ? 's' : ''} selected as{' '}
-              {ROLE_LABELS[campRole]}
+              {ROLE_LABELS[projectRole]}
             </p>
           )}
 

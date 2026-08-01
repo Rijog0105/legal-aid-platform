@@ -19,12 +19,12 @@ import { EXPENSE_CATEGORIES } from '../constants';
 import { generateBudgetReportPDF } from '../utils/budgetReportGenerator';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROLES } from '@/constants';
-import type { Camp, Expense } from '@/types';
+import type { Project, Expense } from '@/types';
 import { formatCurrency, formatDate } from '@/utils';
 
 interface BudgetTabProps {
   campId: string;
-  camp: Camp;
+  camp: Project;
   onCampUpdate?: () => void;
 }
 
@@ -145,7 +145,7 @@ export function BudgetTab({ campId, camp, onCampUpdate }: BudgetTabProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-surface-200 shadow-sm">
         <div>
           <h2 className="text-lg font-extrabold text-surface-900 leading-tight">
-            Camp Budget &amp; Expenses
+            Project Budget &amp; Expenses
           </h2>
           <p className="text-xs text-surface-500 mt-0.5">
             Track line-item expenditures, category allocations, and balance statement.

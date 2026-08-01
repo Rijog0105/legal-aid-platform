@@ -3,23 +3,23 @@ import type { NarrativeSection } from '@/types';
 import type { NarrativeSectionType } from '@/constants';
 
 /**
- * Fetch all narrative sections for a given camp.
+ * Fetch all narrative sections for a given project.
  */
-export async function fetchNarrativeSections(campId: string): Promise<NarrativeSection[]> {
+export async function fetchNarrativeSections(projectId: string): Promise<NarrativeSection[]> {
   const { data, error } = await supabase
     .from('narrative_sections')
     .select('*')
-    .eq('camp_id', campId);
+    .eq('camp_id', projectId);
 
   if (error) throw new Error(error.message);
   return (data as NarrativeSection[]) || [];
 }
 
 /**
- * Upsert a narrative section for a camp.
+ * Upsert a narrative section for a project.
  */
 export async function upsertNarrativeSection(
-  campId: string,
+  projectId: string,
   sectionType: NarrativeSectionType,
   content: string,
   updatedBy: string
@@ -28,7 +28,7 @@ export async function upsertNarrativeSection(
     .from('narrative_sections')
     .upsert(
       {
-        camp_id: campId,
+        camp_id: projectId,
         section_type: sectionType,
         content,
         updated_by: updatedBy,

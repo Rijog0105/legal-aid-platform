@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Trash2, MapPin, AlertCircle, Images } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useMyCampAssignment } from '@/features/volunteer/hooks/useMyCampAssignment';
+import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { useMyPhotos } from '@/features/volunteer/hooks/useMyPhotos';
 import { deletePhoto, type PhotoWithActivityName } from '@/features/volunteer/services/photoService';
 import { PhotoThumbnail } from '@/features/volunteer/components/PhotoThumbnail';
@@ -14,9 +14,9 @@ export function MySubmissionsPage() {
   const { personId, userId } = useAuth();
   const navigate = useNavigate();
 
-  const { camp, isLoading: campLoading, error: campError } = useMyCampAssignment(personId);
+  const { project, isLoading: projectLoading, error: projectError } = useMyProjectAssignment(personId);
   const { photos, isLoading: photosLoading, error: photosError, reload } = useMyPhotos(
-    camp?.id ?? null,
+    project?.id ?? null,
     userId
   );
 
@@ -40,7 +40,7 @@ export function MySubmissionsPage() {
     }
   };
 
-  if (campLoading || photosLoading) {
+  if (projectLoading || photosLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" />
@@ -48,15 +48,15 @@ export function MySubmissionsPage() {
     );
   }
 
-  if (campError || !camp) {
+  if (projectError || !project) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center">
           <MapPin className="w-8 h-8 text-surface-400" />
         </div>
-        <p className="text-base font-semibold text-surface-800">No active camp</p>
+        <p className="text-base font-semibold text-surface-800">No active project</p>
         <p className="text-sm text-surface-500">
-          {campError ?? 'You are not assigned to an active camp.'}
+          {projectError ?? 'You are not assigned to an active project.'}
         </p>
         <Button variant="secondary" size="sm" onClick={() => navigate(ROUTES.VOLUNTEER_HOME)}>
           Back to Home
@@ -91,7 +91,7 @@ export function MySubmissionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-surface-900">Personal Gallery</h1>
-          <p className="text-xs text-surface-500 mt-0.5">{camp.camp_name}</p>
+          <p className="text-xs text-surface-500 mt-0.5">{project.camp_name}</p>
         </div>
         <div className="px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold">
           {photos.length} Photo{photos.length !== 1 ? 's' : ''} Submitted

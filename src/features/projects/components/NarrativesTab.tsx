@@ -10,11 +10,11 @@ interface NarrativesTabProps {
 }
 
 const SECTION_DESCRIPTIONS: Record<NarrativeSectionType, string> = {
-  [NARRATIVE_SECTION_TYPE.SYNOPSIS]: 'Executive summary of the legal aid camp, background context, and overall execution.',
-  [NARRATIVE_SECTION_TYPE.OBJECTIVES]: 'Key legal literacy, consultation, and institutional goals established for the camp.',
+  [NARRATIVE_SECTION_TYPE.SYNOPSIS]: 'Executive summary of the legal aid project, background context, and overall execution.',
+  [NARRATIVE_SECTION_TYPE.OBJECTIVES]: 'Key legal literacy, consultation, and institutional goals established for the project.',
   [NARRATIVE_SECTION_TYPE.OBSERVATIONS]: 'On-field observations regarding legal queries, community awareness, and field dynamics.',
-  [NARRATIVE_SECTION_TYPE.RECOMMENDATIONS]: 'Actionable suggestions for future camps, legal clinic improvements, and authority follow-ups.',
-  [NARRATIVE_SECTION_TYPE.CONCLUSION]: 'Concluding summary of camp achievements, beneficiary engagement, and final remarks.',
+  [NARRATIVE_SECTION_TYPE.RECOMMENDATIONS]: 'Actionable suggestions for future projects, legal clinic improvements, and authority follow-ups.',
+  [NARRATIVE_SECTION_TYPE.CONCLUSION]: 'Concluding summary of project achievements, beneficiary engagement, and final remarks.',
 };
 
 const SECTION_TYPES: NarrativeSectionType[] = [
@@ -25,9 +25,9 @@ const SECTION_TYPES: NarrativeSectionType[] = [
   NARRATIVE_SECTION_TYPE.CONCLUSION,
 ];
 
-export function NarrativesTab({ campId }: NarrativesTabProps) {
+export function NarrativesTab({ campId: projectId }: NarrativesTabProps) {
   const { userId } = useAuth();
-  const { narratives, isLoading, error, saveSection } = useNarratives(campId);
+  const { narratives, isLoading, error, saveSection } = useNarratives(projectId);
 
   const [localContent, setLocalContent] = useState<Record<string, string>>({});
   const [savingState, setSavingState] = useState<Record<string, boolean>>({});
