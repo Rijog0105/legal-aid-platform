@@ -49,8 +49,6 @@ graph TD
     Survey --> SurveyAssign[Assign People]
     Survey --> SurveyAttendance[Survey Attendance]
     Survey --> SurveyForms[Survey Forms - Volunteer UI]
-    Survey --> VerifyPhotos[Verification Photos]
-    Survey --> SurveyPhotos[Survey Documentation Photos]
     Survey --> SurveyBudget[Survey Budget]
     Survey --> SurveyDash[Survey Dashboard: Stats, Individual Reports, Consolidated Reports]
 
@@ -75,29 +73,28 @@ graph TD
 ```
 Faculty Home
 ├── Legal Aid Projects (Overview / List)
-│   ├── Create Project
+│   ├── Create Project (Creation Form contains only Name, Desc, Village, Taluk, District, State, Academic Year)
 │   └── Project Details (Project ID Workspace)
-│       ├── Overview (Details, Status Controls, Metadata)
-│       ├── Survey Phase (Sub-tab)
-│       │   ├── Schedule Survey
-│       │   ├── Assign People (Survey-specific roster)
-│       │   ├── Attendance
-│       │   ├── Verification Photos
-│       │   ├── Survey Photos
-│       │   ├── Survey Budget
-│       │   └── Survey Dashboard (Consolidated survey stats & PDF individual list)
-│       ├── Camp Phase (Sub-tab)
-│       │   ├── Schedule Camp
-│       │   ├── Assign People (Camp-specific roster)
-│       │   ├── Attendance
-│       │   ├── Guests
-│       │   ├── Activities
-│       │   ├── Documentation Photos
-│       │   └── Camp Budget
-│       └── Final Report (Sub-tab)
-│           ├── Synopsis & Narrative Sections
-│           ├── Report Preview
-│           └── PDF/DOCX Download Center
+│       ├── Overview (Project Home landing view with metadata & phase schedules)
+│       ├── Survey Phase (Sub-tab workspace)
+│       │   ├── Survey Dashboard (Placeholder)
+│       │   ├── Schedule Survey (SurveySchedule component)
+│       │   ├── Assign People (Reuses ProjectPeopleTab)
+│       │   ├── Attendance (Reuses ProjectPeopleTab)
+│       │   ├── Survey Forms (Placeholder / Central module; Verification photos are linked here)
+│       │   └── Survey Budget (Reuses BudgetTab)
+│       ├── Camp Phase (Sub-tab workspace)
+│       │   ├── Activities (Reuses ActivitiesTab)
+│       │   ├── Documentation Photos (Reuses PhotosTab)
+│       │   ├── Camp Budget (Reuses BudgetTab)
+│       │   ├── Schedule Camp (CampSchedule component)
+│       │   ├── Assign People (Reuses ProjectPeopleTab)
+│       │   ├── Attendance (Reuses ProjectPeopleTab)
+│       │   └── Guests & Dignitaries (Placeholder)
+│       └── Final Report (Cohesive single workspace)
+│           ├── Workspace controls: Generate Draft, Preview Draft, Generate Final, Designer (Soon)
+│           ├── Content Readiness Checklist
+│           └── Synopsis & Narrative Editors (Reuses NarrativesTab)
 └── People Registry
 ```
 
@@ -117,9 +114,7 @@ Team Lead Home
 Volunteer Portal
 ├── Project Overview (Upcoming / Active / Finished status indicator)
 ├── Survey Phase (Enabled during Active Survey Phase)
-│   ├── Survey Form (Collect beneficiary data)
-│   ├── Verification Photo (Capture GPS-stamped site check)
-│   └── Survey Photos (General survey site upload)
+│   └── Survey Form (Collect beneficiary data; Verification photos attached here)
 ├── Camp Phase (Enabled during Active Camp Phase)
 │   ├── Capture Activity Photo (Camera capture of counseling/booths)
 │   └── Documentation Gallery (My submissions grouped by activity)
@@ -133,8 +128,7 @@ Volunteer Portal
 1. **Parent Containment**: All activities, surveys, photos, budgets, and assignments are tied to the **Project ID**.
 2. **Phase Partitioning**:
    - **Photos**:
-     - *Verification Photos* (Survey site checks) are linked to Survey Phase.
-     - *Survey Photos* (Data collection verification) are linked to Survey Phase.
+     - *Verification Photos* & *Survey Photos* will be attached directly to individual survey forms during Survey Engine implementation (Phase 8).
      - *Documentation Photos* (Activity captures) are linked to Camp Phase.
    - **Rosters**:
      - Staffing can differ. People can be assigned to the Survey Phase (e.g., student surveyors) or the Camp Phase (e.g., counseling students, guest speakers) independently.
@@ -143,61 +137,37 @@ Volunteer Portal
 
 ---
 
-## 6. Implementation Strategy & Safe Phases
+## 6. Implementation Strategy & Milestones
 
-Refactoring the architecture is planned across three progressive phases to minimize operational risk and keep the application buildable at all times:
+Refactoring the architecture is planned across three progressive phases:
 
-### Phase 1: Terminology Rename (Focus of Current Step)
-- Rename UI text, labels, page titles, React components, state variables, hooks, routes, types, and client-side service functions from "Camp" to "Project" or "Legal Aid Project".
-- **Crucial Safety Rule**: Do NOT modify the database schema at this phase. Supabase tables (`camps`, `camp_people`), foreign key constraints, and SQL column names (`camp_id`, `camp_role`) remain exactly as they are. The frontend services act as the mapping layer.
+### Phase 1: Terminology Rename — `[COMPLETED]`
+- Renamed UI text, labels, page titles, React components, state variables, hooks, routes, types, and client-side service functions from "Camp" to "Project" or "Legal Aid Project".
+- **Safety Rule Maintained**: Underlying database schema and column names (`camp_id`, `camp_role`, `camps` table) remain untouched.
 
-### Phase 2: Information Architecture & Sub-Tabs Setup
-- Reorganize the `ProjectDetailPage` layout. Introduce the sub-tabs: Overview, Survey Phase, Camp Phase, and Final Report.
-- Group existing tabs into these sub-tabs (e.g. move `NarrativesTab` and `ReportPreparationTab` under Final Report; move `ActivitiesTab` under Camp Phase).
+### Phase 2: Information Architecture & Sub-Tabs Setup — `[COMPLETED]`
+- Reorganized `ProjectDetailPage` layout to use a lifecycle navigation model with 4 main workspaces: Overview, Survey Phase, Camp Phase, and Final Report.
+- Created sub-navigation hierarchies composing existing working modules (`ProjectPeopleTab`, `ActivitiesTab`, `PhotosTab`, `BudgetTab`) directly without code duplication.
+- Reconstructed the report section into a single unified Report Workspace.
 
-### Phase 3: Roster, Photo, and Budget Bifurcation
-- Refactor the database schema or data layer to allow independent rosters (`camp_people` rows assigned specifically to `survey` vs `camp` phase).
-- Categorize photos with a phase indicator column (`survey_verification`, `survey_documentation`, `camp_documentation`).
-- Categorize budget expenses by phase.
-
----
-
-## 7. Affected Frontend Modules (Phase 1 Rename)
-
-The following areas are renamed or updated in Phase 1:
-
-1. **Routes & Constants**:
-   - Rename `ROUTES.CAMPS` to `ROUTES.PROJECTS`.
-   - Rename `ROUTES.CAMP_DETAIL` to `ROUTES.PROJECT_DETAIL`.
-   - Rename `CAMP_STATUS` to `PROJECT_STATUS`.
-   - Rename `CAMP_ROLE` to `PROJECT_ROLE`.
-2. **Components**:
-   - Rename features folder `src/features/camps` to `src/features/projects`.
-   - Rename files and exports: `CampListPage` → `ProjectListPage`, `CampDetailPage` → `ProjectDetailPage`, `CampForm` → `ProjectForm`, etc.
-3. **Hooks & Services**:
-   - Rename hooks: `useCamp` → `useProject`, `useCamps` → `useProjects`, `useCampPeople` → `useProjectPeople`.
-   - Rename service: `campService.ts` → `projectService.ts`, `campPeopleService.ts` → `projectPeopleService.ts`.
+### Phase 3: Workflow Correction & Scheduling Modules — `[COMPLETED]`
+- Removed project date fields from the main project creation form.
+- Created Survey Schedule (`SurveySchedule.tsx`) and Camp Schedule (`CampSchedule.tsx`) components, persisting data securely via existing columns and `report_settings` JSONB.
+- Upgraded the top navigation from simple text links to a properly styled segmented control.
+- Removed standalone Verification Photos and Survey Photos modules from the navigation to prepare for the integrated Survey Engine.
+- Updated ACCEPTED milestones list and remaining workflow roadmaps.
 
 ---
 
-## 8. Risk Assessment & Mitigation
+## 7. Acceptance Criteria (Milestone 3 Workflow Correctness)
 
-- **Risk: Supabase Query Breaks**: Renaming variables might lead to changing query parameter names in Supabase calls (e.g., renaming `camp_id` in code to `projectId` but sending `projectId` to a Supabase query expecting `camp_id`).
-  - *Mitigation*: Ensure all service queries maintain the literal column names of the database schema (`camp_id`, `camp_role`, `camps` table name) in their Supabase client calls.
-- **Risk: TypeScript Type Mismatch**: Extensive type renaming can cause cascade compiler errors.
-  - *Mitigation*: Run `npx tsc --noEmit` frequently during rename steps. Ensure interfaces like `Camp` are safely renamed to `Project` while mapping key fields properly.
-- **Risk: Lost RLS Context**: The application depends on SQL policies checking roles.
-  - *Mitigation*: Do not change the SQL database tables or functions. RLS relies entirely on the SQL database schema, which remains frozen.
-
----
-
-## 9. Acceptance Criteria (Phase 1 Rename)
-
-1. **UI Alignment**:
-   - No user-visible references to "Camp" or "Camps" remain in the main navigation, headers, labels, placeholders, lists, or dashboard cards (except where referencing a historical database tag/code if strictly necessary). All displayed names read "Legal Aid Project" or "Project".
-2. **Functional Preservation**:
-   - The user can list, create, edit, view, and transition states of Projects exactly as they did with Camps.
-   - Budgeting, narrative edits, photo upload, and registration approval functions continue to work without error.
-3. **Build Success**:
-   - `npx tsc --noEmit` returns `0` errors.
-   - `npm run build` succeeds and produces the production build package.
+1. **Workflow Form Alignment**:
+   - Project creation form contains no date inputs.
+2. **Phase Scheduling**:
+   - Survey schedule and camp schedule are editable and viewable directly within the workspaces.
+3. **No Standalone Verification/Survey Photo Tabs**:
+   - Photo tabs are removed from the Survey Phase sub-navigation in preparation for Survey Forms attachment.
+4. **Segmented Switcher**:
+   - Workspace navigation uses structured neutral segmented control buttons.
+5. **Clean Build**:
+   - `npx tsc --noEmit` and `npm run build` execute successfully.

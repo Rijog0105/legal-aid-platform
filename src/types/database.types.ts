@@ -53,6 +53,14 @@ export interface ReportSettings {
   include_budget: boolean;
   include_survey_stats: boolean;
   max_photos_per_activity: number;
+  survey_date?: string;
+  survey_start_time?: string;
+  survey_end_time?: string;
+  survey_notes?: string;
+  camp_notes?: string;
+  state?: string;
+  academic_year?: string;
+  venue?: string;
 }
 
 export interface Project {

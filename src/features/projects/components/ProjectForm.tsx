@@ -11,12 +11,11 @@ import { createProject, updateProject } from '@/features/projects/services/proje
 const schema = z.object({
   camp_name: z.string().min(2, 'Project name must be at least 2 characters'),
   description: z.string().optional(),
-  camp_date: z.string().min(1, 'Project date is required'),
-  start_time: z.string().optional(),
-  end_time: z.string().optional(),
   village_name: z.string().min(1, 'Village is required'),
   taluk: z.string().min(1, 'Taluk is required'),
   district: z.string().min(1, 'District is required'),
+  state: z.string().min(1, 'State is required'),
+  academic_year: z.string().optional(),
   include_budget: z.boolean(),
   include_survey_stats: z.boolean(),
   max_photos_per_activity: z.number().int().min(1, 'Must be at least 1'),
@@ -44,12 +43,11 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
     defaultValues: {
       camp_name: '',
       description: '',
-      camp_date: '',
-      start_time: '',
-      end_time: '',
       village_name: '',
       taluk: '',
       district: '',
+      state: 'Karnataka',
+      academic_year: '',
       include_budget: true,
       include_survey_stats: true,
       max_photos_per_activity: APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY,
@@ -61,12 +59,11 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
       reset({
         camp_name: project.camp_name,
         description: project.description ?? '',
-        camp_date: project.camp_date,
-        start_time: project.start_time ?? '',
-        end_time: project.end_time ?? '',
         village_name: project.village_name,
         taluk: project.taluk,
         district: project.district,
+        state: project.report_settings?.state ?? 'Karnataka',
+        academic_year: project.report_settings?.academic_year ?? '',
         include_budget: project.report_settings?.include_budget ?? true,
         include_survey_stats: project.report_settings?.include_survey_stats ?? true,
         max_photos_per_activity:
@@ -77,12 +74,13 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
   }, [project, reset]);
 
   const onSubmit = async (values: FormValues) => {
+    // Retain original camp_date/times if editing, otherwise assign default today's date
     const payload = {
       camp_name: values.camp_name,
       description: values.description || null,
-      camp_date: values.camp_date,
-      start_time: values.start_time || null,
-      end_time: values.end_time || null,
+      camp_date: project?.camp_date || new Date().toISOString().split('T')[0],
+      start_time: project?.start_time || null,
+      end_time: project?.end_time || null,
       village_name: values.village_name,
       taluk: values.taluk,
       district: values.district,
@@ -90,6 +88,13 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
         include_budget: values.include_budget,
         include_survey_stats: values.include_survey_stats,
         max_photos_per_activity: values.max_photos_per_activity,
+        survey_date: project?.report_settings?.survey_date,
+        survey_start_time: project?.report_settings?.survey_start_time,
+        survey_end_time: project?.report_settings?.survey_end_time,
+        survey_notes: project?.report_settings?.survey_notes,
+        camp_notes: project?.report_settings?.camp_notes,
+        state: values.state,
+        academic_year: values.academic_year || undefined,
       },
     };
 
@@ -124,31 +129,7 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Input
-            label="Project Date *"
-            id="camp_date"
-            type="date"
-            error={errors.camp_date?.message}
-            {...register('camp_date')}
-          />
-          <Input
-            label="Start Time"
-            id="start_time"
-            type="time"
-            error={errors.start_time?.message}
-            {...register('start_time')}
-          />
-          <Input
-            label="End Time"
-            id="end_time"
-            type="time"
-            error={errors.end_time?.message}
-            {...register('end_time')}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Village *"
             id="village_name"
@@ -163,12 +144,29 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
             error={errors.taluk?.message}
             {...register('taluk')}
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input
             label="District *"
             id="district"
             placeholder="District"
             error={errors.district?.message}
             {...register('district')}
+          />
+          <Input
+            label="State *"
+            id="state"
+            placeholder="State"
+            error={errors.state?.message}
+            {...register('state')}
+          />
+          <Input
+            label="Academic Year"
+            id="academic_year"
+            placeholder="2026-27"
+            error={errors.academic_year?.message}
+            {...register('academic_year')}
           />
         </div>
 

@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Card, Button, Badge, Spinner } from '@/components/ui';
-import { CheckCircle2, AlertCircle, FileText, Camera, Calendar, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle2, AlertCircle, FileText, Camera, Calendar, ArrowRight, Sparkles, Wand2, Eye, FileCheck, Palette } from 'lucide-react';
 import { useActivities } from '@/features/activities/hooks/useActivities';
 import { useProjectPhotos } from '@/features/volunteer/hooks/useProjectPhotos';
 import { useNarratives } from '../hooks/useNarratives';
@@ -8,15 +7,13 @@ import { NarrativesTab } from './NarrativesTab';
 
 interface ReportPreparationTabProps {
   projectId: string;
-  onNavigateTab: (tabKey: 'activities' | 'photos' | 'narratives') => void;
+  onNavigateTab: (tabKey: 'activities' | 'photos') => void;
 }
 
 export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPreparationTabProps) {
   const { activities, isLoading: activitiesLoading } = useActivities(projectId);
   const { photos, isLoading: photosLoading } = useProjectPhotos(projectId);
   const { narratives, isLoading: narrativesLoading } = useNarratives(projectId);
-
-  const [activeSubView, setActiveSubView] = useState<'checklist' | 'narratives'>('checklist');
 
   const isLoading = activitiesLoading || photosLoading || narrativesLoading;
 
@@ -38,6 +35,10 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
   const completedSteps = (isActivitiesReady ? 1 : 0) + (isPhotosReady ? 1 : 0) + (isNarrativesReady ? 1 : 0);
   const isFullyReady = completedSteps === 3;
 
+  const handleActionClick = (actionName: string) => {
+    alert(`${actionName} engine will be integrated in Phase 8 (Report Studio).`);
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* ─── Header & Notice ─── */}
@@ -45,7 +46,7 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-bold">Report Preparation Workspace</h2>
+            <h2 className="text-lg font-bold">Report Workspace</h2>
           </div>
           <Badge variant={isFullyReady ? 'success' : 'warning'}>
             {isFullyReady ? 'Ready for Generation' : 'Preparation In Progress'}
@@ -55,13 +56,42 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
         <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
           Curate activities, select featured documentation photos, and draft narrative sections. All prepared content is persisted in real time for institutional report compilation.
         </p>
+      </div>
 
-        <div className="pt-2 flex items-center gap-2 text-[11px] text-indigo-200">
-          <span>Target Generation Engine:</span>
-          <span className="font-semibold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
-            Phase 8 (Report Studio)
-          </span>
-        </div>
+      {/* ─── Action Buttons Workspace Controls ─── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Button
+          onClick={() => handleActionClick('Draft Report Generation')}
+          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold"
+          variant="primary"
+          leftIcon={<Wand2 size={15} />}
+        >
+          Generate Draft
+        </Button>
+        <Button
+          onClick={() => handleActionClick('Interactive Preview')}
+          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold"
+          variant="outline"
+          leftIcon={<Eye size={15} />}
+        >
+          Preview Draft
+        </Button>
+        <Button
+          onClick={() => handleActionClick('Final Report Generation')}
+          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold"
+          variant="secondary"
+          leftIcon={<FileCheck size={15} />}
+        >
+          Generate Final
+        </Button>
+        <Button
+          disabled
+          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold opacity-60 cursor-not-allowed"
+          variant="outline"
+          leftIcon={<Palette size={15} />}
+        >
+          Designer (Soon)
+        </Button>
       </div>
 
       {/* ─── Report Readiness Checklist ─── */}
@@ -135,11 +165,10 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
 
           {/* Step 3: Narratives */}
           <div
-            onClick={() => setActiveSubView('narratives')}
-            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            className={`p-4 rounded-2xl border transition-all ${
               isNarrativesReady
-                ? 'bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50'
-                : 'bg-surface-50 border-surface-200 hover:bg-surface-100'
+                ? 'bg-emerald-50/50 border-emerald-200'
+                : 'bg-surface-50 border-surface-200'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -154,27 +183,17 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
             <p className="text-xs text-surface-500 mt-1">
               {filledNarratives.length} / 5 sections drafted
             </p>
-            <div className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-primary-600">
-              <span>Edit Text Blocks</span>
-              <ArrowRight size={12} />
+            <div className="mt-3 text-[11px] font-semibold text-surface-400">
+              <span>Scroll down to edit</span>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* ─── Sub-View Toggle Buttons ─── */}
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant={activeSubView === 'narratives' ? 'primary' : 'outline'}
-          onClick={() => setActiveSubView('narratives')}
-        >
-          Narrative Editors
-        </Button>
+      {/* ─── Narrative Editors View (Cohesive single workspace) ─── */}
+      <div className="border-t border-surface-200 pt-6">
+        <NarrativesTab campId={projectId} />
       </div>
-
-      {/* ─── Narrative Editors View ─── */}
-      {activeSubView === 'narratives' && <NarrativesTab campId={projectId} />}
     </div>
   );
 }
