@@ -129,10 +129,10 @@ export function PhotosTab({ campId: projectId }: PhotosTabProps) {
       {filteredPhotos.length === 0 ? (
         <Card>
           <EmptyState
-            title={photos.length === 0 ? 'No photos uploaded' : 'No matching photos'}
+            title={photos.length === 0 ? 'No documentation photos have been uploaded for this project.' : 'No matching photos'}
             description={
               photos.length === 0
-                ? 'Volunteers have not submitted any photos for this camp yet.'
+                ? 'Documentation photos captured during the project execution will be displayed here.'
                 : 'Try clearing or changing your filters.'
             }
           />

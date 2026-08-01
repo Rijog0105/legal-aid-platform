@@ -9,8 +9,8 @@ export function useNarratives(projectId: string | null | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   const loadNarratives = useCallback(async () => {
+    setNarratives([]);
     if (!projectId) {
-      setNarratives([]);
       setIsLoading(false);
       return;
     }

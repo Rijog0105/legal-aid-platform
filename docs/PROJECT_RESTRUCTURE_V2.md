@@ -171,3 +171,61 @@ Refactoring the architecture is planned across three progressive phases:
    - Workspace navigation uses structured neutral segmented control buttons.
 5. **Clean Build**:
    - `npx tsc --noEmit` and `npm run build` execute successfully.
+
+---
+
+### Stabilization Pass: Data Isolation Audit — `[COMPLETED]`
+
+- Fixed cross-project photo leakage by clearing state at the start of every query hook's load callback (`useProjectPhotos`, `useActivities`, `useExpenses`, `useProjectPeople`, `useNarratives`).
+- Updated empty state copy in all module tabs to be project-specific and professional.
+- Removed redundant "Guests & Dignitaries" sub-tab from Camp Phase (guests managed via Assign People).
+- Matched SurveySchedule and CampSchedule layouts identically (Date / Hours / Location / Notes).
+- Clean build verified: `npx tsc --noEmit` and `npm run build` pass with 0 errors.
+
+---
+
+### Final UI Polish — `[COMPLETED]`
+
+This is the last milestone of the platform foundation phase. All subsequent work is feature-level implementation.
+
+#### Changes Implemented
+
+1. **Delete Project workflow** (`ProjectDetailPage.tsx`):
+   - Faculty/Admin-only "Delete Project" button added to the project header.
+   - Confirmation dialog listing all data that will be permanently removed.
+   - User must type the full project name (case-insensitive) to unlock the Delete button.
+   - On success, navigates to the Projects list with a dismissible deletion success banner (`ProjectListPage.tsx`).
+   - Calls the existing `deleteProject()` service; cascade rules in the database handle child record cleanup.
+
+2. **Overview tab converted to executive read-only dashboard** (`ProjectOverviewCard.tsx`):
+   - Project Information card: Village, Taluk, District, State, Academic Year, Status.
+   - Phase Progress bars: Survey Progress %, Camp Progress %, Budget Used %.
+   - Read-only Schedule Cards (`SurveyScheduleCard.tsx`, `CampScheduleCard.tsx`) with edit shortcuts that redirect to the appropriate phase workspace.
+   - Quick Statistics grid: live counts for Volunteers, Team Leads, Faculty, Total Assigned, Activities (completed/total), Budget Spent.
+   - All statistics are sourced from `useProjectPeople`, `useActivities`, and `useExpenses` hooks — no static values.
+
+3. **Design principle enforced**: The Overview tab is monitoring-only. All editing is delegated to the Survey Phase and Camp Phase workspaces.
+
+#### New Files
+- `src/features/projects/components/SurveyScheduleCard.tsx` — read-only survey schedule card
+- `src/features/projects/components/CampScheduleCard.tsx` — read-only camp schedule card
+- `src/features/projects/components/ProjectOverviewCard.tsx` — executive overview dashboard
+
+#### Design Rules Established
+- **Monitor in Overview. Edit in Phases.** The Overview tab must never contain editable workflow forms.
+- **Data isolation by project ID.** Every query hook clears its state on load to prevent cross-project leakage.
+- **Confirmed destructive actions require typed confirmation.** All destructive actions on permanent data must require user-typed confirmation (case-insensitive, trimmed).
+
+---
+
+## 8. Platform Foundation Status
+
+> **The platform foundation is now complete and frozen.**
+>
+> The architecture, navigation hierarchy, database schema, and all module frameworks have been finalized across Milestones 1–3, the Stabilization Pass, and the Final UI Polish milestone.
+>
+> All subsequent development will focus exclusively on **feature implementation**:
+>
+> - **Phase 8A — Survey Engine**: Survey form builder, volunteer mobile submission flow, form review, and survey analytics dashboard.
+> - **Phase 8B — Report Generator**: PDF/DOCX generation, narrative editing, photo selection, and institutional submission flow.
+> - **Phase 8C — Designer Integration**: Alumni legal counselor directory, camp coordination, and legal advisor scheduling.

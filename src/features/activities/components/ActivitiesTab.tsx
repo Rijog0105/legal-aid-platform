@@ -8,7 +8,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Plus, ListChecks, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle } from 'lucide-react';
 import { Button, EmptyState, Spinner } from '@/components/ui';
 import type { Activity } from '@/types';
 import type { ActivityStatus } from '@/constants';
@@ -120,11 +120,10 @@ export function ActivitiesTab({ campId }: ActivitiesTabProps) {
           <Spinner size="lg" />
         </div>
       ) : activities.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-surface-200 shadow-sm">
+        <div className="bg-white rounded-2xl border border-surface-200 shadow-sm p-4">
           <EmptyState
-            icon={<ListChecks size={28} />}
-            title="No activities yet"
-            description="Add activities to build out this camp's agenda."
+            title="No activities scheduled"
+            description="No activities have been added to this project's execution agenda yet."
             action={
               <Button leftIcon={<Plus size={15} />} onClick={openCreate}>
                 Add Activity

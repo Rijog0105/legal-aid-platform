@@ -45,7 +45,7 @@ export async function assignMultiplePeopleToProject(
 export async function updateProjectPersonRole(
   projectPersonId: string,
   projectRole: ProjectRole,
-  personId?: string
+  _personId?: string
 ): Promise<ProjectPersonWithDetails> {
   const { data, error } = await supabase
     .from('camp_people')
@@ -54,29 +54,6 @@ export async function updateProjectPersonRole(
     .select('*, person:persons(*)')
     .single();
   if (error) throw new Error(error.message);
-
-  // Sync user table role for system access if personId is provided
-  if (personId) {
-    if (projectRole === 'team_lead') {
-      const { data: roleData } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', 'team_lead')
-        .single();
-      if (roleData) {
-        await supabase.from('users').update({ role_id: roleData.id }).eq('person_id', personId);
-      }
-    } else if (projectRole === 'volunteer') {
-      const { data: roleData } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', 'volunteer')
-        .single();
-      if (roleData) {
-        await supabase.from('users').update({ role_id: roleData.id }).eq('person_id', personId);
-      }
-    }
-  }
 
   return data as unknown as ProjectPersonWithDetails;
 }

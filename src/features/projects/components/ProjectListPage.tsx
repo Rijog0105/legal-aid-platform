@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { Tent, Plus, Search, MapPin, Calendar, AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Tent, Plus, Search, MapPin, Calendar, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { Button, Card, ProjectStatusBadge, EmptyState, Spinner } from '@/components/ui';
 import { PROJECT_STATUS, ROUTES, type ProjectStatus } from '@/constants';
 import { useProjects } from '@/features/projects/hooks/useProjects';
@@ -21,6 +21,10 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 
 export function ProjectListPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const deletedProjectName = (location.state as { deletedProjectName?: string } | null)
+    ?.deletedProjectName ?? null;
+
   const { projects, isLoading, error, search, setSearch, statusFilter, setStatusFilter } =
     useProjects();
 
@@ -28,6 +32,24 @@ export function ProjectListPage() {
 
   return (
     <div>
+      {/* ─── Deletion Success Banner ─── */}
+      {deletedProjectName && (
+        <div className="flex items-center justify-between gap-3 mb-5 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm">
+          <span className="flex items-center gap-2">
+            <CheckCircle size={16} className="text-emerald-600 flex-shrink-0" />
+            <span>
+              <span className="font-bold">{deletedProjectName}</span> has been permanently deleted.
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.PROJECTS, { replace: true })}
+            className="text-emerald-500 hover:text-emerald-700 transition-colors cursor-pointer flex-shrink-0"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-surface-900">Legal Aid Projects</h1>

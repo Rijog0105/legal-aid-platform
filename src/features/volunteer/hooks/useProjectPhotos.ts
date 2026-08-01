@@ -12,8 +12,8 @@ export function useProjectPhotos(projectId: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setPhotos([]);
     if (!projectId) {
-      setPhotos([]);
       setIsLoading(false);
       return;
     }

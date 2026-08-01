@@ -61,6 +61,7 @@ export interface ReportSettings {
   state?: string;
   academic_year?: string;
   venue?: string;
+  survey_location?: string;
 }
 
 export interface Project {

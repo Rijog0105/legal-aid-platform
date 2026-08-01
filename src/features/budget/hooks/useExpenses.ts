@@ -16,7 +16,11 @@ export function useExpenses(campId: string, allocatedBudget?: number | null) {
   const [error, setError] = useState<string | null>(null);
 
   const loadExpenses = useCallback(async () => {
-    if (!campId) return;
+    setExpenses([]);
+    if (!campId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {

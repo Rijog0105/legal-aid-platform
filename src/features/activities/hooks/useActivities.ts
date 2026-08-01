@@ -8,7 +8,11 @@ export function useActivities(campId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!campId) return;
+    setActivities([]);
+    if (!campId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {

@@ -85,6 +85,24 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
 }
 
 export async function deleteProject(id: string): Promise<void> {
+  // Step 1 — Issue the DELETE statement.
+  // NOTE: Supabase / PostgREST returns { error: null } with 0 rows affected
+  // when RLS silently blocks a DELETE. We cannot rely solely on `error` here.
   const { error } = await supabase.from('camps').delete().eq('id', id);
   if (error) throw new Error(error.message);
+
+  // Step 2 — Defensive verification: confirm the row no longer exists.
+  // If RLS blocked the delete without an error, the row will still be present.
+  const { data: surviving } = await supabase
+    .from('camps')
+    .select('id')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (surviving) {
+    throw new Error(
+      'Project could not be deleted. You may not have permission to delete this project, or it may be referenced by another record. Please contact an administrator.'
+    );
+  }
 }
+

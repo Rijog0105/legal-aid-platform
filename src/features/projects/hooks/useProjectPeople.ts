@@ -8,7 +8,11 @@ export function useProjectPeople(projectId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!projectId) return;
+    setProjectPeople([]);
+    if (!projectId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {

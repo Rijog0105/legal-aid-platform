@@ -7,13 +7,14 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROLES } from '@/constants';
 import type { Project } from '@/types';
 import { updateProject } from '@/features/projects/services/projectService';
-import { Calendar, Clock, Edit, FileText } from 'lucide-react';
+import { Calendar, Clock, Edit, FileText, MapPin } from 'lucide-react';
 import { formatDate } from '@/utils';
 
 const schema = z.object({
   survey_date: z.string().min(1, 'Survey date is required'),
   survey_start_time: z.string().optional(),
   survey_end_time: z.string().optional(),
+  survey_location: z.string().min(1, 'Survey location is required'),
   survey_notes: z.string().optional(),
 });
 
@@ -30,7 +31,7 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   const currentSettings = project.report_settings;
-  const hasSchedule = !!currentSettings?.survey_date;
+  const isScheduled = !!currentSettings?.survey_date;
 
   const {
     register,
@@ -42,6 +43,7 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
       survey_date: currentSettings?.survey_date ?? '',
       survey_start_time: currentSettings?.survey_start_time ?? '',
       survey_end_time: currentSettings?.survey_end_time ?? '',
+      survey_location: currentSettings?.survey_location ?? project.village_name ?? '',
       survey_notes: currentSettings?.survey_notes ?? '',
     },
   });
@@ -54,6 +56,7 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
           survey_date: values.survey_date,
           survey_start_time: values.survey_start_time || undefined,
           survey_end_time: values.survey_end_time || undefined,
+          survey_location: values.survey_location,
           survey_notes: values.survey_notes || undefined,
         },
       });
@@ -64,12 +67,12 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
     }
   };
 
-  if (isEditing || (!hasSchedule && canEdit)) {
+  if (isEditing || (!isScheduled && canEdit)) {
     return (
       <Card className="p-6 max-w-xl mx-auto space-y-4">
         <div className="border-b border-surface-100 pb-2">
           <h3 className="text-base font-bold text-surface-900">
-            {hasSchedule ? 'Edit Survey Schedule' : 'Schedule Survey Phase'}
+            {isScheduled ? 'Edit Survey Schedule' : 'Schedule Survey Phase'}
           </h3>
           <p className="text-xs text-surface-500 mt-0.5">
             Configure the schedule details for community need assessment survey phase.
@@ -102,6 +105,14 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
             />
           </div>
 
+          <Input
+            label="Survey Location *"
+            id="survey_location"
+            placeholder="e.g. Village ward offices / Community centers"
+            error={errors.survey_location?.message}
+            {...register('survey_location')}
+          />
+
           <div className="flex flex-col gap-1.5">
             <label htmlFor="survey_notes" className="text-sm font-medium text-surface-700">
               Survey Field Instructions / Notes
@@ -116,7 +127,7 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            {hasSchedule && (
+            {isScheduled && (
               <Button type="button" variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
                 Cancel
               </Button>
@@ -130,7 +141,7 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
     );
   }
 
-  if (!hasSchedule) {
+  if (!isScheduled) {
     return (
       <Card className="p-8 text-center space-y-3 max-w-xl mx-auto border-dashed">
         <Calendar className="w-12 h-12 text-surface-400 mx-auto" />
@@ -161,7 +172,7 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
         <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
           <span className="text-xs text-surface-400 block mb-0.5">Date</span>
           <span className="font-semibold text-surface-800">{formatDate(currentSettings.survey_date!)}</span>
@@ -173,12 +184,19 @@ export function SurveySchedule({ project, onUpdate }: SurveyScheduleProps) {
             {currentSettings.survey_start_time ?? '—'} – {currentSettings.survey_end_time ?? '—'}
           </span>
         </div>
+        <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
+          <span className="text-xs text-surface-400 block mb-0.5">Location</span>
+          <span className="font-semibold text-surface-800 flex items-center gap-1">
+            <MapPin size={12} className="text-surface-400" />
+            {currentSettings.survey_location ?? project.village_name}
+          </span>
+        </div>
       </div>
 
       {currentSettings.survey_notes && (
         <div className="bg-surface-50 p-4 rounded-xl border border-surface-100 text-xs">
           <span className="font-bold text-surface-800 flex items-center gap-1.5 mb-1.5">
-            <FileText size={13} className="text-primary-600" /> Field Instructions / Notes
+            <FileText size={13} className="text-primary-600" /> Instructions & Notes
           </span>
           <p className="text-surface-600 leading-relaxed whitespace-pre-wrap">{currentSettings.survey_notes}</p>
         </div>
