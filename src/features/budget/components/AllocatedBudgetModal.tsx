@@ -16,6 +16,7 @@ interface AllocatedBudgetModalProps {
   onClose: () => void;
   currentBudget?: number | null;
   onSave: (amount: number) => Promise<void>;
+  phaseLabel?: string;
 }
 
 export function AllocatedBudgetModal({
@@ -23,6 +24,7 @@ export function AllocatedBudgetModal({
   onClose,
   currentBudget,
   onSave,
+  phaseLabel = 'Camp Phase',
 }: AllocatedBudgetModalProps) {
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -68,8 +70,8 @@ export function AllocatedBudgetModal({
               <DollarSign size={18} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-surface-900 leading-tight">Allocated Camp Budget</h3>
-              <p className="text-xs text-surface-500">Set the maximum approved budget limit for this camp</p>
+              <h3 className="text-base font-bold text-surface-900 leading-tight">Allocated {phaseLabel} Budget</h3>
+              <p className="text-xs text-surface-500">Set the maximum approved budget limit for this {phaseLabel.toLowerCase()}</p>
             </div>
           </div>
           <button

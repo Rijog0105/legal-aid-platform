@@ -97,7 +97,7 @@ export function TeamLeadBudgetPage() {
           </Button>
         </Card>
       ) : (
-        project && <BudgetTab campId={project.id} camp={project} onCampUpdate={reload} />
+        project && <BudgetTab campId={project.id} camp={project} phase="camp" onCampUpdate={reload} />
       )}
     </div>
   );

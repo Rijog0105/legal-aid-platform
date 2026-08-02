@@ -76,6 +76,8 @@ export interface Project {
   district: string;
   status: ProjectStatus;
   allocated_budget?: number | null;
+  allocated_budget_survey?: number | null;
+  allocated_budget_camp?: number | null;
   report_settings: ReportSettings;
   created_by: string;
   created_at: string;
@@ -144,6 +146,7 @@ export interface Expense {
   expense_date: string;
   remarks: string | null;
   receipt_url: string | null;
+  phase: 'survey' | 'camp';
   created_by: string;
   created_at: string;
 }

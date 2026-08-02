@@ -391,7 +391,7 @@ export function ProjectDetailPage() {
           )}
 
           {activeSurveySubTab === 'budget' && (
-            <BudgetTab campId={project.id} camp={project} onCampUpdate={reload} />
+            <BudgetTab campId={project.id} camp={project} phase="survey" onCampUpdate={reload} />
           )}
         </div>
       )}
@@ -423,7 +423,7 @@ export function ProjectDetailPage() {
           {activeCampSubTab === 'photos' && <PhotosTab campId={project.id} />}
 
           {activeCampSubTab === 'budget' && (
-            <BudgetTab campId={project.id} camp={project} onCampUpdate={reload} />
+            <BudgetTab campId={project.id} camp={project} phase="camp" onCampUpdate={reload} />
           )}
 
           {activeCampSubTab === 'schedule' && (

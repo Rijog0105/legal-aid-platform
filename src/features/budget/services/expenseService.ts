@@ -10,19 +10,21 @@ export interface CreateExpensePayload {
   expense_date: string;
   remarks?: string | null;
   receipt_url?: string | null;
+  phase: 'survey' | 'camp';
   created_by: string;
 }
 
 export type UpdateExpensePayload = Partial<Omit<CreateExpensePayload, 'camp_id' | 'created_by'>>;
 
 /**
- * Fetch all expenses for a camp, sorted by created_at DESC (newest first).
+ * Fetch all expenses for a camp phase, sorted by created_at DESC (newest first).
  */
-export async function fetchExpenses(campId: string): Promise<Expense[]> {
+export async function fetchExpenses(campId: string, phase: 'survey' | 'camp'): Promise<Expense[]> {
   const { data, error } = await supabase
     .from('expenses')
     .select('*')
     .eq('camp_id', campId)
+    .eq('phase', phase)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -45,6 +47,7 @@ export async function createExpense(payload: CreateExpensePayload): Promise<Expe
     expense_date: payload.expense_date,
     remarks: payload.remarks ?? null,
     receipt_url: payload.receipt_url ?? null,
+    phase: payload.phase,
     created_by: payload.created_by,
   };
 
@@ -109,12 +112,17 @@ export async function deleteExpense(id: string): Promise<void> {
 }
 
 /**
- * Update allocated budget for a project.
+ * Update allocated budget for a project phase (survey or camp).
  */
-export async function updateAllocatedBudget(campId: string, allocatedBudget: number): Promise<Project> {
+export async function updateAllocatedBudget(
+  campId: string,
+  phase: 'survey' | 'camp',
+  allocatedBudget: number
+): Promise<Project> {
+  const updateField = phase === 'survey' ? 'allocated_budget_survey' : 'allocated_budget_camp';
   const { data, error } = await supabase
     .from('camps')
-    .update({ allocated_budget: allocatedBudget })
+    .update({ [updateField]: allocatedBudget })
     .eq('id', campId)
     .select()
     .single();

@@ -10,7 +10,7 @@ import {
   type UpdateExpensePayload,
 } from '../services/expenseService';
 
-export function useExpenses(campId: string, allocatedBudget?: number | null) {
+export function useExpenses(campId: string, phase: 'survey' | 'camp', allocatedBudget?: number | null) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function useExpenses(campId: string, allocatedBudget?: number | null) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchExpenses(campId);
+      const data = await fetchExpenses(campId, phase);
       setExpenses(data);
     } catch (err) {
       console.error('[useExpenses] Error loading expenses:', err);
@@ -32,7 +32,7 @@ export function useExpenses(campId: string, allocatedBudget?: number | null) {
     } finally {
       setIsLoading(false);
     }
-  }, [campId]);
+  }, [campId, phase]);
 
   useEffect(() => {
     loadExpenses();
@@ -65,9 +65,9 @@ export function useExpenses(campId: string, allocatedBudget?: number | null) {
 
   const setAllocatedBudget = useCallback(
     async (newBudget: number): Promise<Project> => {
-      return await updateAllocatedBudget(campId, newBudget);
+      return await updateAllocatedBudget(campId, phase, newBudget);
     },
-    [campId]
+    [campId, phase]
   );
 
   /* Computations & Safety Guards */

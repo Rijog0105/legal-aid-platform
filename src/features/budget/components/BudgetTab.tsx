@@ -25,15 +25,16 @@ import { formatCurrency, formatDate } from '@/utils';
 interface BudgetTabProps {
   campId: string;
   camp: Project;
+  phase: 'survey' | 'camp';
   onCampUpdate?: () => void;
 }
 
-export function BudgetTab({ campId, camp, onCampUpdate }: BudgetTabProps) {
+export function BudgetTab({ campId, camp, phase, onCampUpdate }: BudgetTabProps) {
   const { hasRole, userId } = useAuth();
   const canEditAllocatedBudget = hasRole([ROLES.FACULTY, ROLES.ADMIN]);
   const canManageExpenses = hasRole([ROLES.FACULTY, ROLES.ADMIN, ROLES.TEAM_LEAD]);
 
-  const allocatedBudget = camp.allocated_budget ?? 0;
+  const allocatedBudget = phase === 'survey' ? (camp.allocated_budget_survey ?? 0) : (camp.allocated_budget_camp ?? 0);
 
   const {
     expenses,
@@ -47,7 +48,7 @@ export function BudgetTab({ campId, camp, onCampUpdate }: BudgetTabProps) {
     editExpense,
     removeExpense,
     setAllocatedBudget,
-  } = useExpenses(campId, allocatedBudget);
+  } = useExpenses(campId, phase, allocatedBudget);
 
   /* Filter & Search State */
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,6 +104,7 @@ export function BudgetTab({ campId, camp, onCampUpdate }: BudgetTabProps) {
         expense_date: values.expense_date,
         remarks: values.remarks,
         receipt_url: values.receipt_url,
+        phase: phase,
         created_by: userId ?? '',
       });
     }
@@ -476,6 +478,7 @@ export function BudgetTab({ campId, camp, onCampUpdate }: BudgetTabProps) {
         onClose={() => setIsBudgetModalOpen(false)}
         currentBudget={allocatedBudget}
         onSave={handleSaveBudget}
+        phaseLabel={phase === 'survey' ? 'Survey Phase' : 'Camp Phase'}
       />
 
       <ExpenseFormModal

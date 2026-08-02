@@ -243,4 +243,11 @@ Implement a robust, geolocation-verified attendance check system for both Survey
 - **Session Summary & Reusable UI**: Created `AttendanceSummary.tsx` as a reusable component (supporting name search, status filters, and sorting by name/role/time). Structured to fit inside future institutional reports seamlessly. Responsive layout uses cards on mobile and tables on desktop.
 - **Overview Card Integration**: Compact dashboard card on Project Overview showing survey/camp check status, dates, and calculated overall attendance turnout with a direct shortcut link to history.
 
+### Refactoring Milestone 8: Separate Survey & Camp Budgets — `[COMPLETED]`
 
+Separated expenses and budget allocations between Survey Phase and Camp Phase while keeping a unified table architecture:
+- **Database Migrations**: Created migration `009_split_budget_by_phase.sql`. Added a `phase` text column to `expenses` with check constraints and index. Added `allocated_budget_survey` and `allocated_budget_camp` to `camps`, migrating existing total allocated budgets to Camp Phase by default.
+- **Service Layer**: Updated `expenseService.ts` and the `useExpenses` hook. All expense fetch, creation, edit, deletion, and allocation mutation methods accept and enforce `phase` parameters.
+- **Dynamic Views**: Segmented the budget tab so that Survey Phase workspace displays Survey expenses and Camp Phase workspace displays Camp expenses. Added dynamic labels to the allocation modals.
+- **Project Overview Dashboard**: Replaced the shared budget block with a comprehensive "Project Financial Snapshot" card, presenting independent tables for Survey Budget, Camp Budget, and Consolidated Overall Project Budget metrics (Allocated, Spent, Remaining).
+- **Report & Mobile Optimization**: Formatted data structures to cleanly support multi-phase budget listings in the Report Preparation Tab. Interface is designed with responsive flex layouts to ensure mobile-friendly usage on the field.
