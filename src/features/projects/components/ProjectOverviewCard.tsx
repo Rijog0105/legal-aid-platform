@@ -1,4 +1,5 @@
-import { Users, Layers, DollarSign, FileText, CheckCircle, MapPin, Building2, GraduationCap, Globe, BookOpen, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Layers, DollarSign, FileText, CheckCircle, MapPin, Building2, GraduationCap, Globe, BookOpen, Loader2, ArrowRight, ClipboardCheck } from 'lucide-react';
 import { Card, ProjectStatusBadge } from '@/components/ui';
 import type { Project } from '@/types';
 import { PROJECT_ROLE, PROJECT_STATUS } from '@/constants';
@@ -8,11 +9,13 @@ import { useExpenses } from '@/features/budget/hooks/useExpenses';
 import { SurveyScheduleCard } from './SurveyScheduleCard';
 import { CampScheduleCard } from './CampScheduleCard';
 import { formatCurrency } from '@/utils';
+import { fetchProjectAttendanceOverview } from '@/features/attendance/services/attendanceService';
 
 interface ProjectOverviewCardProps {
   project: Project;
   onNavigateToSurveySchedule: () => void;
   onNavigateToCampSchedule: () => void;
+  onNavigateToAttendance: (phase: 'survey' | 'camp') => void;
 }
 
 /**
@@ -24,8 +27,31 @@ export function ProjectOverviewCard({
   project,
   onNavigateToSurveySchedule,
   onNavigateToCampSchedule,
+  onNavigateToAttendance,
 }: ProjectOverviewCardProps) {
   /* ─── Live Stats ─── */
+  const [attendanceOverview, setAttendanceOverview] = useState<{
+    surveyCheckIn: string;
+    surveyCheckOut: string;
+    campCheckIn: string;
+    campCheckOut: string;
+    overallPercentage: number | null;
+  } | null>(null);
+  const [loadingOverview, setLoadingOverview] = useState(true);
+
+  useEffect(() => {
+    async function loadAttendance() {
+      try {
+        const data = await fetchProjectAttendanceOverview(project.id);
+        setAttendanceOverview(data);
+      } catch (err) {
+        console.error('Failed to load project attendance overview:', err);
+      } finally {
+        setLoadingOverview(false);
+      }
+    }
+    loadAttendance();
+  }, [project.id]);
   const { projectPeople, isLoading: peopleLoading } = useProjectPeople(project.id);
   const { activities, isLoading: activitiesLoading } = useActivities(project.id);
   const { totalSpent, isLoading: budgetLoading } = useExpenses(project.id, project.allocated_budget);
@@ -211,6 +237,77 @@ export function ProjectOverviewCard({
         <SurveyScheduleCard project={project} onNavigateToSchedule={onNavigateToSurveySchedule} />
         <CampScheduleCard project={project} onNavigateToSchedule={onNavigateToCampSchedule} />
       </div>
+
+      {/* ── Compact Attendance Overview Card ── */}
+      <Card className="p-5 space-y-4 bg-white">
+        <div className="flex items-center justify-between border-b border-surface-100 pb-3">
+          <div className="flex items-center gap-2">
+            <ClipboardCheck className="w-5 h-5 text-primary-600" />
+            <h3 className="text-sm font-bold text-surface-900">Project Attendance Overview</h3>
+          </div>
+          {attendanceOverview && attendanceOverview.overallPercentage !== null && (
+            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-250 px-2.5 py-1 rounded-xl">
+              Turnout: {attendanceOverview.overallPercentage}%
+            </span>
+          )}
+        </div>
+
+        {loadingOverview ? (
+          <div className="flex justify-center py-4">
+            <Loader2 size={16} className="text-surface-400 animate-spin" />
+          </div>
+        ) : !attendanceOverview ? (
+          <p className="text-xs text-surface-500 italic text-center py-2">No attendance data collected.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Survey Phase Summary */}
+            <div className="p-4 bg-surface-50 border border-surface-100 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-surface-900 block">Survey Phase Checks</span>
+                <button
+                  onClick={() => onNavigateToAttendance('survey')}
+                  className="text-[10px] font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5 cursor-pointer"
+                >
+                  History <ArrowRight size={10} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-[11px] text-surface-600">
+                <div>
+                  <span className="text-surface-400 block text-[9px] uppercase tracking-wider">Latest Check-In</span>
+                  <span className="font-semibold text-surface-850">{attendanceOverview.surveyCheckIn}</span>
+                </div>
+                <div>
+                  <span className="text-surface-400 block text-[9px] uppercase tracking-wider">Latest Check-Out</span>
+                  <span className="font-semibold text-surface-850">{attendanceOverview.surveyCheckOut}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Camp Phase Summary */}
+            <div className="p-4 bg-surface-50 border border-surface-100 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-surface-900 block">Camp Phase Checks</span>
+                <button
+                  onClick={() => onNavigateToAttendance('camp')}
+                  className="text-[10px] font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5 cursor-pointer"
+                >
+                  History <ArrowRight size={10} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-[11px] text-surface-600">
+                <div>
+                  <span className="text-surface-400 block text-[9px] uppercase tracking-wider">Latest Check-In</span>
+                  <span className="font-semibold text-surface-850">{attendanceOverview.campCheckIn}</span>
+                </div>
+                <div>
+                  <span className="text-surface-400 block text-[9px] uppercase tracking-wider">Latest Check-Out</span>
+                  <span className="font-semibold text-surface-850">{attendanceOverview.campCheckOut}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* ── Row 3: Quick Statistics ── */}
       <Card className="p-5 space-y-4">

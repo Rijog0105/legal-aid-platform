@@ -31,6 +31,7 @@ import { BudgetTab } from '@/features/budget';
 import { SurveySchedule } from './SurveySchedule';
 import { CampSchedule } from './CampSchedule';
 import { ProjectOverviewCard } from './ProjectOverviewCard';
+import { AttendanceTab } from '@/features/attendance/components/AttendanceTab';
 
 /* ─── Status Configuration ─────────────────────────────── */
 
@@ -133,6 +134,16 @@ export function ProjectDetailPage() {
   const navigateToCampSchedule = () => {
     handleMainTabChange('camp');
     handleCampSubTabChange('schedule');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToAttendance = (phase: 'survey' | 'camp') => {
+    handleMainTabChange(phase);
+    if (phase === 'survey') {
+      handleSurveySubTabChange('attendance');
+    } else {
+      handleCampSubTabChange('attendance');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -311,6 +322,7 @@ export function ProjectDetailPage() {
           project={project}
           onNavigateToSurveySchedule={navigateToSurveySchedule}
           onNavigateToCampSchedule={navigateToCampSchedule}
+          onNavigateToAttendance={navigateToAttendance}
         />
       )}
 
@@ -361,15 +373,7 @@ export function ProjectDetailPage() {
           )}
 
           {activeSurveySubTab === 'attendance' && (
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-base font-bold text-surface-900">Survey Phase Attendance</h3>
-                <span className="text-xs text-surface-500 font-normal">
-                  (Derived from survey delegation roster)
-                </span>
-              </div>
-              <ProjectPeopleTab campId={project.id} />
-            </Card>
+            <AttendanceTab campId={project.id} phase="survey" />
           )}
 
           {activeSurveySubTab === 'forms' && (
@@ -429,15 +433,7 @@ export function ProjectDetailPage() {
           {activeCampSubTab === 'people' && <ProjectPeopleTab campId={project.id} />}
 
           {activeCampSubTab === 'attendance' && (
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-base font-bold text-surface-900">Camp Phase Attendance</h3>
-                <span className="text-xs text-surface-500 font-normal">
-                  (Derived from camp delegation roster)
-                </span>
-              </div>
-              <ProjectPeopleTab campId={project.id} />
-            </Card>
+            <AttendanceTab campId={project.id} phase="camp" />
           )}
         </div>
       )}

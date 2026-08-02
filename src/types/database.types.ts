@@ -197,3 +197,60 @@ export interface SurveyStats {
   completed: number;
   pending: number;
 }
+
+/* ─── 12. attendance_sessions ────────────────────────────── */
+
+export interface AttendanceSession {
+  id: string;
+  camp_id: string;
+  phase: 'survey' | 'camp';
+  session_type: 'check_in' | 'check_out';
+  created_by: string;
+  faculty_latitude: number;
+  faculty_longitude: number;
+  faculty_gps_accuracy?: number | null;
+  radius_meters: number;
+  duration_minutes: number;
+  starts_at: string;
+  expires_at: string;
+  status: 'open' | 'closed';
+  created_at: string;
+}
+
+/* ─── 13. attendance_records ─────────────────────────────── */
+
+export interface AttendanceRecord {
+  id: string;
+  session_id: string;
+  user_id: string;
+  camp_id: string;
+  phase: 'survey' | 'camp';
+  record_type: 'check_in' | 'check_out';
+  latitude: number | null;
+  longitude: number | null;
+  distance_meters: number | null;
+  gps_accuracy?: number | null;
+  device_timestamp: string;
+  server_timestamp: string;
+  device_platform: string;
+  browser?: string | null;
+  os?: string | null;
+  app_version?: string | null;
+  status: 'present' | 'rejected' | 'pending';
+  rejection_reason: string | null;
+  sync_status: 'synced' | 'pending' | 'failed';
+  created_at: string;
+}
+
+/* ─── 14. notifications ──────────────────────────────────── */
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  link: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
