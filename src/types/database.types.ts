@@ -4,7 +4,8 @@
  * Feature-level types should extend/pick from these.
  * ──────────────────────────────────────────────────────────── */
 
-import type { ProjectStatus, ActivityStatus, ReportStatus, ProjectRole, PersonCategory, NarrativeSectionType, RoleName, RegistrationStatus } from '@/constants';
+import type { ProjectStatus, ActivityStatus, ReportStatus, ProjectRole, PersonCategory, NarrativeSectionType, RoleName } from '@/constants';
+export type RegistrationStatus = 'pending' | 'approved' | 'rejected';
 
 /* ─── 1. roles ────────────────────────────────────────────── */
 

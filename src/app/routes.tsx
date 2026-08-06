@@ -19,8 +19,10 @@ import { ProjectListPage, ProjectCreatePage, ProjectDetailPage } from '@/feature
 import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
 import { VolunteerCapturePage, MySubmissionsPage, TeamLeadPhotosPage } from '@/features/volunteer';
 import { TeamLeadWorkspacePage } from '@/pages/TeamLeadWorkspacePage';
-import { TeamLeadPlaceholderPage } from '@/pages/TeamLeadPlaceholderPage';
 import { TeamLeadBudgetPage } from '@/pages/TeamLeadBudgetPage';
+import { FacultySurveyDashboard } from '@/features/reports/components/FacultySurveyDashboard';
+import { VolunteerSurveyPage } from '@/pages/VolunteerSurveyPage';
+import { VolunteerSurveyReportsPage } from '@/pages/VolunteerSurveyReportsPage';
 
 export const router = createBrowserRouter([
   /* ─── Root: smart redirect ─── */
@@ -71,6 +73,14 @@ export const router = createBrowserRouter([
         path: ROUTES.PROJECT_DETAIL,
         element: <ProjectDetailPage />,
       },
+      {
+        path: ROUTES.SURVEYS,
+        element: <FacultySurveyDashboard />,
+      },
+      {
+        path: ROUTES.REPORTS,
+        element: <FacultySurveyDashboard />,
+      },
     ],
   },
 
@@ -92,23 +102,11 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.TEAM_LEAD_SURVEYS,
-        element: (
-          <TeamLeadPlaceholderPage
-            title="Survey Dashboard"
-            description="Centralized survey status tracking showing completed and pending beneficiary forms collected during camp."
-            targetPhase="Phase 7 (Survey Integration)"
-          />
-        ),
+        element: <FacultySurveyDashboard />,
       },
       {
         path: ROUTES.TEAM_LEAD_REPORTS,
-        element: (
-          <TeamLeadPlaceholderPage
-            title="Survey Reports"
-            description="Access to individual beneficiary survey outputs and consolidated survey statistics."
-            targetPhase="Phase 8 (Report Generation)"
-          />
-        ),
+        element: <FacultySurveyDashboard />,
       },
       {
         path: ROUTES.TEAM_LEAD_BUDGET,
@@ -140,6 +138,14 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.VOLUNTEER_SUBMISSIONS,
         element: <MySubmissionsPage />,
+      },
+      {
+        path: ROUTES.VOLUNTEER_SURVEY,
+        element: <VolunteerSurveyPage />,
+      },
+      {
+        path: ROUTES.VOLUNTEER_REPORTS,
+        element: <VolunteerSurveyReportsPage />,
       },
     ],
   },
