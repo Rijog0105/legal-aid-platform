@@ -146,9 +146,14 @@ export const ROUTES = {
   VOLUNTEER_HOME: '/volunteer',
   VOLUNTEER_CAPTURE: '/volunteer/capture',
   VOLUNTEER_SUBMISSIONS: '/volunteer/submissions',
+  VOLUNTEER_SURVEY: '/volunteer/survey',
+  VOLUNTEER_REPORTS: '/volunteer/reports',
+  SURVEYS: '/surveys',
+  REPORTS: '/reports',
   TEAM_LEAD_WORKSPACE: '/team-lead',
   TEAM_LEAD_PHOTOS: '/team-lead/photos',
   TEAM_LEAD_SURVEYS: '/team-lead/surveys',
   TEAM_LEAD_REPORTS: '/team-lead/reports',
   TEAM_LEAD_BUDGET: '/team-lead/budget',
 } as const;
+

@@ -416,15 +416,25 @@ export function VolunteerHomePage() {
           </span>
         </button>
 
-        {/* Lower Half: SURVEY FORM */}
-        <button
-          onClick={() => alert('Survey forms module opens beneficiary survey collection.')}
-          disabled={!isActive}
-          className="w-full min-h-[100px] flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-accent-600 to-accent-700 text-white font-bold text-lg shadow-lg shadow-accent-600/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
-        >
-          <ClipboardList className="w-10 h-10" />
-          <span>SURVEY FORM</span>
-        </button>
+        {/* Lower Half: SURVEY FORM & MY REPORTS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={() => navigate(ROUTES.VOLUNTEER_SURVEY)}
+            disabled={!isActive}
+            className="w-full min-h-[90px] flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white font-bold text-base shadow-lg shadow-indigo-600/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all hover:from-indigo-700 hover:to-indigo-800"
+          >
+            <ClipboardList className="w-8 h-8" />
+            <span>CONDUCT SURVEY</span>
+          </button>
+
+          <button
+            onClick={() => navigate(ROUTES.VOLUNTEER_REPORTS)}
+            className="w-full min-h-[90px] flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-base shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all"
+          >
+            <ClipboardList className="w-8 h-8 text-indigo-400" />
+            <span>MY INDIVIDUAL REPORTS</span>
+          </button>
+        </div>
       </div>
     </div>
   );

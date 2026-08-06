@@ -7,6 +7,7 @@ import {
   Scale,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -29,10 +30,12 @@ export function Sidebar() {
     ? [
         { label: 'Workspace', path: ROUTES.TEAM_LEAD_WORKSPACE, icon: <LayoutDashboard className="w-5 h-5" /> },
         { label: 'Activity Photos', path: ROUTES.TEAM_LEAD_PHOTOS, icon: <Tent className="w-5 h-5" /> },
+        { label: 'Surveys & Reports', path: ROUTES.TEAM_LEAD_SURVEYS, icon: <FileText className="w-5 h-5" /> },
       ]
     : [
         { label: 'Control Center', path: ROUTES.DASHBOARD, icon: <LayoutDashboard className="w-5 h-5" /> },
         { label: 'Legal Aid Projects', path: ROUTES.PROJECTS, icon: <Tent className="w-5 h-5" /> },
+        { label: 'Surveys & Reports', path: ROUTES.SURVEYS, icon: <FileText className="w-5 h-5" /> },
         { label: 'People', path: ROUTES.PEOPLE, icon: <Users className="w-5 h-5" /> },
       ];
 
