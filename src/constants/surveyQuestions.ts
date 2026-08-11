@@ -185,13 +185,18 @@ export const SURVEY_QUESTIONS: Question[] = [
     sectionTitle: 'General Socio-Economic & Legal Aid Questions',
     numberLabel: 'Question 7 (Follow-up)',
     questionText: 'If yes, for how long? (ಎಷ್ಟು ವರ್ಷಗಳಿಂದ ಬಾಕಿ ಇದೆ)',
-    type: 'text',
+    type: 'select',
     required: true,
     conditionalLogic: {
       dependsOnQuestionId: 'q7PendingLitigation',
       showIfValue: 'Yes',
     },
-    placeholder: 'e.g. 3 years',
+    options: [
+      { label: 'Less than 1 year (1 ವರ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ)', value: 'Less than 1 year' },
+      { label: '1–3 years (1-3 ವರ್ಷಗಳು)', value: '1–3 years' },
+      { label: '3–5 years (3-5 ವರ್ಷಗಳು)', value: '3–5 years' },
+      { label: 'More than 5 years (5 ವರ್ಷಕ್ಕಿಂತ ಹೆಚ್ಚು)', value: 'More than 5 years' },
+    ],
   },
   {
     id: 'q8MembershipOrganization',

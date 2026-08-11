@@ -228,7 +228,7 @@ export function VolunteerHomePage() {
   /* ─── 1. UPCOMING PROJECT STATE ─── */
   if (isUpcoming) {
     return (
-      <div className="space-y-6 max-w-md mx-auto py-6">
+      <div className="space-y-6 w-full max-w-2xl mx-auto py-6">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-blue-600/20 text-center space-y-3">
           <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-semibold uppercase tracking-wider">
             Upcoming Project
@@ -259,7 +259,7 @@ export function VolunteerHomePage() {
   /* ─── 2. FINISHED PROJECT STATE ─── */
   if (isFinished) {
     return (
-      <div className="space-y-6 max-w-md mx-auto py-6">
+      <div className="space-y-6 w-full max-w-2xl mx-auto py-6">
         <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg shadow-emerald-600/20 text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-white/20 mx-auto flex items-center justify-center">
             <CheckCircle className="w-6 h-6 text-white" />
@@ -296,7 +296,7 @@ export function VolunteerHomePage() {
   const atLimit = activityPhotoCount >= maxPhotos;
 
   return (
-    <div className="space-y-4 max-w-md mx-auto">
+    <div className="space-y-5 w-full max-w-2xl mx-auto px-1 sm:px-2">
       {/* ── Top Section (~10%): Active Project Header ── */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-4 text-white shadow-md shadow-primary-600/20 flex items-center justify-between">
         <div>
@@ -399,43 +399,39 @@ export function VolunteerHomePage() {
       </Card>
 
       {/* ── Main Area (~70%): Equal Split Action Buttons ── */}
-      <div className="grid grid-cols-1 gap-3 min-h-[220px]">
-        {/* Upper Half: CAMERA */}
-        <button
-          onClick={() => navigate(ROUTES.VOLUNTEER_CAPTURE, { state: { selectedActivity } })}
-          disabled={!selectedActivity || atLimit || !isActive}
-          className="w-full min-h-[100px] flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 text-white font-bold text-lg shadow-lg shadow-primary-600/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
-        >
-          <Camera className="w-10 h-10" />
-          <span>
-            {!selectedActivity
-              ? 'CAMERA (Select Activity First)'
-              : atLimit
-                ? `Limit Reached (${maxPhotos}/${maxPhotos})`
+      {/* ── Camera Area ── */}
+      <div>
+        {!selectedActivity ? (
+          <div className="w-full min-h-[100px] rounded-2xl border-2 border-dashed border-surface-300 bg-surface-100 flex flex-col items-center justify-center gap-1.5 p-6 text-surface-400 select-none">
+            <Camera className="w-8 h-8 opacity-60 text-surface-400" />
+            <span className="text-sm font-bold uppercase tracking-wider text-surface-500">CAMERA</span>
+            <span className="text-xs text-surface-400">Select Activity First</span>
+          </div>
+        ) : (
+          <button
+            onClick={() => navigate(ROUTES.VOLUNTEER_CAPTURE, { state: { selectedActivity } })}
+            disabled={atLimit || !isActive}
+            className="w-full min-h-[100px] flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 text-white font-bold text-lg shadow-lg shadow-primary-600/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all hover:brightness-105 cursor-pointer"
+          >
+            <Camera className="w-10 h-10" />
+            <span>
+              {atLimit
+                ? `Limit Reached (${activityPhotoCount}/${maxPhotos})`
                 : 'CAMERA'}
-          </span>
-        </button>
-
-        {/* Lower Half: SURVEY FORM & MY REPORTS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            onClick={() => navigate(ROUTES.VOLUNTEER_SURVEY)}
-            disabled={!isActive}
-            className="w-full min-h-[90px] flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white font-bold text-base shadow-lg shadow-indigo-600/30 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all hover:from-indigo-700 hover:to-indigo-800"
-          >
-            <ClipboardList className="w-8 h-8" />
-            <span>CONDUCT SURVEY</span>
+            </span>
           </button>
-
-          <button
-            onClick={() => navigate(ROUTES.VOLUNTEER_REPORTS)}
-            className="w-full min-h-[90px] flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-base shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all"
-          >
-            <ClipboardList className="w-8 h-8 text-indigo-400" />
-            <span>MY INDIVIDUAL REPORTS</span>
-          </button>
-        </div>
+        )}
       </div>
+
+      {/* ── Primary Action: Conduct Survey ── */}
+      <button
+        onClick={() => navigate(ROUTES.VOLUNTEER_SURVEY)}
+        disabled={!isActive}
+        className="w-full min-h-[90px] flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 text-white font-bold text-base shadow-lg shadow-accent-600/20 disabled:opacity-45 disabled:cursor-not-allowed active:scale-[0.98] transition-all hover:brightness-105 cursor-pointer"
+      >
+        <ClipboardList className="w-8 h-8" />
+        <span>CONDUCT SURVEY</span>
+      </button>
     </div>
   );
 }

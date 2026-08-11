@@ -18,11 +18,13 @@ import { ConsolidatedSurveyReport } from './ConsolidatedSurveyReport';
 import { LegalAidCampReport } from './LegalAidCampReport';
 import { SurveyEngine } from '@/features/survey/components/SurveyEngine';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Spinner } from '@/components/ui';
 
 export const FacultySurveyDashboard: React.FC = () => {
   const { roleName } = useAuth();
   const [surveys, setSurveys] = useState<SurveyResponseData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingSurveyDetails, setLoadingSurveyDetails] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterDispute, setFilterDispute] = useState<string>('all');
   const [filterVillage, setFilterVillage] = useState<string>('all');
@@ -73,10 +75,36 @@ export const FacultySurveyDashboard: React.FC = () => {
     return reportCalculationService.calculateConsolidatedStats(surveys);
   }, [surveys]);
 
-  const handleViewIndividual = (survey: SurveyResponseData) => {
-    setSelectedSurvey(survey);
-    setViewMode('individual');
+  const handleViewIndividual = async (survey: SurveyResponseData) => {
+    const surveyId = survey.id || survey.surveyReferenceId;
+    if (!surveyId) return;
+
+    setLoadingSurveyDetails(true);
+    try {
+      const hydrated = await surveyService.fetchCompleteSurvey(surveyId);
+      if (hydrated) {
+        setSelectedSurvey(hydrated);
+      } else {
+        setSelectedSurvey(survey);
+      }
+      setViewMode('individual');
+    } catch (err) {
+      console.error('Error hydrating survey details:', err);
+      setSelectedSurvey(survey);
+      setViewMode('individual');
+    } finally {
+      setLoadingSurveyDetails(false);
+    }
   };
+
+  if (loadingSurveyDetails) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+        <Spinner size="lg" />
+        <span className="text-xs font-semibold text-slate-500 mt-2">Fetching complete hydrated survey details...</span>
+      </div>
+    );
+  }
 
   if (viewMode === 'individual' && selectedSurvey) {
     return <IndividualSurveyReport survey={selectedSurvey} onBack={() => setViewMode('dashboard')} />;
@@ -160,9 +188,9 @@ export const FacultySurveyDashboard: React.FC = () => {
           </div>
 
           <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Population Impacted</span>
-            <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-1 block">{stats.totalPopulationCovered}</span>
-            <span className="text-[11px] text-slate-400 block mt-1">Including household dependents</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Recorded Family Members</span>
+            <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-1 block">{stats.recordedFamilyMembers}</span>
+            <span className="text-[11px] text-slate-400 block mt-1">Excludes household heads</span>
           </div>
 
           <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">

@@ -9,7 +9,7 @@ export const VolunteerSurveyPage: React.FC = () => {
   return (
     <SurveyEngine
       onComplete={() => {
-        navigate(ROUTES.VOLUNTEER_SUBMISSIONS);
+        navigate(ROUTES.VOLUNTEER_HOME);
       }}
       onCancel={() => {
         navigate(ROUTES.VOLUNTEER_HOME);

@@ -138,3 +138,141 @@ body {
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
 }
+
+/* Override Tailwind v4 oklch colors to standard hex colors inside pdf pages to prevent html2canvas crashes */
+[data-pdf-page], [data-pdf-page] * {
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-800: #3730a3;
+  --color-indigo-900: #312e81;
+  --color-indigo-950: #1e1b4b;
+
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-950: #022c22;
+
+  --color-amber-50: #fffbeb;
+  --color-amber-200: #fde68a;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-950: #451a03;
+
+  --color-cyan-50: #ecfeff;
+  --color-cyan-200: #a5f3fc;
+  --color-cyan-600: #0891b2;
+  --color-cyan-700: #0e7490;
+  --color-cyan-950: #083344;
+
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-600: #ea580c;
+  --color-orange-850: #7c2d12;
+  --color-orange-950: #431407;
+
+  --color-rose-600: #e11d48;
+  
+  --color-white: #ffffff;
+  --color-black: #000000;
+}
+
+@media print {
+  /* Support multi-page layout block breaks in printable reports */
+  [data-pdf-page] {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  /* Hide right sidebar, buttons, back buttons, and other utility chrome */
+  aside,
+  .print\:hidden,
+  button,
+  nav,
+  .inline-flex,
+  .flex-wrap {
+    display: none !important;
+  }
+
+  /* Make content fill full printable area width */
+  body,
+  main,
+  #root,
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-4xl,
+  .max-w-5xl {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Target outer layout containers */
+  .p-6, .lg\:p-8, .p-4, .sm\:p-8 {
+    padding: 0 !important;
+  }
+}
+
+/* ─── Global Fix for Rounded Container Text Clipping ─── */
+/* Ensures text inside tables, card headers, and list items in rounded overflow-hidden containers has enough margin/padding from the curved border to prevent clipping */
+
+.overflow-hidden[class*="rounded-"] th:first-child,
+.overflow-hidden[class*="rounded-"] td:first-child,
+[class*="rounded-"] .overflow-x-auto th:first-child,
+[class*="rounded-"] .overflow-x-auto td:first-child {
+  padding-left: 1.25rem !important; /* At least 20px */
+}
+
+.overflow-hidden.rounded-3xl th:first-child,
+.overflow-hidden.rounded-3xl td:first-child,
+.rounded-3xl .overflow-x-auto th:first-child,
+.rounded-3xl .overflow-x-auto td:first-child {
+  padding-left: 1.5rem !important; /* At least 24px */
+}
+
+.overflow-hidden[class*="rounded-"] th:last-child,
+.overflow-hidden[class*="rounded-"] td:last-child,
+[class*="rounded-"] .overflow-x-auto th:last-child,
+[class*="rounded-"] .overflow-x-auto td:last-child {
+  padding-right: 1.25rem !important; /* At least 20px */
+}
+
+.overflow-hidden.rounded-3xl th:last-child,
+.overflow-hidden.rounded-3xl td:last-child,
+.rounded-3xl .overflow-x-auto th:last-child,
+.rounded-3xl .overflow-x-auto td:last-child {
+  padding-right: 1.5rem !important; /* At least 24px */
+}
+
+/* Increase horizontal padding on card headers/inner divs in rounded-3xl overflow-hidden elements */
+.rounded-3xl.overflow-hidden > .p-5,
+.rounded-3xl.overflow-hidden > .p-4 {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+

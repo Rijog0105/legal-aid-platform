@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Printer, Download, ArrowLeft, Scale, Camera, CheckCircle2, MapPin } from 'lucide-react';
 import type { SurveyResponseData } from '@/types/survey';
+import { ImageWithSignedUrl } from '@/components/ImageWithSignedUrl';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -163,11 +164,17 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
           <div className="p-3 border border-slate-300 rounded-xl bg-white space-y-1">
             <p className="font-bold text-slate-900">2. Main occupation of your family :</p>
             <p className="font-semibold text-slate-800 bg-slate-50 p-2 rounded border border-slate-200">{survey.q2MainOccupation || 'N/A'}</p>
+            {survey.q2MainOccupation === 'Other' && survey.q2MainOccupationOther && (
+              <p className="text-xs text-slate-600 pl-1"><span className="font-semibold">Occupation (specify):</span> {survey.q2MainOccupationOther}</p>
+            )}
           </div>
 
           <div className="p-3 border border-slate-300 rounded-xl bg-white space-y-1">
             <p className="font-bold text-slate-900">3. Which type of house you have ? :</p>
             <p className="font-semibold text-slate-800 bg-slate-50 p-2 rounded border border-slate-200">{survey.q3HouseType || 'N/A'}</p>
+            {survey.q3HouseType === 'Other' && survey.q3HouseTypeOther && (
+              <p className="text-xs text-slate-600 pl-1"><span className="font-semibold">House Type (specify):</span> {survey.q3HouseTypeOther}</p>
+            )}
           </div>
 
           <div className="p-3 border border-slate-300 rounded-xl bg-white space-y-1">
@@ -193,18 +200,38 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
           <div className="p-3 border border-slate-300 rounded-xl bg-white space-y-1">
             <p className="font-bold text-slate-900">6. Do you have a vehicle, if yes do you have a valid :</p>
             <p className="font-semibold text-slate-800 bg-slate-50 p-2 rounded border border-slate-200">Vehicle Owned: {survey.q6HasVehicle}</p>
+            {survey.q6HasVehicle === 'Yes' && (
+              <div className="pl-4 pt-1 space-y-1 text-slate-700 text-xs">
+                <p>• Driving License: <span className="font-bold">{survey.q6aDrivingLicense ?? 'Not Recorded / Unknown'}</span></p>
+                <p>• Insurance Coverage: <span className="font-bold">{survey.q6bInsuranceCoverage ?? 'Not Recorded / Unknown'}</span></p>
+                <p>• Registration Certificate (RC): <span className="font-bold">{survey.q6cRegistrationCertificate ?? 'Not Recorded / Unknown'}</span></p>
+              </div>
+            )}
           </div>
 
           <div className="p-3 border border-slate-300 rounded-xl bg-white space-y-1">
             <p className="font-bold text-slate-900">7. Is there any pending litigation your family is involved in? if yes, for how long? :</p>
             <p className="font-semibold text-slate-800 bg-slate-50 p-2 rounded border border-slate-200">
-              {survey.q7PendingLitigation === 'Yes' ? `Yes (Duration: ${survey.q7PendingLitigationDuration || 'N/A'})` : 'No'}
+              {survey.q7PendingLitigation}
             </p>
+            {survey.q7PendingLitigation === 'Yes' && survey.q7PendingLitigationDuration && (
+              <p className="text-xs text-slate-600 pl-1"><span className="font-semibold">Duration:</span> {survey.q7PendingLitigationDuration}</p>
+            )}
           </div>
 
           <div className="p-3 border border-slate-300 rounded-xl bg-white space-y-1">
             <p className="font-bold text-slate-900">8. Do you have membership of any organization? :</p>
             <p className="font-semibold text-slate-800 bg-slate-50 p-2 rounded border border-slate-200">{survey.q8MembershipOrganization}</p>
+            {survey.q8MembershipOrganization === 'Yes' && (
+              <div className="pl-4 pt-1 space-y-1 text-slate-700 text-xs">
+                <p>• Self Help Group (SHG): <span className="font-bold">{survey.q8aSelfHelpGroup ?? 'Not Recorded / Unknown'}</span></p>
+                <p>• Microfinance Group: <span className="font-bold">{survey.q8bMicroFinanceGroup ?? 'Not Recorded / Unknown'}</span></p>
+                <p>• Milk Producers Cooperative: <span className="font-bold">{survey.q8cMilkProcurersCoop ?? 'Not Recorded / Unknown'}</span></p>
+                <p>• Other Local Organization: <span className="font-bold">
+                  {survey.q8dOtherOrg === 'Yes' ? `Yes (${survey.q8dOtherOrgName || 'Unnamed'})` : (survey.q8dOtherOrg ?? 'Not Recorded / Unknown')}
+                </span></p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -239,8 +266,14 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
                     <td className="p-2 border-r border-slate-300 font-bold">{row.sl}</td>
                     <td className="p-2 border-r border-slate-300 font-semibold text-slate-800">{row.name}</td>
                     <td className="p-2 border-r border-slate-300 font-bold">
-                      <span className={`px-2 py-0.5 rounded text-[11px] ${row.doc?.hasDocument === 'Yes' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                        {row.doc?.hasDocument || 'N/A'}
+                      <span className={`px-2 py-0.5 rounded text-[11px] ${
+                        row.doc?.hasDocument === 'Yes'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : row.doc?.hasDocument === 'No'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}>
+                        {row.doc?.hasDocument || 'Data Not Recorded'}
                       </span>
                     </td>
                     <td className="p-2 border-r border-slate-300 text-slate-700">{row.doc?.namesMissing || '-'}</td>
@@ -262,42 +295,75 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
             <div>
               <span className="font-semibold text-slate-700 block">9. Education Qualification:</span>
               <span className="font-bold text-slate-900">{survey.q9EducationQualification}</span>
+              {survey.q9EducationQualification === 'Other' && survey.q9EducationQualificationOther && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Qualification (specify):</span> {survey.q9EducationQualificationOther}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">10. Discontinued Education:</span>
               <span className="font-bold text-slate-900">{survey.q10DiscontinuedEducation}</span>
+              {survey.q10DiscontinuedEducation === 'Yes' && survey.q10DiscontinuedReason && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Reason:</span> {survey.q10DiscontinuedReason}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">11. Nature of employment:</span>
               <span className="font-bold text-slate-900">{survey.q11NatureOfEmployment}</span>
+              {survey.q11NatureOfEmployment === 'Unemployed' && (survey.q11UnemployedCount || survey.q11UnemployedReason) && (
+                <span className="block text-xs text-slate-600 mt-0.5">
+                  {survey.q11UnemployedCount && <span><span className="font-semibold">Unemployed count:</span> {survey.q11UnemployedCount} &nbsp;</span>}
+                  {survey.q11UnemployedReason && <span><span className="font-semibold">Reason:</span> {survey.q11UnemployedReason}</span>}
+                </span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">12. Transgender in family:</span>
               <span className="font-bold text-slate-900">{survey.q12TransgenderInFamily}</span>
+              {survey.q12TransgenderInFamily === 'Yes' && survey.q12TransgenderDetails && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Details:</span> {survey.q12TransgenderDetails}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">13. Victim of Child Marriage:</span>
               <span className="font-bold text-slate-900">{survey.q13VictimOfChildMarriage}</span>
+              {survey.q13VictimOfChildMarriage === 'Yes' && survey.q13ChildMarriageDetails && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Details:</span> {survey.q13ChildMarriageDetails}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">14. Affected with HIV / Incurable disease:</span>
               <span className="font-bold text-slate-900">{survey.q14AffectedHivIncurableDisease}</span>
+              {survey.q14AffectedHivIncurableDisease === 'Yes' && survey.q14HivDetails && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Details:</span> {survey.q14HivDetails}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">15. Victim of Child Labour:</span>
               <span className="font-bold text-slate-900">{survey.q15VictimOfChildLabour}</span>
+              {survey.q15VictimOfChildLabour === 'Yes' && survey.q15ChildLabourDetails && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Details:</span> {survey.q15ChildLabourDetails}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">16. Victim of Bonded Labour:</span>
               <span className="font-bold text-slate-900">{survey.q16VictimOfBondedLabour}</span>
+              {survey.q16VictimOfBondedLabour === 'Yes' && survey.q16BondedLabourDetails && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Details:</span> {survey.q16BondedLabourDetails}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">17. Victim of Devadasi System:</span>
               <span className="font-bold text-slate-900">{survey.q17VictimOfDevadasiSystem}</span>
+              {survey.q17VictimOfDevadasiSystem === 'Yes' && survey.q17DevadasiDetails && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Details:</span> {survey.q17DevadasiDetails}</span>
+              )}
             </div>
             <div>
               <span className="font-semibold text-slate-700 block">18. Mental or Intellectual Disability:</span>
               <span className="font-bold text-slate-900">{survey.q18MentalOrIntellectualDisability}</span>
+              {survey.q18MentalOrIntellectualDisability === 'Yes' && survey.q18DisabilityDetails && (
+                <span className="block text-xs text-slate-600 mt-0.5"><span className="font-semibold">Details:</span> {survey.q18DisabilityDetails}</span>
+              )}
             </div>
           </div>
 
@@ -355,7 +421,7 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
           {survey.proofPhotoUrl ? (
             <div className="space-y-2">
               <div className="max-w-md mx-auto rounded-xl overflow-hidden border-2 border-slate-300 shadow bg-white p-2">
-                <img
+                <ImageWithSignedUrl
                   src={survey.proofPhotoUrl}
                   alt="Proof of Survey Location"
                   className="w-full max-h-80 object-contain rounded-lg"

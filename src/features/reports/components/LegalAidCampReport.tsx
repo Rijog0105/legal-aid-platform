@@ -139,7 +139,7 @@ export const LegalAidCampReport: React.FC<LegalAidCampReportProps> = ({
             </div>
             <div>
               <span className="text-slate-500 block">Total Families Surveyed:</span>
-              <span className="font-bold text-indigo-900">{stats.totalSurveys} Households ({stats.totalPopulationCovered} Individuals)</span>
+              <span className="font-bold text-indigo-900">{stats.totalSurveys} Households ({stats.recordedFamilyMembers} Family Members)</span>
             </div>
           </div>
         </div>
@@ -168,8 +168,8 @@ export const LegalAidCampReport: React.FC<LegalAidCampReportProps> = ({
               <span className="text-xl font-bold text-indigo-950">{stats.totalSurveys}</span>
             </div>
             <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
-              <span className="text-slate-500 block">Total Population:</span>
-              <span className="text-xl font-bold text-emerald-950">{stats.totalPopulationCovered}</span>
+              <span className="text-slate-500 block">Family Members:</span>
+              <span className="text-xl font-bold text-emerald-950">{stats.recordedFamilyMembers}</span>
             </div>
             <div className="bg-amber-50 p-3 rounded-xl border border-amber-200">
               <span className="text-slate-500 block">Pending Litigations:</span>

@@ -63,6 +63,7 @@ export interface GpsLocationData {
 }
 
 export interface SurveyResponseData {
+  id?: string;
   // Header / Preliminary Information
   surveyReferenceId: string;
   campId?: string;
@@ -97,14 +98,14 @@ export interface SurveyResponseData {
   q8dOtherOrgName?: string;
 
   // Survey Regarding Non-Availability of Necessary Documents (1 to 8)
-  doc1RationCard: DocumentSurveyItem;
-  doc2AadharCard: DocumentSurveyItem;
-  doc3BirthCertificate: DocumentSurveyItem;
-  doc4DeathCertificate: DocumentSurveyItem;
-  doc5OldAgePension: DocumentSurveyItem;
-  doc6WidowPension: DocumentSurveyItem;
-  doc7UdidDisabilityCard: DocumentSurveyItem;
-  doc8AyushmanHealthCard: DocumentSurveyItem;
+  doc1RationCard?: DocumentSurveyItem;
+  doc2AadharCard?: DocumentSurveyItem;
+  doc3BirthCertificate?: DocumentSurveyItem;
+  doc4DeathCertificate?: DocumentSurveyItem;
+  doc5OldAgePension?: DocumentSurveyItem;
+  doc6WidowPension?: DocumentSurveyItem;
+  doc7UdidDisabilityCard?: DocumentSurveyItem;
+  doc8AyushmanHealthCard?: DocumentSurveyItem;
 
   // Questions 9 to 21
   q9EducationQualification: string; // Q9
@@ -156,15 +157,30 @@ export interface SurveyResponseData {
 
 export interface ConsolidatedStats {
   totalSurveys: number;
-  totalPopulationCovered: number;
+  recordedFamilyMembers: number;
   genderDistribution: { category: string; count: number; percentage: number }[];
   ageDistribution: { range: string; count: number; percentage: number }[];
   occupationBreakdown: { category: string; count: number; percentage: number }[];
   educationBreakdown: { level: string; count: number; percentage: number }[];
   houseTypeBreakdown: { category: string; count: number; percentage: number }[];
   freeLegalAidCategoryCounts: { category: string; count: number; percentage: number }[];
-  documentAvailabilityMatrix: { name: string; hasDoc: number; missing: number; percentage: number }[];
+  documentAvailabilityMatrix: { name: string; hasDoc: number; missing: number; notApplicable: number; notRecorded: number; percentage: number }[];
   pendingLitigationCount: number;
   vulnerableGroupsCounts: { group: string; count: number }[];
   basicAmenitiesAvailability: { amenity: string; availableCount: number; percentage: number }[];
+  
+  // Custom Analytics Additions
+  householdsWithMissingDocs: number;
+  householdsWithAmenityIssues: number;
+  vulnerableHouseholds: number;
+  vulnerableCases: number;
+  averageHouseholdSize: number;
+  childrenCount: number;
+  elderlyCount: number;
+  houseOwnershipBreakdown: { category: string; count: number; percentage: number }[];
+  vehicleStatus: { category: string; count: number; total: number; percentage: number }[];
+  communityParticipation: { category: string; count: number; total: number; percentage: number }[];
+  propertyProfile: { category: string; count: number; total: number; percentage: number }[];
+  litigationDurationBreakdown: { category: string; count: number; percentage: number }[];
+  otherLegalProblemsCount: number;
 }

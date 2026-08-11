@@ -132,7 +132,61 @@ export interface Survey {
   survey_reference_id: string;
   submitted_by: string;
   submitted_at: string;
+  template_id: string | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
+  gps_accuracy: number | null;
+  proof_photo_url: string | null;
+  device_telemetry: any;
+  sync_status: 'synced' | 'pending' | 'failed';
 }
+
+/* ─── 8a. survey_templates ─────────────────────────────────── */
+export interface SurveyTemplate {
+  id: string;
+  title: string;
+  description: string | null;
+  version: number;
+  is_active: boolean;
+  created_at: string;
+  created_by: string | null;
+}
+
+/* ─── 8b. survey_sections ──────────────────────────────────── */
+export interface SurveySection {
+  id: string;
+  template_id: string;
+  title: string;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+}
+
+/* ─── 8c. survey_questions ─────────────────────────────────── */
+export interface SurveyQuestion {
+  id: string;
+  section_id: string;
+  question_text: string;
+  question_code: string;
+  question_type: 'text' | 'textarea' | 'number' | 'radio' | 'checkbox' | 'select' | 'date' | 'phone' | 'email' | 'family_grid' | 'document_survey' | 'photo_proof';
+  is_required: boolean;
+  validation_rules: any;
+  question_options: any;
+  conditional_logic: any;
+  display_order: number;
+  created_at: string;
+}
+
+/* ─── 8d. survey_answers ───────────────────────────────────── */
+export interface SurveyAnswer {
+  id: string;
+  survey_id: string;
+  question_id: string;
+  answer_value: string | null;
+  answer_payload: any;
+  created_at: string;
+}
+
 
 /* ─── 9. expenses ─────────────────────────────────────────── */
 

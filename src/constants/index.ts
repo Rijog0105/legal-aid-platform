@@ -119,6 +119,7 @@ export const APP_CONFIG = {
   DEFAULT_MAX_PHOTOS_PER_ACTIVITY: 4,
   PHOTO_BUCKET: 'camp-photos',
   REPORT_BUCKET: 'camp-reports',
+  SURVEY_PROOF_PHOTO_BUCKET: 'survey-proof-photos',
 } as const;
 
 /* ─── Route Paths ─────────────────────────────────────────── */

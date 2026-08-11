@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, FileText, Download, Calendar, MapPin, CheckCircle2, Scale, Plus } from 'lucide-react';
 import type { SurveyResponseData } from '@/types/survey';
+import { ImageWithSignedUrl } from '@/components/ImageWithSignedUrl';
 import { surveyService } from '@/services/surveyService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { IndividualSurveyReport } from '@/features/reports/components/IndividualSurveyReport';
@@ -103,7 +104,7 @@ export const VolunteerSurveyReportsPage: React.FC = () => {
                 <div className="flex items-start gap-4">
                   {/* Proof Photo Thumbnail if available */}
                   {survey.proofPhotoUrl ? (
-                    <img
+                    <ImageWithSignedUrl
                       src={survey.proofPhotoUrl}
                       alt="Proof"
                       className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shrink-0"

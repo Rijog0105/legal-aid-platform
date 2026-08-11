@@ -120,41 +120,68 @@ export async function togglePhotoReportSelection(photoId: string, isSelected: bo
 }
 
 /**
- * Record a survey proof photo directly into the photos table so it appears in My Works.
+ * Uploads a survey proof photo (Base64 JPEG string or File/Blob) to the private 'survey-proof-photos' bucket.
  */
-export async function recordSurveyProofPhoto({
-  campId,
-  uploadedBy,
-  fileUrl,
-  latitude,
-  longitude,
-  capturedAt,
-}: {
-  campId?: string | null;
-  uploadedBy: string;
-  fileUrl: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  capturedAt?: string;
-}): Promise<void> {
-  try {
-    if (!campId) return;
-    const { error } = await supabase.from('photos').insert([
-      {
-        camp_id: campId,
-        uploaded_by: uploadedBy,
-        file_url: fileUrl,
-        latitude: latitude || null,
-        longitude: longitude || null,
-        captured_at: capturedAt || new Date().toISOString(),
-      },
-    ]);
-    if (error) {
-      console.warn('Could not record survey proof photo to Supabase photos table', error);
+export async function uploadSurveyProofPhoto(
+  campId: string,
+  surveyId: string,
+  base64OrFile: string | File | Blob
+): Promise<string> {
+  let fileBody: Blob | File;
+  let contentType = 'image/jpeg';
+
+  if (typeof base64OrFile === 'string' && base64OrFile.startsWith('data:')) {
+    // Convert Base64 data URL to Blob
+    const arr = base64OrFile.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
-  } catch (err) {
-    console.error('Error recording survey proof photo', err);
+    fileBody = new Blob([u8arr], { type: mime });
+    contentType = mime;
+  } else if (typeof base64OrFile !== 'string') {
+    fileBody = base64OrFile;
+    contentType = (base64OrFile as any).type || 'image/jpeg';
+  } else {
+    throw new Error('Invalid file format for upload');
   }
+
+  const timestamp = Date.now();
+  const path = `camp/${campId}/survey/${surveyId}/verification-${timestamp}.jpg`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(APP_CONFIG.SURVEY_PROOF_PHOTO_BUCKET)
+    .upload(path, fileBody, { contentType, upsert: true });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload survey proof photo to storage: ${uploadError.message}`);
+  }
+
+  return path;
+}
+
+/**
+ * Generates a temporary signed URL for a private survey proof photo.
+ */
+export async function getSignedSurveyProofPhotoUrl(
+  path: string,
+  expiresInSeconds = 3600
+): Promise<string | null> {
+  if (!path) return null;
+  if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const { data, error } = await supabase.storage
+    .from(APP_CONFIG.SURVEY_PROOF_PHOTO_BUCKET)
+    .createSignedUrl(path, expiresInSeconds);
+  if (error) {
+    console.error('Error generating signed URL for survey proof photo:', error);
+    return null;
+  }
+  return data.signedUrl;
 }
 
 /**

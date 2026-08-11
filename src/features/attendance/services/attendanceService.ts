@@ -481,6 +481,8 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
   campCheckIn: string;
   campCheckOut: string;
   overallPercentage: number | null;
+  surveyPercentage: number | null;
+  campPercentage: number | null;
 }> {
   const sessions = await fetchCompletedSessions(campId);
 
@@ -517,6 +519,34 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
     totalPresent = records?.length || 0;
   }
 
+  const surveySessions = sessions.filter((s) => s.phase === 'survey');
+  const campSessions = sessions.filter((s) => s.phase === 'camp');
+
+  let surveyPercentage: number | null = null;
+  let campPercentage: number | null = null;
+
+  if (surveySessions.length > 0) {
+    const { data: surveyRecords } = await supabase
+      .from('attendance_records')
+      .select('session_id')
+      .in('session_id', surveySessions.map((s) => s.id))
+      .eq('status', 'present');
+    const surveyPresent = surveyRecords?.length || 0;
+    const surveyExpected = surveySessions.length * totalRoster;
+    surveyPercentage = surveyExpected > 0 ? Math.round((surveyPresent / surveyExpected) * 100) : null;
+  }
+
+  if (campSessions.length > 0) {
+    const { data: campRecords } = await supabase
+      .from('attendance_records')
+      .select('session_id')
+      .in('session_id', campSessions.map((s) => s.id))
+      .eq('status', 'present');
+    const campPresent = campRecords?.length || 0;
+    const campExpected = campSessions.length * totalRoster;
+    campPercentage = campExpected > 0 ? Math.round((campPresent / campExpected) * 100) : null;
+  }
+
   const formatLatestSession = async (list: AttendanceSession[]) => {
     if (list.length === 0) return 'Not Conducted';
     const latest = list[0];
@@ -543,6 +573,8 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
     campCheckIn,
     campCheckOut,
     overallPercentage,
+    surveyPercentage,
+    campPercentage,
   };
 }
 

@@ -23,6 +23,8 @@ import { TeamLeadBudgetPage } from '@/pages/TeamLeadBudgetPage';
 import { FacultySurveyDashboard } from '@/features/reports/components/FacultySurveyDashboard';
 import { VolunteerSurveyPage } from '@/pages/VolunteerSurveyPage';
 import { VolunteerSurveyReportsPage } from '@/pages/VolunteerSurveyReportsPage';
+import { DevTestSurveyPage } from '@/pages/DevTestSurveyPage';
+import { SurveyDetailsPage } from '@/pages/SurveyDetailsPage';
 
 export const router = createBrowserRouter([
   /* ─── Root: smart redirect ─── */
@@ -32,6 +34,10 @@ export const router = createBrowserRouter([
   },
 
   /* ─── Public Routes ─── */
+  {
+    path: '/dev/test-survey',
+    element: <DevTestSurveyPage />,
+  },
   {
     path: ROUTES.LOGIN,
     element: <LoginPage />,
@@ -76,6 +82,10 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.SURVEYS,
         element: <FacultySurveyDashboard />,
+      },
+      {
+        path: '/faculty/surveys/:surveyId',
+        element: <SurveyDetailsPage />,
       },
       {
         path: ROUTES.REPORTS,
