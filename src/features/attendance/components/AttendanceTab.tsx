@@ -295,27 +295,29 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
   return (
     <div className="space-y-6">
       {/* ─── Header View Switcher Toggle ─── */}
-      <div className="flex bg-surface-150 p-1.5 rounded-2xl border border-surface-200/50 max-w-xs shadow-sm">
-        <button
-          onClick={() => handleViewModeChange('current')}
-          className={`flex-1 text-center py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            viewMode === 'current'
-              ? 'bg-white text-surface-900 shadow-sm border border-surface-200/10'
-              : 'text-surface-500 hover:text-surface-800'
-          }`}
-        >
-          Current Session
-        </button>
-        <button
-          onClick={() => handleViewModeChange('history')}
-          className={`flex-1 text-center py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            viewMode === 'history'
-              ? 'bg-white text-surface-900 shadow-sm border border-surface-200/10'
-              : 'text-surface-500 hover:text-surface-800'
-          }`}
-        >
-          Attendance History
-        </button>
+      <div className="w-full flex justify-center">
+        <div className="flex bg-surface-150 p-1.5 rounded-2xl border border-surface-200/50 max-w-xs w-full shadow-sm">
+          <button
+            onClick={() => handleViewModeChange('current')}
+            className={`flex-1 text-center py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'current'
+                ? 'bg-white text-surface-900 shadow-sm border border-surface-200/10'
+                : 'text-surface-500 hover:text-surface-800'
+            }`}
+          >
+            Current Session
+          </button>
+          <button
+            onClick={() => handleViewModeChange('history')}
+            className={`flex-1 text-center py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'history'
+                ? 'bg-white text-surface-900 shadow-sm border border-surface-250/10'
+                : 'text-surface-500 hover:text-surface-800'
+            }`}
+          >
+            Attendance History
+          </button>
+        </div>
       </div>
 
       {sessionError && (
@@ -530,118 +532,136 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
             </div>
           ) : (
             /* Session creation panel */
-            <Card className="max-w-xl mx-auto p-6 space-y-6">
-              <div className="border-b border-surface-100 pb-3">
-                <h3 className="text-base font-bold text-surface-900 font-semibold">Start Attendance Session</h3>
-                <p className="text-xs text-surface-500 mt-1">
-                  Initialize a live geolocation-verified attendance check for volunteers and team leads on the project roster.
-                </p>
-              </div>
-
-              <div className="space-y-4 text-sm">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-surface-700 uppercase tracking-wide">Attendance Type</label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer font-medium text-surface-800">
-                      <input
-                        type="radio"
-                        name="session_type"
-                        value="check_in"
-                        checked={sessionType === 'check_in'}
-                        onChange={() => setSessionType('check_in')}
-                        className="accent-primary-600 w-4 h-4 cursor-pointer"
-                      />
-                      <span>Check-In</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer font-medium text-surface-800">
-                      <input
-                        type="radio"
-                        name="session_type"
-                        value="check_out"
-                        checked={sessionType === 'check_out'}
-                        onChange={() => setSessionType('check_out')}
-                        className="accent-primary-600 w-4 h-4 cursor-pointer"
-                      />
-                      <span>Check-Out</span>
-                    </label>
-                  </div>
+            <div className="w-full flex justify-center">
+              <Card 
+                className="p-10 max-w-3xl lg:max-w-4xl w-full border border-surface-200/80 shadow-md shadow-surface-900/4 rounded-3xl bg-white hover:shadow-lg hover:shadow-surface-900/6 hover:border-surface-300 hover:-translate-y-0.5 hover:scale-[1.003] transition-all duration-300 ease-out" 
+                padding="lg"
+              >
+                <div className="border-b border-surface-100 pb-5 mb-8">
+                  <h3 className="text-xl font-bold text-surface-900 tracking-tight">Start Attendance Session</h3>
+                  <p className="text-xs text-surface-500 mt-1.5">
+                    Initialize a live geolocation-verified attendance check for volunteers and team leads on the project roster.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label htmlFor="radius_select" className="text-xs font-semibold text-surface-700 uppercase tracking-wide">
-                      Attendance Radius
-                    </label>
-                    <select
-                      id="radius_select"
-                      value={radius}
-                      onChange={(e) => setRadius(parseInt(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-surface-300 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
-                    >
-                      <option value={50}>50 meters</option>
-                      <option value={100}>100 meters (Default)</option>
-                      <option value={150}>150 meters</option>
-                      <option value={200}>200 meters</option>
-                    </select>
+                <div className="space-y-8 text-sm">
+                  <div className="space-y-3">
+                    <label className="text-xs font-semibold text-surface-700 uppercase tracking-wide">Attendance Type</label>
+                    <div className="flex gap-8 mt-1.5">
+                      <label className="flex items-center gap-2.5 cursor-pointer font-medium text-surface-850">
+                        <input
+                          type="radio"
+                          name="session_type"
+                          value="check_in"
+                          checked={sessionType === 'check_in'}
+                          onChange={() => setSessionType('check_in')}
+                          className="accent-primary-600 w-4 h-4 cursor-pointer"
+                        />
+                        <span>Check-In</span>
+                      </label>
+                      <label className="flex items-center gap-2.5 cursor-pointer font-medium text-surface-850">
+                        <input
+                          type="radio"
+                          name="session_type"
+                          value="check_out"
+                          checked={sessionType === 'check_out'}
+                          onChange={() => setSessionType('check_out')}
+                          className="accent-primary-600 w-4 h-4 cursor-pointer"
+                        />
+                        <span>Check-Out</span>
+                      </label>
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="duration_select" className="text-xs font-semibold text-surface-700 uppercase tracking-wide">
-                      Session Expiry Duration
-                    </label>
-                    <select
-                      id="duration_select"
-                      value={duration}
-                      onChange={(e) => setDuration(parseInt(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-surface-300 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
-                    >
-                      <option value={5}>5 minutes</option>
-                      <option value={10}>10 minutes</option>
-                      <option value={15}>15 minutes (Default)</option>
-                      <option value={20}>20 minutes</option>
-                      <option value={30}>30 minutes</option>
-                    </select>
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="space-y-2.5">
+                      <label htmlFor="radius_select" className="text-xs font-semibold text-surface-700 uppercase tracking-wide">
+                        Attendance Radius
+                      </label>
+                      <select
+                        id="radius_select"
+                        value={radius}
+                        onChange={(e) => setRadius(parseInt(e.target.value))}
+                        className="w-full px-4 py-2.5 rounded-xl border border-surface-300 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-surface-400 transition-all text-sm"
+                      >
+                        <option value={50}>50 meters</option>
+                        <option value={100}>100 meters (Default)</option>
+                        <option value={150}>150 meters</option>
+                        <option value={200}>200 meters</option>
+                      </select>
+                    </div>
 
-                <div className="bg-surface-50 border border-surface-150 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-surface-800 flex items-center gap-1.5">
-                      <MapPin size={14} className="text-primary-600" /> Geolocation Verification
-                    </span>
-                    <Button size="sm" variant="outline" leftIcon={<Compass size={13} />} onClick={captureLocation} isLoading={gpsLoading}>
-                      Capture Location
+                    <div className="space-y-2.5">
+                      <label htmlFor="duration_select" className="text-xs font-semibold text-surface-700 uppercase tracking-wide">
+                        Session Expiry Duration
+                      </label>
+                      <select
+                        id="duration_select"
+                        value={duration}
+                        onChange={(e) => setDuration(parseInt(e.target.value))}
+                        className="w-full px-4 py-2.5 rounded-xl border border-surface-300 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 hover:border-surface-400 transition-all text-sm"
+                      >
+                        <option value={5}>5 minutes</option>
+                        <option value={10}>10 minutes</option>
+                        <option value={15}>15 minutes (Default)</option>
+                        <option value={20}>20 minutes</option>
+                        <option value={30}>30 minutes</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface-50 border border-surface-150 rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <span className="text-xs font-bold text-surface-800 flex items-center gap-1.5">
+                        <MapPin size={15} className="text-primary-600" /> Geolocation Verification
+                      </span>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        leftIcon={<Compass size={13} />} 
+                        onClick={captureLocation} 
+                        isLoading={gpsLoading}
+                        className="px-4 py-2.5 rounded-xl text-xs font-semibold border-surface-300 text-surface-700 hover:bg-slate-50 transition-all"
+                      >
+                        Capture Location
+                      </Button>
+                    </div>
+
+                    {facultyCoords ? (
+                      <div className="text-xs text-surface-600 bg-white border border-surface-100 rounded-xl p-3.5 flex items-center justify-between">
+                        <span>Coordinates Captured Successfully:</span>
+                        <span className="font-mono font-bold text-surface-900 bg-surface-50 px-2.5 py-1 rounded border border-surface-100 text-xs">
+                          {facultyCoords.latitude.toFixed(6)}, {facultyCoords.longitude.toFixed(6)}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-surface-500 flex items-center gap-2">
+                        <AlertCircle size={15} className="text-amber-500 shrink-0" />
+                        <span>Please capture your current GPS location to start the attendance session.</span>
+                      </div>
+                    )}
+
+                    {gpsError && (
+                      <div className="text-xs text-red-650 bg-red-50 border border-red-100 rounded-xl p-3">
+                        {gpsError}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-8 border-t border-surface-100 mt-8">
+                    <Button 
+                      size="md" 
+                      className="w-full py-3.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-all hover:scale-[1.005]" 
+                      leftIcon={<Play size={16} />} 
+                      disabled={!facultyCoords} 
+                      onClick={handleStartSession}
+                    >
+                      Start Attendance Session
                     </Button>
                   </div>
-
-                  {facultyCoords ? (
-                    <div className="text-xs text-surface-600 bg-white border border-surface-100 rounded-xl p-2.5 flex items-center justify-between">
-                      <span>Coordinates Captured Successfully:</span>
-                      <span className="font-mono font-bold text-surface-900 bg-surface-50 px-2 py-0.5 rounded border border-surface-100">
-                        {facultyCoords.latitude.toFixed(6)}, {facultyCoords.longitude.toFixed(6)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-surface-500 flex items-center gap-1.5">
-                      <AlertCircle size={14} className="text-amber-500" />
-                      <span>Please capture your current GPS location to start the attendance session.</span>
-                    </div>
-                  )}
-
-                  {gpsError && (
-                    <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl p-2.5">
-                      {gpsError}
-                    </div>
-                  )}
                 </div>
-
-                <div className="pt-2">
-                  <Button size="md" className="w-full" leftIcon={<Play size={16} />} disabled={!facultyCoords} onClick={handleStartSession}>
-                    Start Attendance Session
-                  </Button>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           )}
         </>
       )}
@@ -668,103 +688,138 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
             />
           ) : (
             /* List of completed historical sessions */
-            <div className="space-y-4">
-              <div className="border-b border-surface-100 pb-2.5">
-                <h3 className="text-base font-bold text-surface-900">Attendance Session History</h3>
-                <p className="text-xs text-surface-500">Review turnouts and records of all previously concluded attendance checks.</p>
-              </div>
-
-              {historyError && (
-                <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
-                  <AlertCircle size={13} className="flex-shrink-0" />
-                  {historyError}
+            <div className="w-full flex justify-center">
+              <Card 
+                className="p-8 max-w-3xl lg:max-w-4xl w-full border border-surface-200/80 shadow-md shadow-surface-900/4 rounded-3xl bg-white hover:shadow-lg hover:shadow-surface-900/6 hover:border-surface-300 hover:-translate-y-0.5 hover:scale-[1.003] transition-all duration-300 ease-out" 
+                padding="lg"
+              >
+                <div className="border-b border-surface-100 pb-4 mb-6">
+                  <h3 className="text-lg font-bold text-surface-900 tracking-tight">Attendance Session History</h3>
+                  <p className="text-xs text-surface-500 mt-1">Review turnouts and records of all previously concluded attendance checks.</p>
                 </div>
-              )}
 
-              {loadingHistory ? (
-                <div className="flex justify-center py-12">
-                  <Spinner size="lg" />
-                </div>
-              ) : completedSessions.length === 0 ? (
-                <Card className="p-8 text-center border-dashed">
-                  <History className="w-12 h-12 text-surface-300 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-surface-700">No session history found</p>
-                  <p className="text-xs text-surface-500 mt-0.5">No attendance sessions have been completed yet for this project phase.</p>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {completedSessions.map((session) => {
-                    const dateStr = formatDate(session.starts_at);
-                    const timeStr = new Date(session.starts_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                    const percent = session.total_roster > 0 ? Math.round((session.present_count / session.total_roster) * 100) : 0;
-                    
-                    // Determine status: Closed (Completed) vs Open-and-Expired (Expired)
-                    const isConcluded = session.status === 'closed';
+                {historyError && (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs mb-6">
+                    <AlertCircle size={13} className="flex-shrink-0" />
+                    {historyError}
+                  </div>
+                )}
 
-                    return (
-                      <Card
-                        key={session.id}
-                        hover
-                        onClick={() => handleSelectSession(session)}
-                        className="p-5 flex flex-col justify-between gap-4 cursor-pointer bg-white relative overflow-hidden"
-                      >
-                        {/* Upper row: Badges and Status */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-surface-100 text-surface-650 uppercase tracking-wide">
-                                {session.phase === 'survey' ? 'Survey Phase' : 'Camp Phase'}
-                              </span>
-                              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-primary-50 text-primary-700 uppercase tracking-wide">
-                                {session.session_type === 'check_in' ? 'Check-In' : 'Check-Out'}
+                {loadingHistory ? (
+                  <div className="flex justify-center py-12">
+                    <Spinner size="lg" />
+                  </div>
+                ) : completedSessions.length === 0 ? (
+                  <div className="p-8 text-center border border-dashed border-surface-300 rounded-2xl bg-surface-50/20">
+                    <History className="w-12 h-12 text-surface-300 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-surface-700">No session history found</p>
+                    <p className="text-xs text-surface-500 mt-0.5">No attendance sessions have been completed yet for this project phase.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {[...completedSessions]
+                      .sort((a, b) => {
+                        // If there are exactly 2 completed sessions, sort by type so Check-In is on the left
+                        if (completedSessions.length === 2) {
+                          if (a.session_type !== b.session_type) {
+                            return a.session_type === 'check_in' ? -1 : 1;
+                          }
+                        }
+                        
+                        const dateA = new Date(a.starts_at);
+                        const dateB = new Date(b.starts_at);
+                        
+                        const dayA = new Date(dateA.getFullYear(), dateA.getMonth(), dateA.getDate()).getTime();
+                        const dayB = new Date(dateB.getFullYear(), dateB.getMonth(), dateB.getDate()).getTime();
+                        
+                        if (dayA !== dayB) {
+                          return dayB - dayA; // newest day first
+                        }
+                        
+                        // Same day: check_in always goes first (on the left)
+                        if (a.session_type !== b.session_type) {
+                          return a.session_type === 'check_in' ? -1 : 1;
+                        }
+                        
+                        return dateA.getTime() - dateB.getTime();
+                      })
+                      .map((session) => {
+                        const dateStr = formatDate(session.starts_at);
+                        const timeStr = new Date(session.starts_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                        const percent = session.total_roster > 0 ? Math.round((session.present_count / session.total_roster) * 100) : 0;
+                        
+                        // Determine status: Closed (Completed) vs Open-and-Expired (Expired)
+                        const isConcluded = session.status === 'closed';
+
+                        return (
+                          <Card
+                            key={session.id}
+                            hover={true}
+                            onClick={() => handleSelectSession(session)}
+                            className="p-6 min-h-[230px] flex flex-col justify-between cursor-pointer bg-white border border-surface-200 shadow-sm shadow-surface-900/4 rounded-2xl hover:shadow-md hover:border-surface-300 hover:-translate-y-0.5 hover:scale-[1.002] transition-all duration-300 ease-out relative overflow-hidden"
+                          >
+                            {/* Upper row: Badges and Status */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-surface-100 text-surface-650 uppercase tracking-wide">
+                                  {session.phase === 'survey' ? 'Survey Phase' : 'Camp Phase'}
+                                </span>
+                                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-primary-50 text-primary-700 uppercase tracking-wide">
+                                  {session.session_type === 'check_in' ? 'Check-In' : 'Check-Out'}
+                                </span>
+                              </div>
+
+                              {/* Status Badge (Completed / Expired) */}
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                  isConcluded
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-250'
+                                }`}
+                              >
+                                {isConcluded ? 'Completed' : 'Expired'}
                               </span>
                             </div>
-                            <h4 className="font-bold text-surface-900 text-sm leading-snug">
-                              {session.phase === 'survey' ? 'Survey' : 'Camp'} {session.session_type === 'check_in' ? 'Check-In' : 'Check-Out'}
-                            </h4>
-                          </div>
 
-                          {/* Status Badge (Completed / Expired) */}
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                              isConcluded
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-250'
-                            }`}
-                          >
-                            {isConcluded ? 'Completed' : 'Expired'}
-                          </span>
-                        </div>
+                            {/* Session Title */}
+                            <div className="mt-2.5">
+                              <h4 className="font-extrabold text-surface-900 text-base leading-snug">
+                                {session.phase === 'survey' ? 'Survey' : 'Camp'} {session.session_type === 'check_in' ? 'Check-In' : 'Check-Out'}
+                              </h4>
+                            </div>
 
-                        {/* Mid Row: Date and Time */}
-                        <div className="grid grid-cols-2 gap-2 text-xs text-surface-500 py-1.5 border-t border-b border-surface-100">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar size={13} className="text-surface-400" />
-                            <span>{dateStr}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Clock size={13} className="text-surface-400" />
-                            <span>{timeStr}</span>
-                          </div>
-                        </div>
+                            <div className="flex-1" />
 
-                        {/* Footer Row: Turnout Stats and Action */}
-                        <div className="flex items-center justify-between gap-2 pt-1">
-                          <div className="space-y-0.5">
-                            <span className="text-[9px] text-surface-400 block uppercase tracking-wider">Attendance turnout</span>
-                            <span className="text-xs font-bold text-surface-850">
-                              {session.present_count} / {session.total_roster} Present ({percent}%)
-                            </span>
-                          </div>
-                          <span className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1">
-                            View Summary <ArrowRight size={12} />
-                          </span>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+                            {/* Mid Row: Date and Time */}
+                            <div className="grid grid-cols-2 gap-2 text-xs text-surface-550 py-2.5 border-t border-b border-surface-100/80 my-2">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar size={13} className="text-surface-400" />
+                                <span>{dateStr}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Clock size={13} className="text-surface-400" />
+                                <span>{timeStr}</span>
+                              </div>
+                            </div>
+
+                            {/* Footer Row: Turnout Stats and Action */}
+                            <div className="flex items-center justify-between gap-2 pt-1">
+                              <div className="space-y-0.5">
+                                <span className="text-[9px] text-surface-400 block uppercase tracking-wider">Attendance turnout</span>
+                                <span className="text-xs font-bold text-surface-850">
+                                  {session.present_count} / {session.total_roster} Present ({percent}%)
+                                </span>
+                              </div>
+                              <span className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                                View Summary <ArrowRight size={12} />
+                              </span>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                  </div>
+                )}
+              </Card>
             </div>
           )}
         </>
