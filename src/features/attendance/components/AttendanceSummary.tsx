@@ -4,6 +4,7 @@ import {
   fetchSessionDashboardData,
   type DashboardAttendee,
 } from '../services/attendanceService';
+import { generateAttendanceReportPDF } from '../utils/attendanceReportGenerator';
 import {
   Search,
   Download,
@@ -79,7 +80,16 @@ export function AttendanceSummary({
   const attendancePercentage = totalAssigned > 0 ? Math.round((presentCount / totalAssigned) * 100) : 0;
 
   const handleExport = () => {
-    alert('Attendance export will be implemented in Report Generation Phase.');
+    generateAttendanceReportPDF({
+      projectName,
+      phase,
+      sessionType,
+      startsAt,
+      expiresAt,
+      radiusMeters,
+      facultyCoords,
+      attendees,
+    });
   };
 
   const toggleSort = (field: 'name' | 'role' | 'time') => {
@@ -269,13 +279,13 @@ export function AttendanceSummary({
       <div className="bg-white p-4 rounded-2xl border border-surface-200 shadow-sm flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
         {/* Search Input */}
         <div className="relative flex-1 max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none" />
           <input
             type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search attendee by name..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-surface-300 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+            className="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border border-surface-300 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all"
           />
         </div>
 
@@ -336,7 +346,14 @@ export function AttendanceSummary({
               ) : (
                 processedAttendees.map((attendee) => (
                   <tr key={attendee.user_id} className="hover:bg-surface-50/50">
-                    <td className="px-5 py-3.5 font-bold text-surface-900">{attendee.name}</td>
+                    <td className="px-5 py-3.5 text-surface-900">
+                      <span className="font-bold block">{attendee.name}</span>
+                      {attendee.category === 'student' && attendee.usn_employee_id && (
+                        <span className="text-[10px] text-surface-500 font-medium block mt-0.5">
+                          SRN: <span className="font-mono">{attendee.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
+                        </span>
+                      )}
+                    </td>
                     <td className="px-5 py-3.5 text-surface-500">{attendee.role}</td>
                     <td className="px-5 py-3.5">
                       {attendee.check_in_time
@@ -397,6 +414,11 @@ export function AttendanceSummary({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-bold text-surface-900 text-sm">{attendee.name}</h4>
+                    {attendee.category === 'student' && attendee.usn_employee_id && (
+                      <span className="text-[10px] text-surface-500 font-medium block mt-0.5">
+                        SRN: <span className="font-mono">{attendee.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
+                      </span>
+                    )}
                     <span className="text-[10px] text-surface-400 block">{attendee.role}</span>
                   </div>
                   <span

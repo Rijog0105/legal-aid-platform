@@ -447,7 +447,14 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                       ) : (
                         attendees.map((attendee) => (
                           <tr key={attendee.user_id} className="hover:bg-surface-50/50">
-                            <td className="px-5 py-3 font-semibold text-surface-900">{attendee.name}</td>
+                            <td className="px-5 py-3 text-surface-900">
+                              <span className="font-semibold block">{attendee.name}</span>
+                              {attendee.category === 'student' && attendee.usn_employee_id && (
+                                <span className="text-[10px] text-surface-500 font-medium block mt-0.5">
+                                  SRN: <span className="font-mono">{attendee.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
+                                </span>
+                              )}
+                            </td>
                             <td className="px-5 py-3 text-surface-500">{attendee.role}</td>
                             <td className="px-5 py-3">
                               {attendee.check_in_time
@@ -504,7 +511,14 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                     attendees.map((attendee) => (
                       <div key={attendee.user_id} className="p-4 space-y-2 hover:bg-surface-50/50">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-surface-900 text-sm">{attendee.name}</span>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-surface-900 text-sm">{attendee.name}</span>
+                            {attendee.category === 'student' && attendee.usn_employee_id && (
+                              <span className="text-[10px] text-surface-500 font-medium">
+                                SRN: <span className="font-mono">{attendee.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
+                              </span>
+                            )}
+                          </div>
                           <span
                             className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase ${
                               attendee.status === 'present'

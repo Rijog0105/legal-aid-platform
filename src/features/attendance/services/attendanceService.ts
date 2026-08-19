@@ -251,6 +251,8 @@ export interface DashboardAttendee {
   gps_status: 'Within Radius' | 'Outside Radius' | 'No GPS' | 'Pending';
   status: 'present' | 'rejected' | 'pending';
   rejection_reason: string | null;
+  usn_employee_id?: string | null;
+  category?: string | null;
 }
 
 /**
@@ -274,7 +276,7 @@ export async function fetchSessionDashboardData(
     .select(`
       camp_role,
       person_id,
-      person:persons(id, full_name)
+      person:persons(id, full_name, usn_employee_id, category)
     `)
     .eq('camp_id', projectId)
     .in('camp_role', ['volunteer', 'team_lead']);
@@ -361,6 +363,8 @@ export async function fetchSessionDashboardData(
       gps_status,
       status,
       rejection_reason,
+      usn_employee_id: r.person?.usn_employee_id,
+      category: r.person?.category,
     };
   });
 

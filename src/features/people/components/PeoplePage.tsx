@@ -250,6 +250,11 @@ export function PeoplePage() {
                     <tr key={p.id} className="hover:bg-surface-50/60 transition-colors group">
                       <td className="px-5 py-4">
                         <p className="font-medium text-surface-900">{p.full_name}</p>
+                        {p.category === 'student' && p.usn_employee_id && (
+                          <span className="text-[10px] text-surface-500 font-medium block mt-0.5">
+                            SRN: <span className="font-mono">{p.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
+                          </span>
+                        )}
                         <span className="sm:hidden">
                           <Badge variant={CATEGORY_BADGE_VARIANTS[p.category]} className="mt-1">
                             {CATEGORY_LABELS[p.category]}

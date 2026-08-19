@@ -136,7 +136,7 @@ export function ProjectDetailPage() {
   const consolidatedPrintRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [quickFilter, setQuickFilter] = useState<'all' | 'attention' | 'legal' | 'docs' | 'amenities' | 'vulnerable'>('all');
+  const [quickFilter, setQuickFilter] = useState<'all' | 'attention' | 'legal' | 'docs' | 'amenities'>('all');
 
   const toggleCustomFilter = (key: string) => {
     setActiveFilters((prev) =>
@@ -255,9 +255,6 @@ export function ProjectDetailPage() {
     }
     if (filter === 'amenities') {
       return s.q19aWater !== 'Yes' || s.q19bElectricity !== 'Yes' || s.q19cRoadsPathways !== 'Yes' || s.q19dHealthFacilities !== 'Yes';
-    }
-    if (filter === 'vulnerable') {
-      return s.q12TransgenderInFamily === 'Yes' || s.q13VictimOfChildMarriage === 'Yes' || s.q14AffectedHivIncurableDisease === 'Yes' || s.q15VictimOfChildLabour === 'Yes' || s.q16VictimOfBondedLabour === 'Yes' || s.q17VictimOfDevadasiSystem === 'Yes' || s.q18MentalOrIntellectualDisability === 'Yes';
     }
     return true;
   };
@@ -1490,7 +1487,7 @@ export function ProjectDetailPage() {
           )}
 
           {activeSurveySubTab === 'forms' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {loadingSurveys || loadingSurveyDetails ? (
                 <div className="p-12 flex flex-col items-center justify-center bg-white rounded-3xl border border-surface-200 shadow-sm">
                   <Spinner size="lg" />
@@ -1517,68 +1514,75 @@ export function ProjectDetailPage() {
                   </p>
                 </Card>
               ) : (
-                <div className="space-y-6">
-                  {/* Search Bar */}
-                  <div className="bg-white p-4 rounded-3xl border border-surface-200 flex items-center justify-between gap-4 shadow-sm">
-                    <div className="relative w-full">
-                      <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                      <input
-                        type="text"
-                        placeholder="Search survey ID, respondent, surveyor..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 font-medium"
-                      />
-                    </div>
+                <div className="space-y-8">
+                  {/* 1. Search Section */}
+                  <div className="relative w-full shadow-xs">
+                    <Search
+                      size={18}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search survey ID, respondent, surveyor..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3.5 text-xs rounded-2xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium text-slate-900 shadow-xs placeholder:text-slate-400 placeholder:font-normal"
+                    />
                   </div>
 
-                  {/* Quick Filters Row */}
-                  <div className="flex flex-wrap gap-2">
+                  {/* 2. Survey Status Tabs (Segmented Control) */}
+                  <div className="bg-white p-1.5 rounded-2xl flex flex-wrap md:flex-row gap-1 border border-slate-200 shadow-sm">
                     {[
-                      { key: 'all', label: 'All Surveys', count: surveyList.length, color: 'bg-slate-100 text-slate-700 hover:bg-slate-200' },
-                      { key: 'attention', label: 'Needs Attention', count: surveyList.filter(s => matchesQuickFilter(s, 'attention')).length, color: 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200' },
-                      { key: 'legal', label: 'Legal Cases', count: surveyList.filter(s => matchesQuickFilter(s, 'legal')).length, color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200' },
-                      { key: 'docs', label: 'Document Issues', count: surveyList.filter(s => matchesQuickFilter(s, 'docs')).length, color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200' },
-                      { key: 'amenities', label: 'Amenity Issues', count: surveyList.filter(s => matchesQuickFilter(s, 'amenities')).length, color: 'bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200' },
-                      { key: 'vulnerable', label: 'Vulnerable Cases', count: surveyList.filter(s => matchesQuickFilter(s, 'vulnerable')).length, color: 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200' }
-                    ].map(q => (
-                      <button
-                        key={q.key}
-                        onClick={() => {
-                          setQuickFilter(q.key as any);
-                          setActiveFilters([]);
-                        }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer shadow-sm ${
-                          quickFilter === q.key
-                            ? 'scale-[1.02] ring-2 ring-primary-500/20 font-black ' + q.color.replace('bg-', 'bg-opacity-95 bg-')
-                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span>{q.label}</span>
-                        <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-200/50 font-mono">{q.count}</span>
-                      </button>
-                    ))}
+                      { key: 'all', label: 'All Surveys', count: surveyList.length, activeColor: 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs', hoverColor: 'hover:bg-slate-50 text-slate-600' },
+                      { key: 'attention', label: 'Needs Attention', count: surveyList.filter(s => matchesQuickFilter(s, 'attention')).length, activeColor: 'bg-red-50 text-red-700 border border-red-200 shadow-xs', hoverColor: 'hover:bg-red-50/40 text-slate-600' },
+                      { key: 'legal', label: 'Legal Cases', count: surveyList.filter(s => matchesQuickFilter(s, 'legal')).length, activeColor: 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs', hoverColor: 'hover:bg-indigo-50/40 text-slate-600' },
+                      { key: 'docs', label: 'Document Issues', count: surveyList.filter(s => matchesQuickFilter(s, 'docs')).length, activeColor: 'bg-amber-50 text-amber-700 border border-amber-200 shadow-xs', hoverColor: 'hover:bg-amber-50/40 text-slate-600' },
+                      { key: 'amenities', label: 'Amenity Issues', count: surveyList.filter(s => matchesQuickFilter(s, 'amenities')).length, activeColor: 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs', hoverColor: 'hover:bg-rose-50/40 text-slate-600' },
+                    ].map(q => {
+                      const isActive = quickFilter === q.key;
+                      return (
+                        <button
+                          key={q.key}
+                          onClick={() => {
+                            setQuickFilter(q.key as any);
+                            setActiveFilters([]);
+                          }}
+                          className={`flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-between gap-2 cursor-pointer ${
+                            isActive
+                              ? q.activeColor + ' scale-[1.01]'
+                              : 'text-slate-600 border border-transparent ' + q.hoverColor
+                          }`}
+                        >
+                          <span className="font-semibold">{q.label}</span>
+                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold font-mono transition-colors ${
+                            isActive 
+                              ? 'bg-slate-200/60 text-slate-700' 
+                              : 'bg-slate-200/40 text-slate-500'
+                          }`}>{q.count}</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {/* Multi-Criteria Filtering Tag Grid */}
-                  <div className="bg-white p-5 rounded-3xl border border-surface-200 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-                        <Filter className="w-3.5 h-3.5 text-primary-600" />
+                  {/* 3. Multi-Criteria Filtering Tag Grid */}
+                  <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-primary-600" />
                         Multi-Criteria Filtering Options
                       </span>
                       {activeFilters.length > 0 && (
-                        <button onClick={() => setActiveFilters([])} className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer">
+                        <button onClick={() => setActiveFilters([])} className="text-[10px] font-bold text-red-500 hover:text-red-700 hover:underline cursor-pointer transition-colors">
                           Clear All Filters ({activeFilters.length})
                         </button>
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                       {/* Legal Group */}
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Legal</span>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="space-y-2.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1">Legal</span>
+                        <div className="flex flex-wrap gap-1.5">
                           {[
                             { key: 'litigation', label: 'Pending Litigation' },
                             { key: 'no_litigation', label: 'No Litigation' },
@@ -1588,10 +1592,10 @@ export function ProjectDetailPage() {
                             <button
                               key={f.key}
                               onClick={() => toggleCustomFilter(f.key)}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors border cursor-pointer ${
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 border cursor-pointer ${
                                 activeFilters.includes(f.key)
-                                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-bold'
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  ? 'bg-indigo-50 border-indigo-200 text-indigo-750 font-bold shadow-xs'
+                                  : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600 hover:text-slate-800'
                               }`}
                             >
                               {f.label}
@@ -1601,9 +1605,9 @@ export function ProjectDetailPage() {
                       </div>
 
                       {/* Documents Group */}
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Missing Documents</span>
-                        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                      <div className="space-y-2.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1">Missing Documents</span>
+                        <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
                           {[
                             { key: 'missing_ration_card', label: 'Ration Card' },
                             { key: 'missing_aadhar', label: 'Aadhaar' },
@@ -1617,10 +1621,10 @@ export function ProjectDetailPage() {
                             <button
                               key={f.key}
                               onClick={() => toggleCustomFilter(f.key)}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors border cursor-pointer ${
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 border cursor-pointer ${
                                 activeFilters.includes(f.key)
-                                  ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  ? 'bg-amber-50 border-amber-200 text-amber-800 font-bold shadow-xs'
+                                  : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600 hover:text-slate-800'
                               }`}
                             >
                               {f.label}
@@ -1630,9 +1634,9 @@ export function ProjectDetailPage() {
                       </div>
 
                       {/* Amenities Group */}
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Amenities Problems</span>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="space-y-2.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1">Amenities Problems</span>
+                        <div className="flex flex-wrap gap-1.5">
                           {[
                             { key: 'water_problem', label: 'Water Problem' },
                             { key: 'electricity_problem', label: 'Electricity Problem' },
@@ -1642,10 +1646,10 @@ export function ProjectDetailPage() {
                             <button
                               key={f.key}
                               onClick={() => toggleCustomFilter(f.key)}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors border cursor-pointer ${
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 border cursor-pointer ${
                                 activeFilters.includes(f.key)
-                                  ? 'bg-rose-50 border-rose-300 text-rose-700 font-bold'
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  ? 'bg-rose-50 border-rose-200 text-rose-800 font-bold shadow-xs'
+                                  : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600 hover:text-slate-800'
                               }`}
                             >
                               {f.label}
@@ -1655,9 +1659,9 @@ export function ProjectDetailPage() {
                       </div>
 
                       {/* Vulnerability Group */}
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Vulnerabilities</span>
-                        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                      <div className="space-y-2.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1">Vulnerabilities</span>
+                        <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
                           {[
                             { key: 'transgender', label: 'Transgender' },
                             { key: 'child_marriage', label: 'Child Marriage' },
@@ -1670,10 +1674,10 @@ export function ProjectDetailPage() {
                             <button
                               key={f.key}
                               onClick={() => toggleCustomFilter(f.key)}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors border cursor-pointer ${
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 border cursor-pointer ${
                                 activeFilters.includes(f.key)
-                                  ? 'bg-orange-50 border-orange-300 text-orange-700 font-bold'
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  ? 'bg-orange-50 border-orange-200 text-orange-850 font-bold shadow-xs'
+                                  : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600 hover:text-slate-800'
                               }`}
                             >
                               {f.label}
@@ -1683,9 +1687,9 @@ export function ProjectDetailPage() {
                       </div>
 
                       {/* Socio-Economic Group */}
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Socio-Economic</span>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="space-y-2.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1">Socio-Economic</span>
+                        <div className="flex flex-wrap gap-1.5">
                           {[
                             { key: 'unemployment', label: 'Unemployed' },
                             { key: 'education_issue', label: 'Discontinued Edu' },
@@ -1696,10 +1700,10 @@ export function ProjectDetailPage() {
                             <button
                               key={f.key}
                               onClick={() => toggleCustomFilter(f.key)}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors border cursor-pointer ${
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 border cursor-pointer ${
                                 activeFilters.includes(f.key)
-                                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700 font-bold'
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold shadow-xs'
+                                  : 'bg-slate-50/60 hover:bg-slate-100/80 border-slate-200 text-slate-600 hover:text-slate-800'
                               }`}
                             >
                               {f.label}
@@ -1710,61 +1714,62 @@ export function ProjectDetailPage() {
                     </div>
                   </div>
 
-                  {/* List View */}
-                  <div className="bg-white border border-surface-200 rounded-3xl overflow-hidden shadow-sm">
-                    <div className="p-5 border-b border-surface-200 bg-slate-50/50">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-surface-600">
+                  {/* 4. List View Table */}
+                  <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                    <div className="p-5 border-b border-slate-105 bg-slate-50/40">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-indigo-500" />
                         Submitted Volunteer Sheets ({filteredSurveys.length})
                       </h3>
                     </div>
                     {filteredSurveys.length === 0 ? (
-                      <div className="p-12 text-center space-y-2 text-xs text-slate-400 font-bold">
+                      <div className="p-12 text-center text-xs text-slate-400 font-bold">
                         No submitted surveys match your search query or filters.
                       </div>
                     ) : (
                       <div className="overflow-x-auto text-xs font-medium">
                         <table className="w-full text-left border-collapse">
-                          <thead className="bg-slate-50 font-bold border-b border-surface-200 text-surface-700">
+                          <thead className="bg-slate-50/60 font-bold border-b border-slate-100 text-slate-600 uppercase tracking-wider text-[10px]">
                             <tr>
-                              <th className="p-4">Ref ID</th>
-                              <th className="p-4">Data Collector (Volunteer)</th>
-                              <th className="p-4">Respondent</th>
-                              <th className="p-4">Main Occupation</th>
-                              <th className="p-4">Litigation Status</th>
-                              <th className="p-4 text-right">Actions</th>
+                              <th className="py-4 px-6">Ref ID</th>
+                              <th className="py-4 px-6">Data Collector (Volunteer)</th>
+                              <th className="py-4 px-6">Respondent</th>
+                              <th className="py-4 px-6">Main Occupation</th>
+                              <th className="py-4 px-6">Litigation Status</th>
+                              <th className="py-4 px-6 text-right">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-surface-100">
+                          <tbody className="divide-y divide-slate-100 text-slate-700">
                             {filteredSurveys.map((survey) => (
-                              <tr key={survey.surveyReferenceId} className="hover:bg-slate-50/70 transition-colors">
-                                <td className="p-4 font-mono font-bold text-primary-600">
+                              <tr key={survey.surveyReferenceId} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="py-4 px-6 font-mono font-bold text-indigo-650">
                                   {survey.surveyReferenceId}
                                 </td>
-                                <td className="p-4 font-bold text-slate-800">
+                                <td className="py-4 px-6 font-semibold text-slate-900">
                                   {survey.nameOfDataCollector || 'Surveyor'}
                                 </td>
-                                <td className="p-4 text-slate-800 font-bold">
+                                <td className="py-4 px-6 text-slate-900">
                                   {survey.nameOfOrganizationCollege || 'N/A'}
                                 </td>
-                                <td className="p-4 text-surface-600">
+                                <td className="py-4 px-6 text-slate-500">
                                   {survey.q2MainOccupation || 'N/A'}
                                 </td>
-                                <td className="p-4">
+                                <td className="py-4 px-6">
                                   {survey.q7PendingLitigation === 'Yes' ? (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/60 shadow-2xs">
                                       <ShieldAlert className="w-3 h-3 text-amber-500" />
                                       Litigation Pending
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/60 shadow-2xs">
                                       No Litigation
                                     </span>
                                   )}
                                 </td>
-                                <td className="p-4 text-right">
+                                <td className="py-4 px-6 text-right">
                                   <button
                                     onClick={() => handleViewIndividual(survey)}
-                                    className="px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 font-bold rounded-xl text-[11px] inline-flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                                    className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-[11px] inline-flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
                                     View Individual Sheet

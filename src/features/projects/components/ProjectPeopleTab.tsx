@@ -186,9 +186,16 @@ export function ProjectPeopleTab({ campId: projectId }: ProjectPeopleTabProps) {
                         {isTeamLead && (
                           <Crown size={14} className="text-amber-500 shrink-0" />
                         )}
-                        <span className="font-medium text-surface-900">
-                          {cp.person?.full_name}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-surface-900">
+                            {cp.person?.full_name}
+                          </span>
+                          {cp.person?.category === 'student' && cp.person?.usn_employee_id && (
+                            <span className="text-[10px] text-surface-500 font-medium mt-0.5">
+                              SRN: <span className="font-mono">{cp.person.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">

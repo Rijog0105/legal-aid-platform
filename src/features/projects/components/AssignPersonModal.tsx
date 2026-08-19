@@ -232,8 +232,14 @@ export function AssignPersonModal({
                       />
                       <span className="flex-1 min-w-0">
                         <span className="font-medium text-surface-900 truncate block">{p.full_name}</span>
-                        {p.usn_employee_id && (
-                          <span className="text-[11px] text-surface-400 font-mono">{p.usn_employee_id}</span>
+                        {p.category === 'student' && p.usn_employee_id ? (
+                          <span className="text-[11px] text-surface-500 font-medium block">
+                            SRN: <span className="font-mono">{p.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
+                          </span>
+                        ) : (
+                          p.designation && (
+                            <span className="text-[11px] text-surface-400 block">{p.designation}</span>
+                          )
                         )}
                       </span>
                       <Badge variant={CATEGORY_BADGE[p.category]} className="flex-shrink-0 capitalize text-[10px]">
