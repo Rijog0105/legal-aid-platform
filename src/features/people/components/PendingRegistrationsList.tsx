@@ -116,7 +116,8 @@ export function PendingRegistrationsList({ onUpdated }: PendingRegistrationsList
             <tr className="border-b border-surface-100 bg-surface-50">
               <th className="text-left px-5 py-3.5 font-medium text-surface-600">Applicant</th>
               <th className="text-left px-5 py-3.5 font-medium text-surface-600">Requested Category</th>
-              <th className="text-left px-5 py-3.5 font-medium text-surface-600 hidden md:table-cell">USN / Employee ID</th>
+              <th className="text-left px-5 py-3.5 font-medium text-surface-600 hidden md:table-cell">SRN</th>
+
               <th className="text-left px-5 py-3.5 font-medium text-surface-600 hidden lg:table-cell">Dept &amp; Sem</th>
               <th className="text-left px-5 py-3.5 font-medium text-surface-600 hidden sm:table-cell">Contact</th>
               <th className="px-5 py-3.5 text-right font-medium text-surface-600">Actions</th>

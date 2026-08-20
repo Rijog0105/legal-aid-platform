@@ -6,9 +6,79 @@ import {
   signOut as authSignOut,
 } from '@/features/auth/services/authService';
 import { PageLoader } from '@/components/ui';
+import { supabase } from '@/services/supabase';
 
 interface AuthProviderProps {
   children: React.ReactNode;
+}
+
+/**
+ * Helper to dynamically create a profile on first login (post email-confirmation).
+ * Enforces 'student' category and default 'volunteer' role securely.
+ */
+async function createProfileAfterEmailConfirmation(user: any): Promise<boolean> {
+  const metadata = user.user_metadata;
+  if (!metadata || !metadata.full_name || !metadata.usn_employee_id) {
+    console.log('[AuthProvider] Missing metadata on user, cannot auto-create profile:', metadata);
+    return false;
+  }
+
+  try {
+    // 1. Insert into public.persons (category student, status pending)
+    const { data: personData, error: personError } = await supabase
+      .from('persons')
+      .insert([
+        {
+          full_name: metadata.full_name,
+          category: 'student',
+          email: user.email,
+          phone: metadata.phone || null,
+          usn_employee_id: metadata.usn_employee_id,
+          department: metadata.department,
+          semester: metadata.semester || null,
+          registration_status: 'pending',
+        },
+      ])
+      .select('id')
+      .single();
+
+    if (personError || !personData) {
+      console.error('[AuthProvider] Failed to create person profile on first login:', personError?.message);
+      return false;
+    }
+
+    // 2. Resolve default volunteer role
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'volunteer')
+      .single();
+
+    if (roleError || !roleData) {
+      console.error('[AuthProvider] Failed to resolve default role on first login:', roleError?.message);
+      return false;
+    }
+
+    // 3. Insert into public.users (is_active false)
+    const { error: userError } = await supabase.from('users').insert([
+      {
+        auth_user_id: user.id,
+        person_id: personData.id,
+        role_id: roleData.id,
+        is_active: false,
+      },
+    ]);
+
+    if (userError) {
+      console.error('[AuthProvider] Failed to create user record on first login:', userError.message);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('[AuthProvider] Exception creating profile on first login:', err);
+    return false;
+  }
 }
 
 /**
@@ -35,6 +105,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.log('[AuthProvider] 3. AFTER fetchUserProfile() returned profile:', profile?.person?.full_name, '| role:', profile?.role?.name);
 
           if (!profile) {
+            console.log('[AuthProvider] Profile not found. Checking if user already exists in public.users...');
+            const { data: existingUser, error: checkErr } = await supabase
+              .from('users')
+              .select('id, is_active')
+              .eq('auth_user_id', session.user.id)
+              .maybeSingle();
+
+            if (checkErr) {
+              console.error('[AuthProvider] Error checking existing user:', checkErr.message);
+            }
+
+            if (existingUser) {
+              if (!existingUser.is_active) {
+                console.log('[AuthProvider] User profile exists but is pending approval.');
+                await authSignOut();
+                store.reset();
+                store.setAuthError('Your registration is pending approval by a Faculty Coordinator.');
+                return;
+              }
+            } else {
+              // Attempt first sign-in profile creation
+              console.log('[AuthProvider] No database user found. Attempting profile creation from metadata...');
+              const created = await createProfileAfterEmailConfirmation(session.user);
+              if (created) {
+                console.log('[AuthProvider] Profile created successfully. User is now pending approval.');
+                await authSignOut();
+                store.reset();
+                store.setAuthError('Your registration has been submitted successfully and is pending approval.');
+                return;
+              }
+            }
+
             console.warn('[AuthProvider] Unresolvable profile for session user! Signing out and resetting state...');
             await authSignOut();
             store.reset();
@@ -68,3 +170,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return <>{children}</>;
 }
+
