@@ -1,5 +1,6 @@
 import { supabase } from '@/services/supabase';
 import type { Project, ProjectPersonWithDetails } from '@/types';
+import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 
 interface ProjectPersonWithProject extends ProjectPersonWithDetails {
   camp: Project;
@@ -12,7 +13,7 @@ export interface MyProjectAssignment {
 
 /**
  * Finds all project assignments for a user (volunteer or team lead).
- * Sorted by active status first, then camp_date descending.
+ * Sorted by operational lifecycle status first, then camp_date descending.
  */
 export async function fetchAllMyProjectAssignments(
   personId: string
@@ -27,10 +28,17 @@ export async function fetchAllMyProjectAssignments(
   const rows = (data ?? []) as unknown as ProjectPersonWithProject[];
   const validRows = rows.filter((row) => Boolean(row.camp));
 
-  // Sort: active projects first, then by camp_date descending
+  const isAccessible = (camp: Project) => {
+    const lc = getProjectLifecycleState(camp);
+    return lc.state !== 'completed' && lc.state !== 'draft';
+  };
+
+  // Sort: active/upcoming projects first, then by camp_date descending
   validRows.sort((a, b) => {
-    if (a.camp.status === 'active' && b.camp.status !== 'active') return -1;
-    if (a.camp.status !== 'active' && b.camp.status === 'active') return 1;
+    const actA = isAccessible(a.camp);
+    const actB = isAccessible(b.camp);
+    if (actA && !actB) return -1;
+    if (!actA && actB) return 1;
     return a.camp.camp_date < b.camp.camp_date ? 1 : -1;
   });
 

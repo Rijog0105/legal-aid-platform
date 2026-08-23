@@ -9,6 +9,7 @@ import { ROUTES } from '@/constants';
 
 const registerSchema = z
   .object({
+    category: z.enum(['student', 'faculty']),
     full_name: z.string().min(1, 'Full Name is required').min(2, 'Full Name must be at least 2 characters'),
     email: z
       .string()
@@ -19,16 +20,46 @@ const registerSchema = z
         'Please use your institutional college email'
       ),
     phone: z.string().min(1, 'Phone Number is required').min(10, 'Enter a valid 10-digit phone number'),
-    category: z.enum(['student', 'faculty']),
-    usn_employee_id: z.string().min(1, 'SRN is required'),
+    usn_employee_id: z.string().optional(),
     department: z.string().min(1, 'Department is required'),
-    semester: z.string().min(1, 'Semester is required'),
+    semester: z.string().optional(),
+    designation: z.string().optional(),
     password: z.string().min(1, 'Password is required').min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(1, 'Confirm Password is required'),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+  .superRefine((data, ctx) => {
+    if (data.category === 'student') {
+      if (!data.usn_employee_id || !data.usn_employee_id.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'SRN is required',
+          path: ['usn_employee_id'],
+        });
+      }
+      if (!data.semester || !data.semester.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Semester is required',
+          path: ['semester'],
+        });
+      }
+    } else if (data.category === 'faculty') {
+      if (!data.designation || !data.designation.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Designation is required',
+          path: ['designation'],
+        });
+      }
+    }
+
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Passwords do not match',
+        path: ['confirmPassword'],
+      });
+    }
   });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -42,6 +73,7 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -53,10 +85,13 @@ export function RegisterPage() {
       usn_employee_id: '',
       department: '',
       semester: '',
+      designation: '',
       password: '',
       confirmPassword: '',
     },
   });
+
+  const category = watch('category');
 
   const onSubmit = async (values: RegisterFormValues) => {
     setServerError(null);
@@ -65,9 +100,10 @@ export function RegisterPage() {
       email: values.email,
       phone: values.phone,
       category: values.category,
-      usn_employee_id: values.usn_employee_id,
+      usn_employee_id: values.usn_employee_id || null,
       department: values.department,
-      semester: values.semester,
+      semester: values.category === 'student' ? values.semester : null,
+      designation: values.category === 'faculty' ? values.designation : null,
       password: values.password,
     });
 
@@ -80,7 +116,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
       {/* Branding Header Area */}
       <div className="w-full max-w-4xl flex flex-col sm:flex-row justify-between items-center mb-6 px-4 gap-4">
         {/* REVA University Branding */}
@@ -134,18 +170,35 @@ export function RegisterPage() {
             </Link>
 
             <h2 className="text-2xl font-extrabold text-slate-900 mb-1">Create an Account</h2>
-            <p className="text-sm text-slate-500 mb-6">
-              Register as a Student Volunteer to get started.
+            <p className="text-sm text-slate-500 mb-6 animate-fade-in" key={category}>
+              {category === 'faculty'
+                ? 'Register as a Faculty Coordinator.'
+                : 'Register as a Student Volunteer.'}
             </p>
 
             {serverError && (
-              <div className="flex items-start gap-2.5 p-3.5 mb-5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs leading-relaxed">
+              <div className="flex items-start gap-2.5 p-3.5 mb-5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs leading-relaxed animate-fade-in">
                 <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
                 <span>{serverError}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+              {/* Account Type Dropdown */}
+              <div>
+                <label htmlFor="category" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Account Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="category"
+                  {...register('category')}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
+                >
+                  <option value="student">Student Volunteer</option>
+                  <option value="faculty">Faculty</option>
+                </select>
+              </div>
+
               {/* Form Grid Layout */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
                 {/* Column 1 */}
@@ -184,22 +237,47 @@ export function RegisterPage() {
                     )}
                   </div>
 
-                  {/* SRN */}
-                  <div>
-                    <label htmlFor="usn_employee_id" className="block text-xs font-semibold text-slate-700 mb-1">
-                      SRN <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="usn_employee_id"
-                      type="text"
-                      placeholder="Enter your SRN"
-                      {...register('usn_employee_id')}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                    />
-                    {errors.usn_employee_id && (
-                      <p className="text-xs text-red-600 mt-1">{errors.usn_employee_id.message}</p>
-                    )}
-                  </div>
+                  {/* SRN (Student Only) */}
+                  {category === 'student' && (
+                    <div className="animate-fade-in">
+                      <label htmlFor="usn_employee_id" className="block text-xs font-semibold text-slate-700 mb-1">
+                        SRN <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="usn_employee_id"
+                        type="text"
+                        placeholder="Enter your SRN"
+                        {...register('usn_employee_id')}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+                      />
+                      {errors.usn_employee_id && (
+                        <p className="text-xs text-red-600 mt-1">{errors.usn_employee_id.message}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Designation (Faculty Only, Dropdown) */}
+                  {category === 'faculty' && (
+                    <div className="animate-fade-in">
+                      <label htmlFor="designation" className="block text-xs font-semibold text-slate-700 mb-1">
+                        Designation <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="designation"
+                        {...register('designation')}
+                        defaultValue=""
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
+                      >
+                        <option value="" disabled>Select Designation</option>
+                        <option value="Professor">Professor</option>
+                        <option value="Associate Professor">Associate Professor</option>
+                        <option value="Assistant Professor">Assistant Professor</option>
+                      </select>
+                      {errors.designation && (
+                        <p className="text-xs text-red-650 mt-1">{errors.designation.message}</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Password */}
                   <div>
@@ -265,31 +343,52 @@ export function RegisterPage() {
                     )}
                   </div>
 
-                  {/* Semester Dropdown */}
-                  <div>
-                    <label htmlFor="semester" className="block text-xs font-semibold text-slate-700 mb-1">
-                      Semester <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="semester"
-                      {...register('semester')}
-                      defaultValue=""
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
-                    >
-                      <option value="" disabled>Select Semester</option>
-                      <option value="Semester 1">Semester 1</option>
-                      <option value="Semester 2">Semester 2</option>
-                      <option value="Semester 3">Semester 3</option>
-                      <option value="Semester 4">Semester 4</option>
-                      <option value="Semester 5">Semester 5</option>
-                      <option value="Semester 6">Semester 6</option>
-                      <option value="Semester 7">Semester 7</option>
-                      <option value="Semester 8">Semester 8</option>
-                    </select>
-                    {errors.semester && (
-                      <p className="text-xs text-red-600 mt-1">{errors.semester.message}</p>
-                    )}
-                  </div>
+                  {/* Semester Dropdown (Student Only) */}
+                  {category === 'student' && (
+                    <div className="animate-fade-in">
+                      <label htmlFor="semester" className="block text-xs font-semibold text-slate-700 mb-1">
+                        Semester <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="semester"
+                        {...register('semester')}
+                        defaultValue=""
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
+                      >
+                        <option value="" disabled>Select Semester</option>
+                        <option value="Semester 1">Semester 1</option>
+                        <option value="Semester 2">Semester 2</option>
+                        <option value="Semester 3">Semester 3</option>
+                        <option value="Semester 4">Semester 4</option>
+                        <option value="Semester 5">Semester 5</option>
+                        <option value="Semester 6">Semester 6</option>
+                        <option value="Semester 7">Semester 7</option>
+                        <option value="Semester 8">Semester 8</option>
+                      </select>
+                      {errors.semester && (
+                        <p className="text-xs text-red-600 mt-1">{errors.semester.message}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Employee ID (Faculty Only, Optional) */}
+                  {category === 'faculty' && (
+                    <div className="animate-fade-in">
+                      <label htmlFor="usn_employee_id" className="block text-xs font-semibold text-slate-700 mb-1">
+                        Employee ID <span className="text-slate-400 font-normal">(Optional)</span>
+                      </label>
+                      <input
+                        id="usn_employee_id"
+                        type="text"
+                        placeholder="Enter Employee ID"
+                        {...register('usn_employee_id')}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+                      />
+                      {errors.usn_employee_id && (
+                        <p className="text-xs text-red-650 mt-1">{errors.usn_employee_id.message}</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Confirm Password */}
                   <div>

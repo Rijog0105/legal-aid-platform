@@ -38,10 +38,11 @@ export function RightSidebar() {
     <aside className="w-60 shrink-0 flex flex-col bg-surface-950 border-l border-surface-800 h-screen max-h-screen sticky top-0 overflow-hidden print:hidden">
 
       {/* ── Profile — top padding creates breathing room from browser edge ── */}
-      <div className="pt-12 px-5 pb-5 flex flex-col items-center text-center">
-        {/* Avatar — initials, gradient tile */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl font-black shadow-lg mb-4 ring-2 ring-white ring-opacity-10">
+      <div className="pt-24 px-5 pb-5 flex flex-col items-center text-center">
+        {/* Avatar — initials, gradient tile, fully rounded */}
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl font-black shadow-lg mb-4 ring-2 ring-white ring-opacity-10 relative">
           {initials}
+          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-surface-950" />
         </div>
 
         {/* Name */}
@@ -90,16 +91,27 @@ export function RightSidebar() {
         )}
       </div>
 
-      {/* ── Flexible spacer ── */}
-      <div className="flex-1" />
+      {/* ── Flexible spacer to push CC tile down ── */}
+      <div className="flex-grow" />
+
+      {/* ── Organization Branding ── */}
+      <div className="text-center pt-3 pb-5 select-none flex flex-col gap-1.5">
+        <h4 className="text-base font-semibold tracking-wide">
+          <span className="text-orange-500">REVA</span>{' '}
+          <span className="text-slate-200">University</span>
+        </h4>
+        <h3 className="text-base font-semibold text-slate-200 tracking-wide">
+          Civic Forge Labs
+        </h3>
+      </div>
 
       {/* ── Control Center — centered rectangular tile, NOT full-width ── */}
       {!isTeamLead && (
-        <div className="pb-6 flex justify-center">
+        <div className="pb-4 flex justify-center">
           <button
             onClick={() => navigate(controlCenterPath)}
             style={{ width: '160px', height: '100px' }}
-            className="flex flex-col items-center justify-center gap-2 bg-surface-800 border border-surface-700 rounded-2xl shadow-md cursor-pointer transition-all duration-200 ease-out hover:bg-surface-700 hover:border-surface-600 hover:shadow-lg group"
+            className="flex flex-col items-center justify-center gap-2 bg-[#1e293b]/70 border border-slate-800 rounded-3xl shadow-md cursor-pointer transition-all duration-200 ease-out hover:bg-[#1e293b] hover:border-slate-700 hover:shadow-lg group"
           >
             <LayoutDashboard
               size={22}
@@ -113,6 +125,9 @@ export function RightSidebar() {
         </div>
       )}
 
+      {/* ── Spacer between Control Center and Sign Out ── */}
+      <div className="h-10" />
+
       {/* ── Sign Out — subordinate, bottom ── */}
       <div className="mx-4 mb-5 border-t border-surface-800 pt-4">
         <button
@@ -122,6 +137,7 @@ export function RightSidebar() {
           <LogOut size={12} />
           <span>Sign Out</span>
         </button>
+        <span className="block text-[9px] text-surface-650 text-center mt-2 font-mono">v1.0.0</span>
       </div>
     </aside>
   );

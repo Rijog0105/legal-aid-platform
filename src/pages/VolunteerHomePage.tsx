@@ -390,7 +390,7 @@ export function VolunteerHomePage() {
   const isSessionExpired = activeSession ? new Date(activeSession.expires_at) <= new Date() : false;
 
   return (
-    <div className="space-y-6 sm:space-y-8 w-full max-w-2xl mx-auto px-2 pb-6">
+    <div className="flex flex-col justify-between min-h-[calc(100dvh-5.5rem)] md:min-h-0 w-full max-w-2xl mx-auto px-2 pb-6 gap-6 sm:gap-8">
       {/* ── Active Project Block ── */}
       <div className="space-y-2">
         <h3 className="text-[10px] font-extrabold text-surface-400 uppercase tracking-widest px-1">Active Project Assignment</h3>

@@ -5,9 +5,10 @@ export interface RegisterPayload {
   email: string;
   phone: string;
   category: 'faculty' | 'student';
-  usn_employee_id: string;
+  usn_employee_id?: string | null;
   department: string;
   semester?: string | null;
+  designation?: string | null;
   password: string;
 }
 
@@ -25,7 +26,7 @@ export interface RegisterPayload {
  * registration so they cannot access the application until approved.
  */
 /**
- * Helper to immediately create the student profile in persons and users tables.
+ * Helper to immediately create the student or faculty profile in persons and users tables.
  * Used when email confirmation is disabled and signUp returns a session immediately.
  */
 async function insertPersonAndUserImmediate(user: any, payload: RegisterPayload): Promise<void> {
@@ -34,12 +35,13 @@ async function insertPersonAndUserImmediate(user: any, payload: RegisterPayload)
     .insert([
       {
         full_name: payload.full_name,
-        category: 'student',
+        category: payload.category,
         email: payload.email,
         phone: payload.phone || null,
-        usn_employee_id: payload.usn_employee_id,
+        usn_employee_id: payload.usn_employee_id || null,
         department: payload.department,
-        semester: payload.semester || null,
+        semester: payload.category === 'faculty' ? null : (payload.semester || null),
+        designation: payload.category === 'faculty' ? (payload.designation || null) : null,
         registration_status: 'pending',
       },
     ])
@@ -50,10 +52,11 @@ async function insertPersonAndUserImmediate(user: any, payload: RegisterPayload)
     throw new Error(personError?.message || 'Failed to create person record.');
   }
 
+  const roleName = payload.category === 'faculty' ? 'faculty' : 'volunteer';
   const { data: roleData, error: roleError } = await supabase
     .from('roles')
     .select('id')
-    .eq('name', 'volunteer')
+    .eq('name', roleName)
     .single();
 
   if (roleError || !roleData) {
@@ -81,7 +84,6 @@ export async function registerUser(
 
   try {
     // ── Step 1: Create Supabase Auth account with options.data ─────────────────────
-    // Note: We explicitly hardcode the metadata category to 'student' to prevent client role escalation.
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: payload.email,
       password: payload.password,
@@ -89,10 +91,11 @@ export async function registerUser(
         data: {
           full_name: payload.full_name,
           phone: payload.phone,
-          usn_employee_id: payload.usn_employee_id,
+          usn_employee_id: payload.usn_employee_id || null,
           department: payload.department,
-          semester: payload.semester || null,
-          category: 'student',
+          semester: payload.category === 'faculty' ? null : (payload.semester || null),
+          designation: payload.category === 'faculty' ? (payload.designation || null) : null,
+          category: payload.category,
         },
       },
     });
@@ -155,5 +158,3 @@ export async function registerUser(
     };
   }
 }
-
-
