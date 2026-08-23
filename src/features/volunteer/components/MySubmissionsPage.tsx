@@ -41,6 +41,15 @@ export function MySubmissionsPage() {
     }
   };
 
+  const lifecycle = project ? getProjectLifecycleState(project) : null;
+  const isCompleted = !!(lifecycle?.isCompleted || project?.status === 'archived' || project?.status === 'completed');
+
+  useEffect(() => {
+    if (isCompleted) {
+      navigate(ROUTES.VOLUNTEER_HOME);
+    }
+  }, [isCompleted, navigate]);
+
   if (projectLoading || photosLoading) {
     return (
       <div className="flex justify-center py-20">
@@ -48,15 +57,6 @@ export function MySubmissionsPage() {
       </div>
     );
   }
-
-  const lifecycle = project ? getProjectLifecycleState(project) : null;
-  const isCompleted = lifecycle?.isCompleted || project?.status === 'archived' || project?.status === 'completed';
-
-  useEffect(() => {
-    if (isCompleted) {
-      navigate(ROUTES.VOLUNTEER_HOME);
-    }
-  }, [isCompleted, navigate]);
 
   if (isCompleted) {
     return null;

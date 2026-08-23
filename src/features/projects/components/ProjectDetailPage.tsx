@@ -1817,7 +1817,7 @@ export function ProjectDetailPage({
           </div>
 
           {/* Sub-tab content */}
-          {activeCampSubTab === 'activities' && <ActivitiesTab campId={project.id} phase="camp" />}
+          {activeCampSubTab === 'activities' && <ActivitiesTab campId={project.id} project={project} phase="camp" />}
 
           {activeCampSubTab === 'photos' && <PhotosTab campId={project.id} />}
 

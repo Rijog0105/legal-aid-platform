@@ -10,28 +10,26 @@ import {
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Plus, AlertCircle } from 'lucide-react';
 import { Button, EmptyState, Spinner } from '@/components/ui';
-import type { Activity } from '@/types';
-import type { ActivityStatus } from '@/constants';
+import type { Activity, Project } from '@/types';
 import { useActivities } from '@/features/activities/hooks/useActivities';
 import {
   deleteActivity,
   reorderActivities,
-  updateActivityStatus,
 } from '@/features/activities/services/activityService';
 import { ActivityForm } from './ActivityForm';
 import { ActivityListItem } from './ActivityListItem';
 
 interface ActivitiesTabProps {
   campId: string;
+  project: Project;
   phase: 'survey' | 'camp';
 }
 
-export function ActivitiesTab({ campId, phase }: ActivitiesTabProps) {
+export function ActivitiesTab({ campId, project, phase }: ActivitiesTabProps) {
   const { activities, isLoading, error, reload, setActivities } = useActivities(campId, phase);
   const [showForm, setShowForm] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const phaseLabel = phase === 'survey' ? 'Survey' : 'Camp';
@@ -61,19 +59,6 @@ export function ActivitiesTab({ campId, phase }: ActivitiesTabProps) {
       setActionError(e instanceof Error ? e.message : 'Failed to delete activity');
     } finally {
       setDeletingId(null);
-    }
-  };
-
-  const handleStatusChange = async (activity: Activity, status: ActivityStatus) => {
-    setStatusUpdatingId(activity.id);
-    setActionError(null);
-    try {
-      const updated = await updateActivityStatus(activity.id, status);
-      setActivities((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : 'Failed to update activity status');
-    } finally {
-      setStatusUpdatingId(null);
     }
   };
 
@@ -145,12 +130,11 @@ export function ActivitiesTab({ campId, phase }: ActivitiesTabProps) {
                 <ActivityListItem
                   key={activity.id}
                   activity={activity}
+                  project={project}
                   index={index}
                   onEdit={openEdit}
                   onDelete={handleDelete}
-                  onStatusChange={handleStatusChange}
                   isDeleting={deletingId === activity.id}
-                  isStatusUpdating={statusUpdatingId === activity.id}
                 />
               ))}
             </div>

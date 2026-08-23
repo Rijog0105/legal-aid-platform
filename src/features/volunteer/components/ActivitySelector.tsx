@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useActivities } from '@/features/activities/hooks/useActivities';
-import { ACTIVITY_STATUS } from '@/constants';
 import { Spinner } from '@/components/ui';
-import type { Activity } from '@/types';
+import type { Activity, Project } from '@/types';
+import { deriveActivityStatus } from '@/utils/projectLifecycle';
 
 interface ActivitySelectorProps {
+  project: Project;
   campId: string;
   selectedActivityId: string | null;
   onSelect: (activity: Activity) => void;
@@ -18,18 +19,29 @@ interface ActivitySelectorProps {
  * (Phase 5) directly, rather than duplicating activity-fetching logic here.
  */
 export function ActivitySelector({
+  project,
   campId,
   selectedActivityId,
   onSelect,
   phase,
   disabled,
 }: ActivitySelectorProps) {
-  const { activities, isLoading, error } = useActivities(campId, phase);
+  // Always query for 'camp' phase activities since all activities (including Survey Activity)
+  // are created and managed under the Camp Phase Activities tab in Faculty view.
+  const { activities: allActivities, isLoading, error } = useActivities(campId, 'camp');
+
+  const activities = useMemo(() => {
+    if (phase === 'survey') {
+      return allActivities.filter((a) => a.activity_name === 'Survey Activity');
+    } else {
+      return allActivities.filter((a) => a.activity_name !== 'Survey Activity');
+    }
+  }, [allActivities, phase]);
 
   // Auto-select survey activity during survey phase
   useEffect(() => {
     if (phase === 'survey' && activities.length > 0) {
-      const surveyAct = activities.find((a) => a.phase === 'survey') || activities[0];
+      const surveyAct = activities.find((a) => a.activity_name === 'Survey Activity') || activities[0];
       if (surveyAct && selectedActivityId !== surveyAct.id) {
         onSelect(surveyAct);
       }
@@ -74,12 +86,15 @@ export function ActivitySelector({
         <option value="" disabled>
           Select an activity…
         </option>
-        {activities.map((activity) => (
-          <option key={activity.id} value={activity.id}>
-            {activity.activity_name}
-            {activity.status === ACTIVITY_STATUS.COMPLETED ? ' (completed)' : ''}
-          </option>
-        ))}
+        {activities.map((activity) => {
+          const derivedStatus = deriveActivityStatus(activity, project);
+          return (
+            <option key={activity.id} value={activity.id}>
+              {activity.activity_name}
+              {derivedStatus === 'completed' ? ' (completed)' : ''}
+            </option>
+          );
+        })}
       </select>
     </div>
   );

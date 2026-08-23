@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabase';
 import type { Project, ReportSettings } from '@/types';
 import type { ProjectStatus } from '@/constants';
+import { ensureSurveyActivityExists } from '@/features/activities/services/activityService';
 
 export interface ProjectPayload {
   camp_name: string;
@@ -56,6 +57,14 @@ export async function createProject(payload: ProjectPayload): Promise<Project> {
     .select()
     .single();
   if (error) throw new Error(error.message);
+
+  // Ensure compulsory Survey Activity exists for the new project
+  try {
+    await ensureSurveyActivityExists(data.id);
+  } catch (err) {
+    console.error('[projectService] Failed to auto-create Survey Activity on project creation:', err);
+  }
+
   return data as Project;
 }
 

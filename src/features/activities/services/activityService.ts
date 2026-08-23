@@ -116,3 +116,39 @@ export async function reorderActivities(campId: string, orderedIds: string[]): P
   const failed = results.find((r) => r.error);
   if (failed?.error) throw new Error(failed.error.message);
 }
+
+export async function ensureSurveyActivityExists(campId: string): Promise<void> {
+  try {
+    // 1. Check if an activity with name 'Survey Activity' and phase = 'camp' already exists for this camp
+    const { data: existing, error: fetchError } = await supabase
+      .from('activities')
+      .select('id')
+      .eq('camp_id', campId)
+      .eq('phase', 'camp')
+      .eq('activity_name', 'Survey Activity')
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('[activityService] Error checking Survey Activity existence:', fetchError.message);
+      return;
+    }
+
+    // 2. If it does not exist, insert it exactly once
+    if (!existing) {
+      console.log(`[activityService] Auto-creating compulsory Survey Activity for camp ${campId}`);
+      await supabase
+        .from('activities')
+        .insert([
+          {
+            camp_id: campId,
+            activity_name: 'Survey Activity',
+            phase: 'camp',
+            activity_order: 0,
+            status: 'planned',
+          },
+        ]);
+    }
+  } catch (err) {
+    console.error('[activityService] Exception in ensureSurveyActivityExists:', err);
+  }
+}

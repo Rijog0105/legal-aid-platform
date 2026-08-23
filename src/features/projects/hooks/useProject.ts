@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchProject } from '@/features/projects/services/projectService';
+import { ensureSurveyActivityExists } from '@/features/activities/services/activityService';
 import type { Project } from '@/types';
 
 export function useProject(projectId: string | undefined) {
@@ -15,6 +16,13 @@ export function useProject(projectId: string | undefined) {
       const data = await fetchProject(projectId);
       if (!data) {
         setError('Project not found');
+      } else {
+        // Ensure compulsory Survey Activity exists for this camp
+        try {
+          await ensureSurveyActivityExists(projectId);
+        } catch (err) {
+          console.error('[useProject] Failed to ensure Survey Activity:', err);
+        }
       }
       setProject(data);
     } catch (e) {

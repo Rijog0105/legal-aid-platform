@@ -7,6 +7,9 @@ import {
 } from '@/features/auth/services/authService';
 import { PageLoader } from '@/components/ui';
 import { supabase } from '@/services/supabase';
+import { fetchMyProjectAssignment } from '@/features/volunteer/services/volunteerService';
+import { getProjectLifecycleState } from '@/utils/projectLifecycle';
+import type { RoleName } from '@/constants';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -142,7 +145,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
             store.reset();
             store.setAuthError('Your session is no longer valid. Please sign in again.');
           } else {
-            store.setProfile(profile);
+            // Dynamic role override logic for student/volunteer accounts temporarily promoted to Team Lead
+            let roleOverride: RoleName | null = null;
+            if (profile.role?.name === 'volunteer') {
+              try {
+                const assignment = await fetchMyProjectAssignment(profile.person_id);
+                if (assignment && assignment.campPerson?.camp_role === 'team_lead') {
+                  const lc = getProjectLifecycleState(assignment.camp);
+                  if (lc.state !== 'completed' && lc.state !== 'draft') {
+                    console.log('[AuthProvider] Active Team Lead assignment detected. Overriding UI role.');
+                    roleOverride = 'team_lead';
+                  } else {
+                    console.log('[AuthProvider] Team Lead assignment is inactive or completed (lifecycle state:', lc.state, '). Reverting to volunteer UI.');
+                  }
+                }
+              } catch (err) {
+                console.error('[AuthProvider] Error resolving dynamic team_lead role:', err);
+              }
+            }
+
+            store.setProfile(profile, roleOverride);
           }
         } else {
           console.log('[AuthProvider] No session user, setting profile to null');
@@ -170,4 +192,3 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return <>{children}</>;
 }
-

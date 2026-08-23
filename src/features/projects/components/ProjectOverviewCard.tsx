@@ -17,6 +17,7 @@ import { SurveyScheduleCard } from './SurveyScheduleCard';
 import { CampScheduleCard } from './CampScheduleCard';
 import { formatCurrency } from '@/utils';
 import { fetchProjectAttendanceOverview } from '@/features/attendance/services/attendanceService';
+import { deriveActivityStatus } from '@/utils/projectLifecycle';
 
 interface ProjectOverviewCardProps {
   project: Project;
@@ -70,7 +71,7 @@ export function ProjectOverviewCard({
   const teamLeadCount   = projectPeople.filter((p) => p.camp_role === PROJECT_ROLE.TEAM_LEAD).length;
   const facultyCount    = projectPeople.filter((p) => p.camp_role === PROJECT_ROLE.FACULTY_COORDINATOR).length;
   const totalAssigned   = projectPeople.length;
-  const completedActivities = activities.filter((a) => a.status === 'completed').length;
+  const completedActivities = activities.filter((a) => deriveActivityStatus(a, project) === 'completed').length;
 
   const surveyAllocated = project.allocated_budget_survey ?? 0;
   const surveyRemaining = surveyAllocated - surveySpent;

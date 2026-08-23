@@ -1,40 +1,26 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2 } from 'lucide-react';
-import { ActivityStatusBadge, Button } from '@/components/ui';
-import { ACTIVITY_STATUS, type ActivityStatus } from '@/constants';
-import type { Activity } from '@/types';
-
-const STATUS_FLOW: Record<ActivityStatus, ActivityStatus[]> = {
-  [ACTIVITY_STATUS.PLANNED]: [ACTIVITY_STATUS.ACTIVE],
-  [ACTIVITY_STATUS.ACTIVE]: [ACTIVITY_STATUS.COMPLETED],
-  [ACTIVITY_STATUS.COMPLETED]: [],
-};
-
-const STATUS_LABELS: Record<ActivityStatus, string> = {
-  [ACTIVITY_STATUS.PLANNED]: 'Planned',
-  [ACTIVITY_STATUS.ACTIVE]: 'Active',
-  [ACTIVITY_STATUS.COMPLETED]: 'Completed',
-};
+import { ActivityStatusBadge } from '@/components/ui';
+import type { Activity, Project } from '@/types';
+import { deriveActivityStatus } from '@/utils/projectLifecycle';
 
 interface ActivityListItemProps {
   activity: Activity;
+  project: Project;
   index: number;
   onEdit: (activity: Activity) => void;
   onDelete: (activity: Activity) => void;
-  onStatusChange: (activity: Activity, status: ActivityStatus) => void;
   isDeleting?: boolean;
-  isStatusUpdating?: boolean;
 }
 
 export function ActivityListItem({
   activity,
+  project,
   index,
   onEdit,
   onDelete,
-  onStatusChange,
   isDeleting = false,
-  isStatusUpdating = false,
 }: ActivityListItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: activity.id,
@@ -45,7 +31,8 @@ export function ActivityListItem({
     transition,
   };
 
-  const nextStatuses = STATUS_FLOW[activity.status];
+  // Derive status dynamically based on project phase dates
+  const derivedStatus = deriveActivityStatus(activity, project);
 
   return (
     <div
@@ -73,18 +60,8 @@ export function ActivityListItem({
         {activity.activity_name}
       </span>
 
-      <ActivityStatusBadge status={activity.status} />
-
-      {nextStatuses.length > 0 && (
-        <Button
-          size="sm"
-          variant="secondary"
-          isLoading={isStatusUpdating}
-          onClick={() => onStatusChange(activity, nextStatuses[0])}
-        >
-          Mark {STATUS_LABELS[nextStatuses[0]]}
-        </Button>
-      )}
+      {/* Read-only status badge showing dynamically derived status */}
+      <ActivityStatusBadge status={derivedStatus} />
 
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button

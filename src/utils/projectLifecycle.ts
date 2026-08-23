@@ -20,7 +20,8 @@
  *     time-based access windows).
  */
 
-import type { Project } from '@/types';
+import type { Project, Activity } from '@/types';
+import type { ActivityStatus } from '@/constants';
 
 /* ─── Phase state type ───────────────────────────────────────── */
 
@@ -140,3 +141,37 @@ export const PHASE_STATE_LABELS: Record<PhaseState, string> = {
   camp_active:      'Camp Phase Active',
   completed:        'Completed',
 };
+
+export function deriveActivityStatus(
+  activity: Activity,
+  project: Project,
+  now: Date = new Date()
+): ActivityStatus {
+  const lc = getProjectLifecycleState(project, now);
+  const nowMs = now.getTime();
+
+  if (activity.activity_name === 'Survey Activity' || activity.phase === 'survey') {
+    // Before Survey Phase
+    if (!lc.surveyStart || nowMs < lc.surveyStart.getTime()) {
+      return 'planned';
+    }
+    // During Survey Phase
+    if (lc.isSurveyActive) {
+      return 'active';
+    }
+    // After Survey Phase
+    return 'completed';
+  } else {
+    // Normal Camp Activity
+    // Before Camp Phase
+    if (!lc.campStart || nowMs < lc.campStart.getTime()) {
+      return 'planned';
+    }
+    // During Camp Phase
+    if (lc.isCampActive) {
+      return 'active';
+    }
+    // After Camp Phase
+    return 'completed';
+  }
+}

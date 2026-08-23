@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabase';
 import type { Project, ProjectPersonWithDetails } from '@/types';
 import { getProjectLifecycleState } from '@/utils/projectLifecycle';
+import { ensureSurveyActivityExists } from '@/features/activities/services/activityService';
 
 interface ProjectPersonWithProject extends ProjectPersonWithDetails {
   camp: Project;
@@ -58,13 +59,25 @@ export async function fetchMyProjectAssignment(
   const assignments = await fetchAllMyProjectAssignments(personId);
   if (assignments.length === 0) return null;
 
+  let result: MyProjectAssignment | null = null;
   if (targetProjectId) {
     const found = assignments.find((item) => item.camp.id === targetProjectId);
-    if (found) return found;
+    if (found) result = found;
   }
 
-  // Default to the first assignment (active first, then newest)
-  return assignments[0] ?? null;
+  if (!result) {
+    result = assignments[0] ?? null;
+  }
+
+  if (result?.camp?.id) {
+    try {
+      await ensureSurveyActivityExists(result.camp.id);
+    } catch (err) {
+      console.error('[volunteerService] Failed to ensure Survey Activity:', err);
+    }
+  }
+
+  return result;
 }
 
 /**

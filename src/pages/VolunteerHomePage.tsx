@@ -485,6 +485,7 @@ export function VolunteerHomePage() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1">
               <ActivitySelector
+                project={project}
                 campId={project.id}
                 selectedActivityId={selectedActivity?.id ?? null}
                 onSelect={setSelectedActivity}

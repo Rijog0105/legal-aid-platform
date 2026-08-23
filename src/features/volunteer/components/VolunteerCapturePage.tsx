@@ -222,9 +222,12 @@ export function VolunteerCapturePage() {
       {/* ─── Activity Selector + Counter ─── */}
       <Card>
         <ActivitySelector
+          project={project}
           campId={project.id}
           selectedActivityId={selectedActivity?.id ?? null}
           onSelect={setSelectedActivity}
+          phase={getProjectLifecycleState(project).isSurveyActive ? 'survey' : 'camp'}
+          disabled={getProjectLifecycleState(project).isSurveyActive}
         />
         {selectedActivity && (
           <div className="mt-3 flex items-center justify-between">

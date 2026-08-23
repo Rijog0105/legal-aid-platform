@@ -20,7 +20,7 @@ interface AuthState {
 
   /* Actions */
   setSession: (session: Session | null) => void;
-  setProfile: (profile: UserWithDetails | null) => void;
+  setProfile: (profile: UserWithDetails | null, roleOverride?: RoleName | null) => void;
   setLoading: (loading: boolean) => void;
   setInitialized: (initialized: boolean) => void;
   setAuthError: (authError: string | null) => void;
@@ -48,10 +48,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ session, isAuthenticated: !!session });
   },
 
-  setProfile: (profile) => {
+  setProfile: (profile, roleOverride) => {
     set({
       profile,
-      roleName: profile?.role?.name ?? null,
+      roleName: roleOverride ?? profile?.role?.name ?? null,
       userId: profile?.id ?? null,
       personId: profile?.person_id ?? null,
       displayName: profile?.person?.full_name ?? null,
