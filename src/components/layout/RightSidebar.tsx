@@ -94,22 +94,24 @@ export function RightSidebar() {
       <div className="flex-1" />
 
       {/* ── Control Center — centered rectangular tile, NOT full-width ── */}
-      <div className="pb-6 flex justify-center">
-        <button
-          onClick={() => navigate(controlCenterPath)}
-          style={{ width: '160px', height: '100px' }}
-          className="flex flex-col items-center justify-center gap-2 bg-surface-800 border border-surface-700 rounded-2xl shadow-md cursor-pointer transition-all duration-200 ease-out hover:bg-surface-700 hover:border-surface-600 hover:shadow-lg group"
-        >
-          <LayoutDashboard
-            size={22}
-            className="text-primary-400 group-hover:text-primary-300 transition-colors duration-150"
-          />
-          <div className="text-center leading-none">
-            <p className="font-extrabold text-white uppercase tracking-widest" style={{ fontSize: '10px' }}>CONTROL</p>
-            <p className="font-extrabold text-white uppercase tracking-widest mt-0.5" style={{ fontSize: '10px' }}>CENTER</p>
-          </div>
-        </button>
-      </div>
+      {!isTeamLead && (
+        <div className="pb-6 flex justify-center">
+          <button
+            onClick={() => navigate(controlCenterPath)}
+            style={{ width: '160px', height: '100px' }}
+            className="flex flex-col items-center justify-center gap-2 bg-surface-800 border border-surface-700 rounded-2xl shadow-md cursor-pointer transition-all duration-200 ease-out hover:bg-surface-700 hover:border-surface-600 hover:shadow-lg group"
+          >
+            <LayoutDashboard
+              size={22}
+              className="text-primary-400 group-hover:text-primary-300 transition-colors duration-150"
+            />
+            <div className="text-center leading-none">
+              <p className="font-extrabold text-white uppercase tracking-widest" style={{ fontSize: '10px' }}>CONTROL</p>
+              <p className="font-extrabold text-white uppercase tracking-widest mt-0.5" style={{ fontSize: '10px' }}>CENTER</p>
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* ── Sign Out — subordinate, bottom ── */}
       <div className="mx-4 mb-5 border-t border-surface-800 pt-4">

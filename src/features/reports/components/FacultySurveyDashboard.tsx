@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -8,7 +9,11 @@ import {
   Eye,
   Plus,
   ShieldAlert,
-  Scale
+  Scale,
+  ChevronLeft,
+  Clock,
+  MapPin,
+  Calendar
 } from 'lucide-react';
 import type { SurveyResponseData } from '@/types/survey';
 import { surveyService } from '@/services/surveyService';
@@ -18,10 +23,14 @@ import { ConsolidatedSurveyReport } from './ConsolidatedSurveyReport';
 import { LegalAidCampReport } from './LegalAidCampReport';
 import { SurveyEngine } from '@/features/survey/components/SurveyEngine';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Spinner } from '@/components/ui';
+import { Spinner, ProjectStatusBadge } from '@/components/ui';
+import { fetchMyProjectAssignment } from '@/features/volunteer/services/volunteerService';
+import { ROUTES } from '@/constants';
 
 export const FacultySurveyDashboard: React.FC = () => {
-  const { roleName } = useAuth();
+  const { roleName, personId } = useAuth();
+  const navigate = useNavigate();
+  const [assignedProject, setAssignedProject] = useState<any | null>(null);
   const [surveys, setSurveys] = useState<SurveyResponseData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingSurveyDetails, setLoadingSurveyDetails] = useState<boolean>(false);
@@ -29,19 +38,38 @@ export const FacultySurveyDashboard: React.FC = () => {
   const [filterDispute, setFilterDispute] = useState<string>('all');
   const [filterVillage, setFilterVillage] = useState<string>('all');
 
-  const [viewMode, setViewMode] = useState<'dashboard' | 'individual' | 'consolidated' | 'camp_report' | 'conduct_survey'>('dashboard');
+  const [viewMode, setViewMode] = useState<'dashboard' | 'individual' | 'consolidated' | 'camp_report' | 'conduct_survey'>(() => {
+    if (window.location.pathname.includes('/reports')) {
+      return 'consolidated';
+    }
+    return 'dashboard';
+  });
   const [selectedSurvey, setSelectedSurvey] = useState<SurveyResponseData | null>(null);
 
-  const loadSurveys = async () => {
+  const loadSurveys = useCallback(async () => {
     setLoading(true);
-    const data = await surveyService.fetchAllSurveys();
-    setSurveys(data);
-    setLoading(false);
-  };
+    try {
+      let data: SurveyResponseData[] = [];
+      if (roleName === 'team_lead' && personId) {
+        const assignment = await fetchMyProjectAssignment(personId);
+        if (assignment?.camp) {
+          setAssignedProject(assignment.camp);
+          data = await surveyService.fetchAllSurveys(assignment.camp.id);
+        }
+      } else {
+        data = await surveyService.fetchAllSurveys();
+      }
+      setSurveys(data);
+    } catch (err) {
+      console.error('Error loading surveys:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [roleName, personId]);
 
   useEffect(() => {
     loadSurveys();
-  }, []);
+  }, [loadSurveys]);
 
   const villages = useMemo(() => {
     const set = new Set<string>();
@@ -111,11 +139,23 @@ export const FacultySurveyDashboard: React.FC = () => {
   }
 
   if (viewMode === 'consolidated') {
-    return <ConsolidatedSurveyReport surveys={surveys} onBack={() => setViewMode('dashboard')} />;
+    return (
+      <ConsolidatedSurveyReport
+        surveys={surveys}
+        campName={assignedProject?.camp_name}
+        onBack={() => setViewMode('dashboard')}
+      />
+    );
   }
 
   if (viewMode === 'camp_report') {
-    return <LegalAidCampReport surveys={surveys} onBack={() => setViewMode('dashboard')} />;
+    return (
+      <LegalAidCampReport
+        surveys={surveys}
+        campName={assignedProject?.camp_name}
+        onBack={() => setViewMode('dashboard')}
+      />
+    );
   }
 
   if (viewMode === 'conduct_survey') {
@@ -133,51 +173,118 @@ export const FacultySurveyDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5">
-                <Scale className="w-3.5 h-3.5 text-indigo-600" />
-                Faculty Review & Report Portal
-              </span>
+        {/* Back button for Team Lead */}
+        {roleName === 'team_lead' && (
+          <button
+            onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}
+            className="flex items-center gap-1 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Team Lead Workspace
+          </button>
+        )}
+
+        {/* Project Header (Read-only for Team Lead) */}
+        {roleName === 'team_lead' && assignedProject && (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5 w-fit">
+                  <Scale className="w-3.5 h-3.5 text-indigo-600" />
+                  Team Lead Survey Portal
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {assignedProject.camp_name}
+                </h1>
+                <ProjectStatusBadge status={assignedProject.status} />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg px-2.5 py-1">
+                  <Calendar size={13} className="text-slate-400" /> {assignedProject.camp_date}
+                </span>
+                {(assignedProject.start_time || assignedProject.end_time) && (
+                  <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg px-2.5 py-1">
+                    <Clock size={13} className="text-slate-400" />
+                    {assignedProject.start_time ?? '—'} – {assignedProject.end_time ?? '—'}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg px-2.5 py-1">
+                  <MapPin size={13} className="text-slate-400" />
+                  {assignedProject.village_name}, {assignedProject.taluk}, {assignedProject.district}
+                </span>
+              </div>
             </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-              Legal Aid Data Collection & Automatic Report Engine
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Review data collection sheets, track pending litigation, and generate institutional reports.
-            </p>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {roleName === 'volunteer' && (
+            {/* Reports Action Buttons for Team Lead */}
+            <div className="flex flex-wrap items-center gap-3">
               <button
-                onClick={() => setViewMode('conduct_survey')}
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all"
+                onClick={() => setViewMode('consolidated')}
+                className="px-4 py-2.5 bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                Start New Survey
+                <PieChart className="w-4 h-4 text-indigo-400" />
+                Consolidated Report
               </button>
-            )}
 
-            <button
-              onClick={() => setViewMode('consolidated')}
-              className="px-4 py-2.5 bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
-            >
-              <PieChart className="w-4 h-4 text-indigo-400" />
-              Consolidated Report
-            </button>
-
-            <button
-              onClick={() => setViewMode('camp_report')}
-              className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-md shadow-indigo-600/25 transition-all"
-            >
-              <Building2 className="w-4 h-4" />
-              Master Camp Report
-            </button>
+              <button
+                onClick={() => setViewMode('camp_report')}
+                className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-md shadow-indigo-600/25 transition-all cursor-pointer"
+              >
+                <Building2 className="w-4 h-4" />
+                Master Camp Report
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Header (Faculty Only) */}
+        {roleName !== 'team_lead' && (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5 text-indigo-600" />
+                  Faculty Review & Report Portal
+                </span>
+              </div>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
+                Legal Aid Data Collection & Automatic Report Engine
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Review data collection sheets, track pending litigation, and generate institutional reports.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {roleName === 'volunteer' && (
+                <button
+                  onClick={() => setViewMode('conduct_survey')}
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Start New Survey
+                </button>
+              )}
+
+              <button
+                onClick={() => setViewMode('consolidated')}
+                className="px-4 py-2.5 bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+              >
+                <PieChart className="w-4 h-4 text-indigo-400" />
+                Consolidated Report
+              </button>
+
+              <button
+                onClick={() => setViewMode('camp_report')}
+                className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-md shadow-indigo-600/25 transition-all cursor-pointer"
+              >
+                <Building2 className="w-4 h-4" />
+                Master Camp Report
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Aggregate Stats Bar */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

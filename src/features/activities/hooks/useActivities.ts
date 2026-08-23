@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchActivities } from '@/features/activities/services/activityService';
 import type { Activity } from '@/types';
 
-export function useActivities(campId: string | undefined) {
+export function useActivities(campId: string | undefined, phase?: 'survey' | 'camp') {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,14 +16,14 @@ export function useActivities(campId: string | undefined) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchActivities(campId);
+      const data = await fetchActivities(campId, phase);
       setActivities(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load activities');
     } finally {
       setIsLoading(false);
     }
-  }, [campId]);
+  }, [campId, phase]);
 
   useEffect(() => {
     load();

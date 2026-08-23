@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { ChevronLeft, MapPin, Filter } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -5,6 +6,7 @@ import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectA
 import { BudgetTab } from '@/features/budget';
 import { Card, Spinner, Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
+import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 
 export function TeamLeadBudgetPage() {
   const { personId } = useAuth();
@@ -18,6 +20,11 @@ export function TeamLeadBudgetPage() {
     personId,
     targetProjectId
   );
+
+  // Default to survey tab if in survey phase, otherwise camp
+  const lifecycle = project ? getProjectLifecycleState(project) : null;
+  const defaultPhase = lifecycle?.isSurveyActive ? 'survey' : 'camp';
+  const [activePhase, setActivePhase] = useState<'survey' | 'camp'>(defaultPhase);
 
   const handleProjectSelect = (newProjectId: string) => {
     setSearchParams({ projectId: newProjectId });
@@ -97,7 +104,34 @@ export function TeamLeadBudgetPage() {
           </Button>
         </Card>
       ) : (
-        project && <BudgetTab campId={project.id} camp={project} phase="camp" onCampUpdate={reload} />
+        project && (
+          <div className="space-y-4">
+            {/* ─── Survey / Camp Phase Segment Switcher ─── */}
+            <div className="flex items-center gap-1 bg-surface-100 p-1 rounded-xl border border-surface-200 w-fit">
+              {(['survey', 'camp'] as const).map((phase) => (
+                <button
+                  key={phase}
+                  type="button"
+                  onClick={() => setActivePhase(phase)}
+                  className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activePhase === phase
+                      ? 'bg-white text-surface-900 shadow-sm border border-surface-200'
+                      : 'text-surface-500 hover:text-surface-800'
+                  }`}
+                >
+                  {phase === 'survey' ? 'Survey Phase Budget' : 'Camp Phase Budget'}
+                </button>
+              ))}
+            </div>
+
+            <BudgetTab
+              campId={project.id}
+              camp={project}
+              phase={activePhase}
+              onCampUpdate={reload}
+            />
+          </div>
+        )
       )}
     </div>
   );

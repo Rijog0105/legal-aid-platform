@@ -28,9 +28,9 @@ import {
   Download
 } from 'lucide-react';
 import { Button, Card, ProjectStatusBadge, Spinner } from '@/components/ui';
-import { PROJECT_STATUS, ROLES, ROUTES, type ProjectStatus } from '@/constants';
+import { ROLES, ROUTES } from '@/constants';
 import { useProject } from '@/features/projects/hooks/useProject';
-import { updateProjectStatus, deleteProject } from '@/features/projects/services/projectService';
+import { deleteProject } from '@/features/projects/services/projectService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ProjectForm } from './ProjectForm';
 import { ProjectPeopleTab } from './ProjectPeopleTab';
@@ -46,6 +46,7 @@ import { surveyService } from '@/services/surveyService';
 import { reportCalculationService } from '@/services/reportCalculationService';
 import { IndividualSurveyReport } from '@/features/reports/components/IndividualSurveyReport';
 import { ConsolidatedSurveyReport } from '@/features/reports/components/ConsolidatedSurveyReport';
+import { getProjectLifecycleState, PHASE_STATE_LABELS } from '@/utils/projectLifecycle';
 import type { SurveyResponseData } from '@/types/survey';
 import {
   ResponsiveContainer,
@@ -61,21 +62,6 @@ import {
 
 const CHART_COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b'];
 
-/* ─── Status Configuration ─────────────────────────────── */
-
-const STATUS_FLOW: Record<ProjectStatus, ProjectStatus[]> = {
-  [PROJECT_STATUS.DRAFT]: [PROJECT_STATUS.ACTIVE],
-  [PROJECT_STATUS.ACTIVE]: [PROJECT_STATUS.COMPLETED],
-  [PROJECT_STATUS.COMPLETED]: [PROJECT_STATUS.ARCHIVED],
-  [PROJECT_STATUS.ARCHIVED]: [],
-};
-
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  [PROJECT_STATUS.DRAFT]: 'Draft',
-  [PROJECT_STATUS.ACTIVE]: 'Active',
-  [PROJECT_STATUS.COMPLETED]: 'Completed',
-  [PROJECT_STATUS.ARCHIVED]: 'Archived',
-};
 
 /* ─── Navigation Tab Types ──────────────────────────────── */
 
@@ -103,13 +89,27 @@ const CAMP_SUB_TABS = [
 
 /* ─── Component ─────────────────────────────────────────── */
 
-export function ProjectDetailPage() {
-  const { projectId } = useParams<{ projectId: string }>();
+export interface ProjectDetailPageProps {
+  projectId?: string;
+  initialMainTab?: MainTab;
+  initialSurveySubTab?: SurveySubTab;
+  isTeamLeadView?: boolean;
+}
+
+export function ProjectDetailPage({
+  projectId: propProjectId,
+  initialMainTab,
+  initialSurveySubTab,
+  isTeamLeadView,
+}: ProjectDetailPageProps = {}) {
+  const params = useParams<{ projectId: string }>();
+  const projectId = propProjectId || params.projectId;
   const navigate = useNavigate();
-  const { hasRole } = useAuth();
+  const { hasRole, roleName } = useAuth();
   const { project, isLoading, error, setProject, reload } = useProject(projectId);
 
-  const canEdit = hasRole([ROLES.FACULTY, ROLES.ADMIN]);
+  const isTeamLead = isTeamLeadView || roleName === ROLES.TEAM_LEAD;
+  const canEdit = !isTeamLead && hasRole([ROLES.FACULTY, ROLES.ADMIN]);
 
   /* ── Persistent navigation state via localStorage ── */
   const storageKeyMain = `project_detail_${projectId}_active_main_tab`;
@@ -117,14 +117,26 @@ export function ProjectDetailPage() {
   const storageKeyCamp = `project_detail_${projectId}_active_camp_sub_tab`;
 
   const [activeMainTab, setActiveMainTab] = useState<MainTab>(
-    () => (localStorage.getItem(storageKeyMain) as MainTab) || 'overview'
+    () => initialMainTab || (localStorage.getItem(storageKeyMain) as MainTab) || 'overview'
   );
   const [activeSurveySubTab, setActiveSurveySubTab] = useState<SurveySubTab>(
-    () => (localStorage.getItem(storageKeySurvey) as SurveySubTab) || 'dashboard'
+    () => initialSurveySubTab || (localStorage.getItem(storageKeySurvey) as SurveySubTab) || 'dashboard'
   );
   const [activeCampSubTab, setActiveCampSubTab] = useState<CampSubTab>(
     () => (localStorage.getItem(storageKeyCamp) as CampSubTab) || 'activities'
   );
+
+  useEffect(() => {
+    if (initialMainTab) {
+      setActiveMainTab(initialMainTab);
+    }
+  }, [initialMainTab]);
+
+  useEffect(() => {
+    if (initialSurveySubTab) {
+      setActiveSurveySubTab(initialSurveySubTab);
+    }
+  }, [initialSurveySubTab]);
 
   /* ── Survey Phase Specific States ── */
   const [surveyList, setSurveyList] = useState<SurveyResponseData[]>([]);
@@ -132,6 +144,10 @@ export function ProjectDetailPage() {
   const [loadingSurveyDetails, setLoadingSurveyDetails] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<SurveyResponseData | null>(null);
   const [surveyViewMode, setSurveyViewMode] = useState<'list' | 'individual'>('list');
+
+  const visibleSubTabs = isTeamLead
+    ? SURVEY_SUB_TABS.filter((tab) => tab.key === 'dashboard' || tab.key === 'forms')
+    : SURVEY_SUB_TABS;
   const [downloadingReport, setDownloadingReport] = useState(false);
   const consolidatedPrintRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -303,8 +319,6 @@ export function ProjectDetailPage() {
 
   /* ── UI state ── */
   const [showEdit, setShowEdit] = useState(false);
-  const [statusUpdating, setStatusUpdating] = useState(false);
-  const [statusError, setStatusError] = useState<string | null>(null);
 
   /* ── Delete Dialog state ── */
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -350,20 +364,6 @@ export function ProjectDetailPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /* ── Status change ── */
-  const handleStatusChange = async (status: ProjectStatus) => {
-    if (!project) return;
-    setStatusUpdating(true);
-    setStatusError(null);
-    try {
-      const updated = await updateProjectStatus(project.id, status);
-      setProject(updated);
-    } catch (e) {
-      setStatusError(e instanceof Error ? e.message : 'Failed to update status');
-    } finally {
-      setStatusUpdating(false);
-    }
-  };
 
   /* ── Delete Project ── */
   const isDeleteConfirmed = project
@@ -415,16 +415,14 @@ export function ProjectDetailPage() {
     );
   }
 
-  const nextStatuses = STATUS_FLOW[project.status];
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-6 lg:px-8">
       {/* ─── Back Link ─── */}
       <Link
-        to={ROUTES.PROJECTS}
+        to={isTeamLead ? ROUTES.TEAM_LEAD_WORKSPACE : ROUTES.PROJECTS}
         className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-surface-700 transition-colors"
       >
-        <ArrowLeft size={15} /> Back to Projects
+        <ArrowLeft size={15} /> {isTeamLead ? 'Back to Team Lead Workspace' : 'Back to Projects'}
       </Link>
 
       {/* ─── Project Header ─── */}
@@ -433,6 +431,24 @@ export function ProjectDetailPage() {
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{project.camp_name}</h1>
             <ProjectStatusBadge status={project.status} />
+            {(() => {
+              const lc = getProjectLifecycleState(project);
+              const colorMap: Record<string, string> = {
+                survey_active: 'bg-blue-100 text-blue-800 border-blue-200',
+                camp_active: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                between_phases: 'bg-amber-100 text-amber-800 border-amber-200',
+                completed: 'bg-surface-100 text-surface-500 border-surface-200',
+                survey_scheduled: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+                camp_scheduled: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+                draft: 'bg-surface-100 text-surface-400 border-surface-200',
+              };
+              const colorClass = colorMap[lc.state] ?? 'bg-surface-100 text-surface-500 border-surface-200';
+              return (
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${colorClass}`}>
+                  {PHASE_STATE_LABELS[lc.state]}
+                </span>
+              );
+            })()}
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-semibold text-slate-500">
             <span className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1">
@@ -452,29 +468,17 @@ export function ProjectDetailPage() {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap md:self-center">
-          {nextStatuses.map((status) => (
+        {canEdit && (
+          <div className="flex items-center gap-2.5 flex-wrap md:self-center">
             <Button
-              key={status}
               size="sm"
-              variant="primary"
-              isLoading={statusUpdating}
-              onClick={() => handleStatusChange(status)}
-              className="bg-indigo-650 hover:bg-indigo-700 text-white font-bold rounded-xl px-4"
+              variant="outline"
+              leftIcon={<Pencil size={13} />}
+              onClick={() => setShowEdit(true)}
+              className="border-slate-200 hover:bg-slate-50 font-bold rounded-xl"
             >
-              Mark {STATUS_LABELS[status]}
+              Edit Details
             </Button>
-          ))}
-          <Button
-            size="sm"
-            variant="outline"
-            leftIcon={<Pencil size={13} />}
-            onClick={() => setShowEdit(true)}
-            className="border-slate-200 hover:bg-slate-50 font-bold rounded-xl"
-          >
-            Edit Details
-          </Button>
-          {canEdit && (
             <Button
               size="sm"
               variant="outline"
@@ -484,40 +488,35 @@ export function ProjectDetailPage() {
             >
               Delete Project
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {statusError && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-          <AlertCircle size={16} className="flex-shrink-0" />
-          {statusError}
-        </div>
-      )}
 
       {/* ─── Segmented Workspace Switcher ─── */}
-      <div className="w-full flex gap-1.5 bg-surface-100 p-1.5 rounded-2xl border border-surface-200 shadow-sm">
-        {(
-          [
-            { key: 'overview', label: 'Overview' },
-            { key: 'survey', label: 'Survey Phase' },
-            { key: 'camp', label: 'Camp Phase' },
-            { key: 'report', label: 'Final Report' },
-          ] as const
-        ).map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleMainTabChange(tab.key)}
-            className={`flex-1 text-center py-3 rounded-xl text-xs font-bold cursor-pointer transition-all duration-200 ease-out ${
-              activeMainTab === tab.key
-                ? 'bg-white text-surface-900 shadow-md border border-surface-200'
-                : 'text-surface-500 hover:text-surface-800 hover:bg-white hover:shadow-sm hover:-translate-y-px'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {!isTeamLead && (
+        <div className="w-full flex gap-1.5 bg-surface-100 p-1.5 rounded-2xl border border-surface-200 shadow-sm">
+          {(
+            [
+              { key: 'overview', label: 'Overview' },
+              { key: 'survey', label: 'Survey Phase' },
+              { key: 'camp', label: 'Camp Phase' },
+              { key: 'report', label: 'Final Report' },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleMainTabChange(tab.key)}
+              className={`flex-1 text-center py-3 rounded-xl text-xs font-bold cursor-pointer transition-all duration-200 ease-out ${
+                activeMainTab === tab.key
+                  ? 'bg-white text-surface-900 shadow-md border border-surface-200'
+                  : 'text-surface-500 hover:text-surface-800 hover:bg-white hover:shadow-sm hover:-translate-y-px'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ─── Tab Content ─── */}
 
@@ -535,21 +534,24 @@ export function ProjectDetailPage() {
       {activeMainTab === 'survey' && (
         <div className="space-y-6">
           {/* Sub-navigation */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-            {SURVEY_SUB_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleSurveySubTabChange(tab.key)}
-                className={`p-4 rounded-2xl border text-center transition-all duration-200 ease-out flex flex-col items-center justify-center gap-2.5 cursor-pointer h-24 shadow-xs ${
-                  activeSurveySubTab === tab.key
-                    ? 'bg-primary-50 border-primary-300 text-primary-900 shadow-md font-bold scale-[1.01] -translate-y-0.5'
-                    : 'bg-white border-surface-200 text-surface-600 hover:bg-surface-50 hover:border-surface-300 hover:shadow-md hover:-translate-y-px hover:scale-[1.005]'
-                }`}
-              >
-                {tab.icon}
-                <span className="text-[11px] leading-tight font-bold">{tab.label}</span>
-              </button>
-            ))}
+          <div className={`grid gap-4 ${isTeamLead ? 'grid-cols-2 max-w-md mx-auto w-full' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6'}`}>
+            {visibleSubTabs.map((tab) => {
+              const label = isTeamLead && tab.key === 'forms' ? 'Survey Reports' : tab.label;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => handleSurveySubTabChange(tab.key)}
+                  className={`p-4 rounded-2xl border text-center transition-all duration-200 ease-out flex flex-col items-center justify-center gap-2.5 cursor-pointer h-24 shadow-xs ${
+                    activeSurveySubTab === tab.key
+                      ? 'bg-primary-50 border-primary-300 text-primary-900 shadow-md font-bold scale-[1.01] -translate-y-0.5'
+                      : 'bg-white border-surface-200 text-surface-600 hover:bg-surface-50 hover:border-surface-300 hover:shadow-md hover:-translate-y-px hover:scale-[1.005]'
+                  }`}
+                >
+                  {tab.icon}
+                  <span className="text-[11px] leading-tight font-bold">{label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Sub-tab content */}
@@ -1815,7 +1817,7 @@ export function ProjectDetailPage() {
           </div>
 
           {/* Sub-tab content */}
-          {activeCampSubTab === 'activities' && <ActivitiesTab campId={project.id} />}
+          {activeCampSubTab === 'activities' && <ActivitiesTab campId={project.id} phase="camp" />}
 
           {activeCampSubTab === 'photos' && <PhotosTab campId={project.id} />}
 

@@ -20,6 +20,7 @@ import { VolunteerHomePage } from '@/pages/VolunteerHomePage';
 import { VolunteerCapturePage, MySubmissionsPage, TeamLeadPhotosPage } from '@/features/volunteer';
 import { TeamLeadWorkspacePage } from '@/pages/TeamLeadWorkspacePage';
 import { TeamLeadBudgetPage } from '@/pages/TeamLeadBudgetPage';
+import { TeamLeadSurveyPortalPage } from '@/pages/TeamLeadSurveyPortalPage';
 import { FacultySurveyDashboard } from '@/features/reports/components/FacultySurveyDashboard';
 import { VolunteerSurveyPage } from '@/pages/VolunteerSurveyPage';
 import { VolunteerSurveyReportsPage } from '@/pages/VolunteerSurveyReportsPage';
@@ -112,11 +113,11 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.TEAM_LEAD_SURVEYS,
-        element: <FacultySurveyDashboard />,
+        element: <TeamLeadSurveyPortalPage />,
       },
       {
         path: ROUTES.TEAM_LEAD_REPORTS,
-        element: <FacultySurveyDashboard />,
+        element: <TeamLeadSurveyPortalPage />,
       },
       {
         path: ROUTES.TEAM_LEAD_BUDGET,

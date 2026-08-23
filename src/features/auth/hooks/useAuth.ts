@@ -61,14 +61,20 @@ export function useAuth() {
     store.setLoading(true);
     try {
       const result = await authSignOut();
-      store.reset();
-      console.log('[useAuth] logout completed, authStore reset');
+      store.setSession(null);
+      store.setProfile(null);
+      store.clearAuthError();
+      console.log('[useAuth] logout completed, authStore credentials cleared');
       console.log('[useAuth] logout returning result:', result);
       return result;
     } catch (err) {
       console.error('[useAuth] CATCH BLOCK in logout:', err);
-      store.reset();
+      store.setSession(null);
+      store.setProfile(null);
+      store.clearAuthError();
       return { success: false, error: err instanceof Error ? err.message : 'Logout failed' };
+    } finally {
+      store.setLoading(false);
     }
   }, [store]);
 

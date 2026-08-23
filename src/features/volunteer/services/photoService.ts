@@ -3,7 +3,7 @@ import { APP_CONFIG } from '@/constants';
 import type { Photo } from '@/types';
 
 export interface PhotoWithActivityName extends Photo {
-  activity: { activity_name: string } | null;
+  activity: { activity_name: string; phase: 'survey' | 'camp' } | null;
   uploader?: { person?: { full_name?: string } } | null;
 }
 
@@ -104,7 +104,7 @@ export async function fetchMyPhotos(
 export async function fetchProjectPhotos(projectId: string): Promise<PhotoWithDetails[]> {
   const { data, error } = await supabase
     .from('photos')
-    .select('*, activity:activities(activity_name)')
+    .select('*, activity:activities(activity_name, phase), uploader:users(person:persons(full_name))')
     .eq('camp_id', projectId)
     .order('captured_at', { ascending: false });
   if (error) throw new Error(error.message);

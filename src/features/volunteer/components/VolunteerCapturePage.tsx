@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, type ChangeEvent } from 'react';
+import { useRef, useState, useEffect, useCallback, type ChangeEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Camera, ChevronLeft, MapPin, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -12,17 +12,30 @@ import { PhotoLightboxModal, type PhotoPreviewData } from '@/features/volunteer/
 import { Card, Spinner, Button } from '@/components/ui';
 import { ROUTES, APP_CONFIG } from '@/constants';
 import type { Activity } from '@/types';
+import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 
-function getCurrentPosition(): Promise<{ latitude: number; longitude: number } | null> {
-  return new Promise((resolve) => {
+function getCurrentPosition(timeoutMs = 15000): Promise<{ latitude: number; longitude: number } | null> {
+  return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      resolve(null);
+      reject(new Error('Geolocation is not supported by your device.'));
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-      () => resolve(null),
-      { timeout: 5000, maximumAge: 60000 }
+      (pos) => {
+        resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      },
+      (err) => {
+        let msg = 'Failed to capture GPS location.';
+        if (err.code === err.PERMISSION_DENIED) {
+          msg = 'Please grant GPS location permissions to capture photo coordinates.';
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          msg = 'GPS location is unavailable on your device.';
+        } else if (err.code === err.TIMEOUT) {
+          msg = 'Location request timed out. Make sure GPS is enabled.';
+        }
+        reject(new Error(msg));
+      },
+      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 }
     );
   });
 }
@@ -55,6 +68,39 @@ export function VolunteerCapturePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Geolocation stashing states
+  const [gpsPromise, setGpsPromise] = useState<Promise<{ latitude: number; longitude: number } | null> | null>(null);
+  const [capturedCoords, setCapturedCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsWarning, setGpsWarning] = useState<string | null>(null);
+
+  const startLocationAcquisition = useCallback(() => {
+    setCapturedCoords(null);
+    setGpsWarning(null);
+    setUploadError(null);
+    setGpsLoading(true);
+
+    const promise = getCurrentPosition(15000); // 15s timeout
+    setGpsPromise(promise);
+    
+    promise.then(
+      (pos) => {
+        setCapturedCoords(pos);
+        setGpsLoading(false);
+      },
+      (err) => {
+        console.warn('GPS location lookup failed:', err);
+        setGpsWarning(err instanceof Error ? err.message : 'GPS lookup failed.');
+        setGpsLoading(false);
+      }
+    );
+  }, []);
+
+  const handleCaptureClick = () => {
+    startLocationAcquisition();
+    fileInputRef.current?.click();
+  };
+
   const maxPhotos =
     project?.report_settings?.max_photos_per_activity ?? APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY;
   const atLimit = photos.length >= maxPhotos;
@@ -66,11 +112,12 @@ export function VolunteerCapturePage() {
     if (shouldAutoTrigger && canCapture && !autoTriggeredRef.current) {
       autoTriggeredRef.current = true;
       const timer = setTimeout(() => {
+        startLocationAcquisition();
         fileInputRef.current?.click();
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [shouldAutoTrigger, canCapture]);
+  }, [shouldAutoTrigger, canCapture, startLocationAcquisition]);
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,7 +132,18 @@ export function VolunteerCapturePage() {
     setIsUploading(true);
     setUploadError(null);
     try {
-      const position = await getCurrentPosition();
+      let position: { latitude: number; longitude: number } | null = capturedCoords;
+      
+      // If user returns quickly from camera app and GPS is still loading, await the promise
+      if (!position && gpsPromise) {
+        try {
+          position = await gpsPromise;
+        } catch (err) {
+          console.warn('Awaiting GPS promise failed:', err);
+          setGpsWarning(err instanceof Error ? err.message : 'GPS lookup failed.');
+        }
+      }
+
       await uploadPhoto({
         projectId: project.id,
         activityId: selectedActivity.id,
@@ -99,6 +157,9 @@ export function VolunteerCapturePage() {
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     } finally {
       setIsUploading(false);
+      setGpsPromise(null);
+      setCapturedCoords(null);
+      setGpsLoading(false);
     }
   };
 
@@ -109,6 +170,19 @@ export function VolunteerCapturePage() {
         <Spinner size="lg" />
       </div>
     );
+  }
+
+  const lifecycle = project ? getProjectLifecycleState(project) : null;
+  const isOperational = lifecycle?.isSurveyActive || lifecycle?.isCampActive;
+
+  useEffect(() => {
+    if (project && !isOperational) {
+      navigate(ROUTES.VOLUNTEER_HOME);
+    }
+  }, [project, isOperational, navigate]);
+
+  if (project && !isOperational) {
+    return null;
   }
 
   /* ─── Error / no project ─── */
@@ -160,11 +234,18 @@ export function VolunteerCapturePage() {
         )}
       </Card>
 
-      {/* ─── Errors ─── */}
+      {/* ─── Errors & Warnings ─── */}
       {(uploadError || photosError) && (
         <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
           <AlertCircle size={16} className="flex-shrink-0" />
           {uploadError ?? photosError}
+        </div>
+      )}
+
+      {gpsWarning && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs">
+          <AlertCircle size={15} className="flex-shrink-0" />
+          <span>{gpsWarning} (Photo upload will proceed without geotag)</span>
         </div>
       )}
 
@@ -178,7 +259,7 @@ export function VolunteerCapturePage() {
         onChange={handleFileChange}
       />
       <button
-        onClick={() => fileInputRef.current?.click()}
+        onClick={handleCaptureClick}
         disabled={!canCapture}
         className="w-full flex flex-col items-center gap-2 p-6 rounded-2xl bg-primary-600 text-white font-medium text-sm shadow-md shadow-primary-600/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform"
       >
@@ -186,6 +267,11 @@ export function VolunteerCapturePage() {
           <>
             <Spinner size="sm" />
             <span>Uploading…</span>
+          </>
+        ) : gpsLoading ? (
+          <>
+            <Spinner size="sm" />
+            <span>Acquiring GPS location…</span>
           </>
         ) : (
           <>

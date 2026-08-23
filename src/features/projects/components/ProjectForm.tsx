@@ -16,8 +16,6 @@ const schema = z.object({
   district: z.string().min(1, 'District is required'),
   state: z.string().min(1, 'State is required'),
   academic_year: z.string().optional(),
-  include_budget: z.boolean(),
-  include_survey_stats: z.boolean(),
   max_photos_per_activity: z.number().int().min(1, 'Must be at least 1'),
 });
 
@@ -48,8 +46,6 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
       district: '',
       state: 'Karnataka',
       academic_year: '',
-      include_budget: true,
-      include_survey_stats: true,
       max_photos_per_activity: APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY,
     },
   });
@@ -64,8 +60,6 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
         district: project.district,
         state: project.report_settings?.state ?? 'Karnataka',
         academic_year: project.report_settings?.academic_year ?? '',
-        include_budget: project.report_settings?.include_budget ?? true,
-        include_survey_stats: project.report_settings?.include_survey_stats ?? true,
         max_photos_per_activity:
           project.report_settings?.max_photos_per_activity ??
           APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY,
@@ -74,7 +68,8 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
   }, [project, reset]);
 
   const onSubmit = async (values: FormValues) => {
-    // Retain original camp_date/times if editing, otherwise assign default today's date
+    // Retain original camp_date/times if editing, otherwise assign default today's date.
+    // include_budget and include_survey_stats are always true — not configurable at creation.
     const payload = {
       camp_name: values.camp_name,
       description: values.description || null,
@@ -85,8 +80,8 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
       taluk: values.taluk,
       district: values.district,
       report_settings: {
-        include_budget: values.include_budget,
-        include_survey_stats: values.include_survey_stats,
+        include_budget: true,
+        include_survey_stats: true,
         max_photos_per_activity: values.max_photos_per_activity,
         survey_date: project?.report_settings?.survey_date,
         survey_start_time: project?.report_settings?.survey_start_time,
@@ -171,26 +166,16 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
         </div>
 
         <div className="border-t border-surface-200 pt-5">
-          <p className="text-sm font-medium text-surface-700 mb-3">Report Settings</p>
-          <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-            <label className="flex items-center gap-2 text-sm text-surface-700">
-              <input type="checkbox" className="rounded" {...register('include_budget')} />
-              Include Budget
-            </label>
-            <label className="flex items-center gap-2 text-sm text-surface-700">
-              <input type="checkbox" className="rounded" {...register('include_survey_stats')} />
-              Include Survey Stats
-            </label>
-            <div className="w-full sm:w-48">
-              <Input
-                label="Max Photos / Activity"
-                id="max_photos_per_activity"
-                type="number"
-                min={1}
-                error={errors.max_photos_per_activity?.message}
-                {...register('max_photos_per_activity', { valueAsNumber: true })}
-              />
-            </div>
+          <p className="text-sm font-medium text-surface-700 mb-3">Settings</p>
+          <div className="w-full sm:w-48">
+            <Input
+              label="Max Photos / Activity"
+              id="max_photos_per_activity"
+              type="number"
+              min={1}
+              error={errors.max_photos_per_activity?.message}
+              {...register('max_photos_per_activity', { valueAsNumber: true })}
+            />
           </div>
         </div>
       </div>

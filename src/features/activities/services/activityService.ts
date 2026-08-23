@@ -7,14 +7,24 @@ export interface ActivityPayload {
   activity_name: string;
   activity_order: number;
   status?: ActivityStatus;
+  phase: 'survey' | 'camp';
 }
 
-export async function fetchActivities(campId: string): Promise<Activity[]> {
-  const { data, error } = await supabase
+export async function fetchActivities(
+  campId: string,
+  phase?: 'survey' | 'camp'
+): Promise<Activity[]> {
+  let query = supabase
     .from('activities')
     .select('*')
     .eq('camp_id', campId)
     .order('activity_order', { ascending: true });
+
+  if (phase) {
+    query = query.eq('phase', phase);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []) as Activity[];
 }
