@@ -32,6 +32,7 @@ type FormValues = z.infer<typeof schema>;
 
 interface ActivityFormProps {
   campId: string;
+  phase: 'survey' | 'camp';
   activity?: Activity | null;
   onClose: () => void;
   onSaved: (activity: Activity) => void;
@@ -41,7 +42,7 @@ function isPredefined(name: string): boolean {
   return (PREDEFINED_ACTIVITIES as readonly string[]).includes(name);
 }
 
-export function ActivityForm({ campId, activity, onClose, onSaved }: ActivityFormProps) {
+export function ActivityForm({ campId, phase, activity, onClose, onSaved }: ActivityFormProps) {
   const isEdit = !!activity;
 
   const {
@@ -80,6 +81,7 @@ export function ActivityForm({ campId, activity, onClose, onSaved }: ActivityFor
       : await createActivity({
           camp_id: campId,
           activity_name,
+          phase,
           activity_order: await getNextActivityOrder(campId),
         });
     onSaved(saved);

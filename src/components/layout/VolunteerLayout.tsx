@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROUTES, ROLES } from '@/constants';
 import { fetchNotifications, markNotificationRead } from '@/features/attendance/services/attendanceService';
 import type { Notification } from '@/types';
+import { supabase } from '@/services/supabase';
 
 /**
  * Mobile-first layout for volunteers with bottom navigation and in-app Notification Center.
@@ -13,7 +14,7 @@ export function VolunteerLayout() {
   const { logout, displayName, roleName, userId } = useAuth();
   const navigate = useNavigate();
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Array<Notification & { is_expired?: boolean }>>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const isTeamLead = roleName === ROLES.TEAM_LEAD;
@@ -22,6 +23,45 @@ export function VolunteerLayout() {
     if (!userId) return;
     try {
       const data = await fetchNotifications(userId);
+      
+      // Parse session IDs from the notification links
+      const sessionIds = data
+        .map((n) => {
+          const match = n.link?.match(/session_id=([^&]+)/);
+          return match ? match[1] : null;
+        })
+        .filter((id): id is string => !!id);
+
+      if (sessionIds.length > 0) {
+        // Query status and expiry of those sessions in bulk
+        const { data: sessions } = await supabase
+          .from('attendance_sessions')
+          .select('id, status, expires_at')
+          .in('id', sessionIds);
+
+        if (sessions) {
+          const sessionMap = new Map<string, { status: string; expires_at: string }>();
+          (sessions as Array<{ id: string; status: string; expires_at: string }>).forEach((s) =>
+            sessionMap.set(s.id, { status: s.status, expires_at: s.expires_at })
+          );
+
+          const mappedNotifications = data.map((n) => {
+            const match = n.link?.match(/session_id=([^&]+)/);
+            const sId = match ? match[1] : null;
+            const sessionInfo = sId ? sessionMap.get(sId) : null;
+            
+            if (sessionInfo) {
+              const isExpired = sessionInfo.status === 'closed' || new Date(sessionInfo.expires_at) <= new Date();
+              return { ...n, is_expired: isExpired };
+            }
+            return n;
+          });
+
+          setNotifications(mappedNotifications);
+          return;
+        }
+      }
+
       setNotifications(data);
     } catch (err) {
       console.error('Failed to load notifications:', err);
@@ -132,18 +172,27 @@ export function VolunteerLayout() {
                     onClick={() => {
                       if (!n.is_read) handleMarkAsRead(n.id);
                       setShowNotifications(false);
+                      if (!n.is_expired && n.link) {
+                        navigate(n.link);
+                      }
                     }}
-                    className={`p-3 text-xs leading-relaxed transition-all cursor-pointer hover:bg-surface-50/50 ${
-                      !n.is_read ? 'bg-primary-50/20' : ''
-                    }`}
+                    className={`p-3 text-xs leading-relaxed transition-all ${
+                      n.is_expired
+                        ? 'opacity-60 cursor-not-allowed hover:bg-transparent'
+                        : 'cursor-pointer hover:bg-surface-50/50'
+                    } ${!n.is_read && !n.is_expired ? 'bg-primary-50/20' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className={`font-semibold ${!n.is_read ? 'text-primary-850 font-bold' : 'text-surface-850'}`}>
-                        {n.title}
+                      <span className={`font-semibold ${!n.is_read && !n.is_expired ? 'text-primary-850 font-bold' : 'text-surface-850'}`}>
+                        {n.is_expired ? `${n.title} (Expired)` : n.title}
                       </span>
-                      {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-primary-600 flex-shrink-0 mt-1" />}
+                      {!n.is_read && !n.is_expired && <span className="w-1.5 h-1.5 rounded-full bg-primary-600 flex-shrink-0 mt-1" />}
                     </div>
-                    <p className="text-surface-500 mt-0.5">{n.message}</p>
+                    <p className="text-surface-500 mt-0.5">
+                      {n.is_expired
+                        ? 'This attendance session has ended and is no longer active.'
+                        : n.message}
+                    </p>
                     <p className="text-[9px] text-surface-400 mt-1">
                       {new Date(n.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </p>

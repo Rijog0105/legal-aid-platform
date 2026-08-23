@@ -106,6 +106,7 @@ export interface Activity {
   activity_name: string;
   activity_order: number;
   status: ActivityStatus;
+  phase: 'survey' | 'camp';
   created_at: string;
 }
 

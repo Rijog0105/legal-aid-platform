@@ -23,15 +23,18 @@ import { ActivityListItem } from './ActivityListItem';
 
 interface ActivitiesTabProps {
   campId: string;
+  phase: 'survey' | 'camp';
 }
 
-export function ActivitiesTab({ campId }: ActivitiesTabProps) {
-  const { activities, isLoading, error, reload, setActivities } = useActivities(campId);
+export function ActivitiesTab({ campId, phase }: ActivitiesTabProps) {
+  const { activities, isLoading, error, reload, setActivities } = useActivities(campId, phase);
   const [showForm, setShowForm] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const phaseLabel = phase === 'survey' ? 'Survey' : 'Camp';
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -101,7 +104,7 @@ export function ActivitiesTab({ campId }: ActivitiesTabProps) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-surface-900">
-          Activities ({activities.length})
+          {phaseLabel} Activities ({activities.length})
         </h3>
         <Button size="sm" leftIcon={<Plus size={15} />} onClick={openCreate}>
           Add Activity
@@ -122,8 +125,8 @@ export function ActivitiesTab({ campId }: ActivitiesTabProps) {
       ) : activities.length === 0 ? (
         <div className="bg-white rounded-2xl border border-surface-200 shadow-sm p-4">
           <EmptyState
-            title="No activities scheduled"
-            description="No activities have been added to this project's execution agenda yet."
+            title={`No ${phaseLabel.toLowerCase()} activities scheduled`}
+            description={`No activities have been added to the ${phaseLabel} Phase agenda yet.`}
             action={
               <Button leftIcon={<Plus size={15} />} onClick={openCreate}>
                 Add Activity
@@ -158,6 +161,7 @@ export function ActivitiesTab({ campId }: ActivitiesTabProps) {
       {showForm && (
         <ActivityForm
           campId={campId}
+          phase={phase}
           activity={editingActivity}
           onClose={() => setShowForm(false)}
           onSaved={() => {

@@ -28,6 +28,7 @@ import { uploadSurveyProofPhoto } from '@/features/volunteer/services/photoServi
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { makeDraftKey } from '@/utils/draftKey';
 import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
+import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 import { fetchProjects } from '@/features/projects/services/projectService';
 import type { Project } from '@/types';
 import { IndividualSurveyReport } from '@/features/reports/components/IndividualSurveyReport';
@@ -594,6 +595,20 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       console.error("Survey submission blocked: activeTemplate is null.");
       setValidationError("Cannot submit survey. No active survey template is loaded from the database.");
       return;
+    }
+
+    // Application-level behavioral guard: block submission outside the survey phase window.
+    // This enforces correct behavior in the UI — it is NOT a security control.
+    // The existing Supabase RLS does not enforce time-based access windows.
+    if (selectedCamp) {
+      const lc = getProjectLifecycleState(selectedCamp);
+      if (!lc.isSurveyActive) {
+        setValidationError(
+          'Survey submission is only allowed during the Survey Phase window. ' +
+          'The survey phase is not currently active for this project.'
+        );
+        return;
+      }
     }
 
     // Enforce mandatory Proof of Survey photo

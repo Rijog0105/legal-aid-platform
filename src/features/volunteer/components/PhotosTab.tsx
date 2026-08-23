@@ -15,6 +15,7 @@ export function PhotosTab({ campId: projectId }: PhotosTabProps) {
   const { photos, isLoading, error, toggleReportSelection, removePhoto } = useProjectPhotos(projectId);
   const { activities } = useActivities(projectId);
 
+  const [phaseFilter, setPhaseFilter] = useState<'all' | 'survey' | 'camp'>('all');
   const [selectedActivityId, setSelectedActivityId] = useState<string>('all');
   const [reportFilter, setReportFilter] = useState<'all' | 'selected' | 'unselected'>('all');
   const [photoToDelete, setPhotoToDelete] = useState<PhotoWithDetails | null>(null);
@@ -23,6 +24,9 @@ export function PhotosTab({ campId: projectId }: PhotosTabProps) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const filteredPhotos = photos.filter((photo) => {
+    if (phaseFilter !== 'all' && photo.activity?.phase !== phaseFilter) {
+      return false;
+    }
     if (selectedActivityId !== 'all' && photo.activity_id !== selectedActivityId) {
       return false;
     }
@@ -70,6 +74,27 @@ export function PhotosTab({ campId: projectId }: PhotosTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* ─── Phase Segment Filter ─── */}
+      <div className="flex items-center gap-1 bg-surface-100 p-1 rounded-xl border border-surface-200 w-fit">
+        {(['all', 'survey', 'camp'] as const).map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => {
+              setPhaseFilter(p);
+              setSelectedActivityId('all');
+            }}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              phaseFilter === p
+                ? 'bg-white text-surface-900 shadow-sm border border-surface-200'
+                : 'text-surface-500 hover:text-surface-800'
+            }`}
+          >
+            {p === 'all' ? 'All Photos' : p === 'survey' ? 'Survey Phase' : 'Camp Phase'}
+          </button>
+        ))}
+      </div>
+
       {/* ─── Header & Controls ─── */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-surface-200 shadow-sm">
         <div className="flex items-center gap-3">
@@ -94,11 +119,13 @@ export function PhotosTab({ campId: projectId }: PhotosTabProps) {
               className="bg-transparent text-surface-700 font-medium focus:outline-none cursor-pointer"
             >
               <option value="all">All Activities</option>
-              {activities.map((act) => (
-                <option key={act.id} value={act.id}>
-                  {act.activity_name}
-                </option>
-              ))}
+              {activities
+                .filter((act) => phaseFilter === 'all' || act.phase === phaseFilter)
+                .map((act) => (
+                  <option key={act.id} value={act.id}>
+                    {act.activity_name}
+                  </option>
+                ))}
             </select>
           </div>
 

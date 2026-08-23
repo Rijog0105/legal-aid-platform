@@ -8,7 +8,7 @@ export function ProjectCreatePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-2xl mx-auto px-4">
       <Link
         to={ROUTES.PROJECTS}
         className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-surface-700 transition-colors mb-4"
@@ -19,7 +19,7 @@ export function ProjectCreatePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-surface-900">New Legal Aid Project</h1>
         <p className="text-surface-500 mt-0.5 text-sm">
-          Create a new legal aid project. It starts in draft status.
+          Create a new legal aid project. Survey and Camp schedules are set inside the project.
         </p>
       </div>
 

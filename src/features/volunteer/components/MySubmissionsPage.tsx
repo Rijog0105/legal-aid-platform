@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Trash2, MapPin, AlertCircle, Images } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -9,6 +9,7 @@ import { PhotoThumbnail } from '@/features/volunteer/components/PhotoThumbnail';
 import { PhotoLightboxModal, type PhotoPreviewData } from '@/features/volunteer/components/PhotoLightboxModal';
 import { Card, Spinner, Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
+import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 
 export function MySubmissionsPage() {
   const { personId, userId } = useAuth();
@@ -46,6 +47,19 @@ export function MySubmissionsPage() {
         <Spinner size="lg" />
       </div>
     );
+  }
+
+  const lifecycle = project ? getProjectLifecycleState(project) : null;
+  const isCompleted = lifecycle?.isCompleted || project?.status === 'archived' || project?.status === 'completed';
+
+  useEffect(() => {
+    if (isCompleted) {
+      navigate(ROUTES.VOLUNTEER_HOME);
+    }
+  }, [isCompleted, navigate]);
+
+  if (isCompleted) {
+    return null;
   }
 
   if (projectError || !project) {
