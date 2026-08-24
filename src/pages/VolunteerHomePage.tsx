@@ -6,8 +6,9 @@ import { useMyPhotos } from '@/features/volunteer/hooks/useMyPhotos';
 import { ActivitySelector } from '@/features/volunteer/components/ActivitySelector';
 import { PhotoCounter } from '@/features/volunteer/components/PhotoCounter';
 import { Card, Spinner, Button } from '@/components/ui';
-import { Camera, Images, MapPin, Calendar, ClipboardList, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Camera, Images, MapPin, Calendar, ClipboardList, CheckCircle, Clock, AlertCircle, AlertTriangle } from 'lucide-react';
 import { ROUTES, APP_CONFIG, PROJECT_STATUS } from '@/constants';
+import { useGeolocation } from '@/hooks/useGeolocation';
 import type { Activity, AttendanceSession, AttendanceRecord } from '@/types';
 import {
   fetchActiveSessions,
@@ -28,6 +29,13 @@ export function VolunteerHomePage() {
 
   const { project, isLoading: projectLoading, error: projectError } = useMyProjectAssignment(personId);
   const { photos } = useMyPhotos(project?.id ?? null, userId);
+  const {
+    coords,
+    isLoading: gpsLoading,
+    error: gpsError,
+    permissionState,
+    captureLocation
+  } = useGeolocation();
 
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [surveyCount, setSurveyCount] = useState<number>(0);
@@ -144,7 +152,7 @@ export function VolunteerHomePage() {
   }, [activeSession]);
 
   // GPS Mark Attendance Action
-  const handleMarkAttendance = () => {
+  const handleMarkAttendance = async () => {
     if (!activeSession || !userId || !project) return;
     
     // Safety check for expired session
@@ -158,8 +166,13 @@ export function VolunteerHomePage() {
     setAttendanceError(null);
     setAttendanceSuccess(null);
 
-    if (!navigator.geolocation) {
-      setAttendanceError('Geolocation is not supported by your device.');
+    let position = coords;
+    if (!position) {
+      position = await captureLocation(false);
+    }
+
+    if (!position) {
+      setAttendanceError(gpsError || 'Please allow GPS location permission to mark attendance.');
       setMarkingLocation(false);
       return;
     }
@@ -183,50 +196,35 @@ export function VolunteerHomePage() {
       return { browser, os };
     };
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { browser, os } = getBrowserAndOS();
-          const rec = await submitAttendanceRecord({
-            session_id: activeSession.id,
-            user_id: userId,
-            camp_id: project.id,
-            phase: activeSession.phase,
-            record_type: activeSession.session_type,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            gps_accuracy: position.coords.accuracy ?? undefined,
-            device_platform: 'web-mobile',
-            browser,
-            os,
-            app_version: '1.0.0',
-          });
-          setMyRecord(rec);
-          if (rec.status === 'present') {
-            setAttendanceSuccess('Attendance verified and marked successfully!');
-            setAttendanceError(null);
-          } else {
-            setAttendanceError(rec.rejection_reason || 'Attendance rejected.');
-            setAttendanceSuccess(null);
-          }
-        } catch (err) {
-          setAttendanceError(err instanceof Error ? err.message : 'Failed to mark attendance.');
-        } finally {
-          setMarkingLocation(false);
-        }
-      },
-      (error) => {
-        let msg = 'Failed to capture your GPS location.';
-        if (error.code === error.PERMISSION_DENIED) {
-          msg = 'Please grant GPS location permissions to verify attendance.';
-        } else if (error.code === error.TIMEOUT) {
-          msg = 'Location request timed out. Make sure GPS is enabled.';
-        }
-        setAttendanceError(msg);
-        setMarkingLocation(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    try {
+      const { browser, os } = getBrowserAndOS();
+      const rec = await submitAttendanceRecord({
+        session_id: activeSession.id,
+        user_id: userId,
+        camp_id: project.id,
+        phase: activeSession.phase,
+        record_type: activeSession.session_type,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        gps_accuracy: position.accuracy ?? undefined,
+        device_platform: 'web-mobile',
+        browser,
+        os,
+        app_version: '1.0.0',
+      });
+      setMyRecord(rec);
+      if (rec.status === 'present') {
+        setAttendanceSuccess('Attendance verified and marked successfully!');
+        setAttendanceError(null);
+      } else {
+        setAttendanceError(rec.rejection_reason || 'Attendance rejected.');
+        setAttendanceSuccess(null);
+      }
+    } catch (err) {
+      setAttendanceError(err instanceof Error ? err.message : 'Failed to mark attendance.');
+    } finally {
+      setMarkingLocation(false);
+    }
   };
 
   /* ─── Loading ─── */
@@ -449,12 +447,25 @@ export function VolunteerHomePage() {
               </div>
             )}
 
+             {permissionState === 'denied' && (
+              <div className="bg-red-50 border border-red-150 rounded-xl p-3.5 space-y-2 text-[10px] text-red-800">
+                <p className="font-bold flex items-center gap-1 text-xs">
+                  <AlertTriangle size={14} className="text-red-650" /> Location Access Blocked
+                </p>
+                <p className="text-red-700">Attendance verification requires GPS. Please enable location permissions:</p>
+                <ul className="list-disc pl-4 space-y-1 bg-white border border-red-100 rounded-lg p-2">
+                  <li><strong>iOS / Safari:</strong> Settings &gt; Safari &gt; Location &gt; change setting to <strong>Allow</strong>.</li>
+                  <li><strong>Android / Chrome:</strong> Padlock icon in address bar &gt; Permissions &gt; enable <strong>Location</strong>.</li>
+                </ul>
+              </div>
+             )}
+
             {/* Action Row */}
             {!myRecord ? (
               <Button
                 size="sm"
                 className="w-full"
-                isLoading={markingLocation}
+                isLoading={markingLocation || gpsLoading}
                 disabled={isSessionExpired}
                 onClick={handleMarkAttendance}
               >

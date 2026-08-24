@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { AttendanceSummary } from './AttendanceSummary';
 import { formatDate } from '@/utils';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 interface AttendanceTabProps {
   campId: string;
@@ -58,9 +59,13 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
   const [sessionType, setSessionType] = useState<'check_in' | 'check_out'>('check_in');
   const [radius, setRadius] = useState<number>(100);
   const [duration, setDuration] = useState<number>(15);
-  const [gpsLoading, setGpsLoading] = useState(false);
-  const [facultyCoords, setFacultyCoords] = useState<{ latitude: number; longitude: number; accuracy?: number | null } | null>(null);
-  const [gpsError, setGpsError] = useState<string | null>(null);
+  const {
+    coords: facultyCoords,
+    isLoading: gpsLoading,
+    error: gpsError,
+    permissionState,
+    captureLocation
+  } = useGeolocation();
 
   // Live Dashboard State
   const [attendees, setAttendees] = useState<DashboardAttendee[]>([]);
@@ -196,145 +201,7 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
     }
   };
 
-  const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied' | 'checking'>('checking');
 
-  // Capture Faculty GPS location
-  const captureLocation = useCallback((isAuto = false) => {
-    setGpsLoading(true);
-    setGpsError(null);
-    if (!isAuto) {
-      setFacultyCoords(null);
-    }
-
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
-      setGpsLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setFacultyCoords({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        });
-        setGpsLoading(false);
-        setGpsError(null);
-        setPermissionState('granted');
-      },
-      (error) => {
-        let msg = 'Failed to capture GPS location.';
-        if (error.code === error.PERMISSION_DENIED) {
-          msg = 'Location access denied. Please grant location permissions in your browser.';
-          setPermissionState('denied');
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          msg = 'Location unavailable. Please check your device GPS/network signal.';
-        } else if (error.code === error.TIMEOUT) {
-          msg = 'Location request timed out. Please try again in an open area.';
-        }
-        setGpsError(msg);
-        setGpsLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, []);
-
-  // Check permission state on mount
-  useEffect(() => {
-    let active = true;
-
-    async function checkPermission() {
-      if (!navigator.geolocation) {
-        setPermissionState('denied');
-        setGpsError('Geolocation is not supported by your browser.');
-        return;
-      }
-
-      if (!navigator.permissions || !navigator.permissions.query) {
-        // Fallback for Safari/browsers lacking Permissions query support
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            if (!active) return;
-            setFacultyCoords({
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-              accuracy: pos.coords.accuracy,
-            });
-            setPermissionState('granted');
-            setGpsError(null);
-          },
-          (err) => {
-            if (!active) return;
-            if (err.code === err.PERMISSION_DENIED) {
-              setPermissionState('denied');
-              setGpsError('Location access denied. Please grant location permissions in your browser.');
-            } else {
-              setPermissionState('prompt');
-            }
-          },
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-        return;
-      }
-
-      try {
-        const result = await navigator.permissions.query({ name: 'geolocation' });
-        if (!active) return;
-        
-        setPermissionState(result.state);
-
-        if (result.state === 'granted') {
-          captureLocation(true);
-        } else if (result.state === 'prompt') {
-          captureLocation(true);
-        } else if (result.state === 'denied') {
-          setGpsError('Location access denied. Please grant location permissions in your browser.');
-        }
-
-        result.onchange = () => {
-          if (!active) return;
-          setPermissionState(result.state);
-          if (result.state === 'granted') {
-            captureLocation(true);
-          } else if (result.state === 'denied') {
-            setFacultyCoords(null);
-            setGpsError('Location access denied. Please grant location permissions in your browser.');
-          }
-        };
-      } catch (err) {
-        console.warn('Geolocation permission query error:', err);
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            if (!active) return;
-            setFacultyCoords({
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-              accuracy: pos.coords.accuracy,
-            });
-            setPermissionState('granted');
-            setGpsError(null);
-          },
-          (err) => {
-            if (!active) return;
-            if (err.code === err.PERMISSION_DENIED) {
-              setPermissionState('denied');
-              setGpsError('Location access denied. Please grant location permissions in your browser.');
-            } else {
-              setPermissionState('prompt');
-            }
-          },
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      }
-    }
-
-    checkPermission();
-
-    return () => {
-      active = false;
-    };
-  }, [captureLocation]);
 
   // Start Session handler
   const handleStartSession = async () => {
