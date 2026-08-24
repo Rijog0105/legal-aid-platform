@@ -17,7 +17,7 @@ import { SurveyScheduleCard } from './SurveyScheduleCard';
 import { CampScheduleCard } from './CampScheduleCard';
 import { formatCurrency } from '@/utils';
 import { fetchProjectAttendanceOverview } from '@/features/attendance/services/attendanceService';
-import { deriveActivityStatus } from '@/utils/projectLifecycle';
+import { deriveActivityStatus, deriveProjectStatus } from '@/utils/projectLifecycle';
 
 interface ProjectOverviewCardProps {
   project: Project;
@@ -89,7 +89,7 @@ export function ProjectOverviewCard({
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-extrabold text-surface-900 tracking-tight">Project Summary</h2>
-            <ProjectStatusBadge status={project.status} />
+            <ProjectStatusBadge status={deriveProjectStatus(project)} />
           </div>
           <p className="text-xs text-surface-500 leading-relaxed font-medium line-clamp-2 max-w-4xl">
             {project.description || 'No description provided for this legal aid camp project. Operational details, assignments, and budgets are monitored below.'}

@@ -7,6 +7,7 @@ import { useProjectPeople } from '@/features/projects/hooks/useProjectPeople';
 import {
   removePersonFromProject,
   updateProjectPersonRole,
+  resolveLegacyAssignment,
 } from '@/features/projects/services/projectPeopleService';
 import { AssignPersonModal } from './AssignPersonModal';
 
@@ -34,15 +35,17 @@ const SECTION_ORDER: ProjectRole[] = [
 ];
 
 interface ProjectPeopleTabProps {
-  campId: string; // Keep prop signature as campId or projectId (or support both for compatibility). Let's use campId to match how ProjectDetailPage calls it.
+  campId: string;
+  phase?: 'survey' | 'camp';
 }
 
-export function ProjectPeopleTab({ campId: projectId }: ProjectPeopleTabProps) {
-  const { projectPeople, isLoading, error, reload } = useProjectPeople(projectId);
+export function ProjectPeopleTab({ campId: projectId, phase }: ProjectPeopleTabProps) {
+  const { projectPeople, isLoading, error, reload } = useProjectPeople(projectId, phase);
   const [showAssign, setShowAssign] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [promotingId, setPromotingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   /* ─── Remove ──────────────────────────────────────────── */
   const handleRemove = async (cp: ProjectPersonWithDetails) => {
@@ -95,6 +98,20 @@ export function ProjectPeopleTab({ campId: projectId }: ProjectPeopleTabProps) {
       setActionError(e instanceof Error ? e.message : 'Failed to remove Team Lead');
     } finally {
       setPromotingId(null);
+    }
+  };
+
+  /* ─── Resolve Legacy Assignment ─── */
+  const handleResolveLegacy = async (cp: ProjectPersonWithDetails, targetPhase: 'survey' | 'camp') => {
+    setResolvingId(cp.id);
+    setActionError(null);
+    try {
+      await resolveLegacyAssignment(cp.id, targetPhase);
+      reload();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Failed to resolve legacy assignment');
+    } finally {
+      setResolvingId(null);
     }
   };
 
@@ -195,6 +212,11 @@ export function ProjectPeopleTab({ campId: projectId }: ProjectPeopleTabProps) {
                               SRN: <span className="font-mono">{cp.person.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
                             </span>
                           )}
+                          {(cp as any).phase === null && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-250 mt-1 self-start animate-pulse">
+                              Legacy — Needs Phase Selection
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -216,6 +238,28 @@ export function ProjectPeopleTab({ campId: projectId }: ProjectPeopleTabProps) {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1 justify-end">
+                        {/* Resolve legacy phase assignment */}
+                        {(cp as any).phase === null && (
+                          <div className="flex items-center gap-1.5 mr-2">
+                            <button
+                              onClick={() => handleResolveLegacy(cp, 'survey')}
+                              disabled={isActioning || resolvingId === cp.id}
+                              title="Resolve assignment to Survey Phase"
+                              className="px-2.5 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 text-[10px] font-bold border border-indigo-200 cursor-pointer transition-colors"
+                            >
+                              {resolvingId === cp.id ? '...' : 'To Survey'}
+                            </button>
+                            <button
+                              onClick={() => handleResolveLegacy(cp, 'camp')}
+                              disabled={isActioning || resolvingId === cp.id}
+                              title="Resolve assignment to Camp Phase"
+                              className="px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 text-[10px] font-bold border border-emerald-200 cursor-pointer transition-colors"
+                            >
+                              {resolvingId === cp.id ? '...' : 'To Camp'}
+                            </button>
+                          </div>
+                        )}
+
                         {/* Promote to Team Lead (only for Volunteers) */}
                         {isVolunteer && (
                           <button
@@ -274,6 +318,7 @@ export function ProjectPeopleTab({ campId: projectId }: ProjectPeopleTabProps) {
       {showAssign && (
         <AssignPersonModal
           campId={projectId}
+          phase={phase}
           alreadyAssignedPersonIds={projectPeople.map((cp) => cp.person_id)}
           onClose={() => setShowAssign(false)}
           onAssigned={() => {

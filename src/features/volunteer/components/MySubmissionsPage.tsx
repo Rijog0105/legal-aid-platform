@@ -9,7 +9,7 @@ import { PhotoThumbnail } from '@/features/volunteer/components/PhotoThumbnail';
 import { PhotoLightboxModal, type PhotoPreviewData } from '@/features/volunteer/components/PhotoLightboxModal';
 import { Card, Spinner, Button } from '@/components/ui';
 import { ROUTES } from '@/constants';
-import { getProjectLifecycleState } from '@/utils/projectLifecycle';
+import { getProjectLifecycleState, deriveProjectStatus } from '@/utils/projectLifecycle';
 
 export function MySubmissionsPage() {
   const { personId, userId } = useAuth();
@@ -42,7 +42,8 @@ export function MySubmissionsPage() {
   };
 
   const lifecycle = project ? getProjectLifecycleState(project) : null;
-  const isCompleted = !!(lifecycle?.isCompleted || project?.status === 'archived' || project?.status === 'completed');
+  const derivedStatus = project ? deriveProjectStatus(project) : null;
+  const isCompleted = !!(lifecycle?.isCompleted || derivedStatus === 'archived' || derivedStatus === 'completed');
 
   useEffect(() => {
     if (isCompleted) {

@@ -46,7 +46,7 @@ import { surveyService } from '@/services/surveyService';
 import { reportCalculationService } from '@/services/reportCalculationService';
 import { IndividualSurveyReport } from '@/features/reports/components/IndividualSurveyReport';
 import { ConsolidatedSurveyReport } from '@/features/reports/components/ConsolidatedSurveyReport';
-import { getProjectLifecycleState, PHASE_STATE_LABELS } from '@/utils/projectLifecycle';
+import { getProjectLifecycleState, PHASE_STATE_LABELS, deriveProjectStatus } from '@/utils/projectLifecycle';
 import type { SurveyResponseData } from '@/types/survey';
 import {
   ResponsiveContainer,
@@ -430,7 +430,7 @@ export function ProjectDetailPage({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{project.camp_name}</h1>
-            <ProjectStatusBadge status={project.status} />
+            <ProjectStatusBadge status={deriveProjectStatus(project)} />
             {(() => {
               const lc = getProjectLifecycleState(project);
               const colorMap: Record<string, string> = {
@@ -1481,7 +1481,7 @@ export function ProjectDetailPage({
           )}
 
           {activeSurveySubTab === 'people' && (
-            <ProjectPeopleTab campId={project.id} />
+            <ProjectPeopleTab campId={project.id} phase="survey" />
           )}
 
           {activeSurveySubTab === 'attendance' && (
@@ -1829,7 +1829,7 @@ export function ProjectDetailPage({
             <CampSchedule project={project} onUpdate={reload} />
           )}
 
-          {activeCampSubTab === 'people' && <ProjectPeopleTab campId={project.id} />}
+          {activeCampSubTab === 'people' && <ProjectPeopleTab campId={project.id} phase="camp" />}
 
           {activeCampSubTab === 'attendance' && (
             <AttendanceTab campId={project.id} phase="camp" />

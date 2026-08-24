@@ -15,7 +15,7 @@ import {
   fetchMyAttendanceRecord,
 } from '@/features/attendance/services/attendanceService';
 import { supabase } from '@/services/supabase';
-import { getProjectLifecycleState } from '@/utils/projectLifecycle';
+import { getProjectLifecycleState, deriveProjectStatus } from '@/utils/projectLifecycle';
 
 /**
  * Volunteer Workspace Home Page
@@ -274,7 +274,7 @@ export function VolunteerHomePage() {
   const isBetweenPhases = lifecycleState === 'between_phases';
   const isCompleted = lifecycleState === 'completed';
   // Archived DB status always closes access
-  const isArchived = project.status === PROJECT_STATUS.ARCHIVED;
+  const isArchived = deriveProjectStatus(project) === PROJECT_STATUS.ARCHIVED;
 
   /* ─── 1. NO ACCESS — Before Survey Phase ─── */
   if (isBeforePhase || (!isSurveyActive && !isCampActive && !isBetweenPhases && !isCompleted && !isArchived)) {

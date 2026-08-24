@@ -3,6 +3,7 @@ import { Tent, Plus, Search, MapPin, Calendar, AlertCircle, CheckCircle, X } fro
 import { Button, Card, ProjectStatusBadge, EmptyState, Spinner } from '@/components/ui';
 import { PROJECT_STATUS, ROUTES, type ProjectStatus } from '@/constants';
 import { useProjects } from '@/features/projects/hooks/useProjects';
+import { deriveProjectStatus } from '@/utils/projectLifecycle';
 
 const ALL_STATUSES: Array<ProjectStatus | null> = [
   null,
@@ -140,7 +141,7 @@ export function ProjectListPage() {
             <Card key={project.id} hover onClick={() => goToDetail(project.id)}>
               <div className="flex items-start justify-between mb-3">
                 <h3 className="font-semibold text-surface-900 leading-snug">{project.camp_name}</h3>
-                <ProjectStatusBadge status={project.status} />
+                <ProjectStatusBadge status={deriveProjectStatus(project)} />
               </div>
               <div className="space-y-1.5 text-sm text-surface-500">
                 <div className="flex items-center gap-1.5">

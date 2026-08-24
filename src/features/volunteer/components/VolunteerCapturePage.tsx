@@ -163,6 +163,15 @@ export function VolunteerCapturePage() {
     }
   };
 
+  const lifecycle = project ? getProjectLifecycleState(project) : null;
+  const isOperational = lifecycle ? (lifecycle.isSurveyActive || lifecycle.isCampActive) : false;
+
+  useEffect(() => {
+    if (project && !isOperational) {
+      navigate(ROUTES.VOLUNTEER_HOME);
+    }
+  }, [project, isOperational, navigate]);
+
   /* ─── Loading ─── */
   if (projectLoading) {
     return (
@@ -171,15 +180,6 @@ export function VolunteerCapturePage() {
       </div>
     );
   }
-
-  const lifecycle = project ? getProjectLifecycleState(project) : null;
-  const isOperational = lifecycle?.isSurveyActive || lifecycle?.isCampActive;
-
-  useEffect(() => {
-    if (project && !isOperational) {
-      navigate(ROUTES.VOLUNTEER_HOME);
-    }
-  }, [project, isOperational, navigate]);
 
   if (project && !isOperational) {
     return null;

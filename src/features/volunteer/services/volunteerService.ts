@@ -59,15 +59,27 @@ export async function fetchMyProjectAssignment(
   const assignments = await fetchAllMyProjectAssignments(personId);
   if (assignments.length === 0) return null;
 
-  let result: MyProjectAssignment | null = null;
-  if (targetProjectId) {
-    const found = assignments.find((item) => item.camp.id === targetProjectId);
-    if (found) result = found;
-  }
+  const projectAssignments = targetProjectId
+    ? assignments.filter((item) => item.camp.id === targetProjectId)
+    : assignments;
 
-  if (!result) {
-    result = assignments[0] ?? null;
-  }
+  if (projectAssignments.length === 0) return null;
+
+  const now = new Date();
+  const activePhaseAssignment = projectAssignments.find((item) => {
+    const lc = getProjectLifecycleState(item.camp, now);
+    const assignedPhase = (item.campPerson as any).phase;
+
+    if (assignedPhase === null) return true; // Legacy matches any active phase
+    if (lc.isSurveyActive && assignedPhase === 'survey') return true;
+    if (lc.isCampActive && assignedPhase === 'camp') return true;
+    if (lc.isBetweenPhases && assignedPhase === 'camp') return true;
+    if (lc.state === 'survey_scheduled' && assignedPhase === 'survey') return true;
+    if (lc.state === 'camp_scheduled' && assignedPhase === 'camp') return true;
+    return false;
+  });
+
+  const result = activePhaseAssignment || projectAssignments[0] || null;
 
   if (result?.camp?.id) {
     try {

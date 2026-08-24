@@ -8,7 +8,7 @@ import {
   MapPin, ArrowRight, Calendar, Clock,
 } from 'lucide-react';
 import { ROUTES, PROJECT_STATUS } from '@/constants';
-import { getProjectLifecycleState, PHASE_STATE_LABELS } from '@/utils/projectLifecycle';
+import { getProjectLifecycleState, PHASE_STATE_LABELS, deriveProjectStatus } from '@/utils/projectLifecycle';
 import { supabase } from '@/services/supabase';
 
 export function TeamLeadWorkspacePage() {
@@ -46,7 +46,7 @@ export function TeamLeadWorkspacePage() {
   /* ── Derive lifecycle state ── */
   const lifecycle = project ? getProjectLifecycleState(project) : null;
   const lifecycleState = lifecycle?.state ?? null;
-  const isArchived = project?.status === PROJECT_STATUS.ARCHIVED;
+  const isArchived = project ? deriveProjectStatus(project) === PROJECT_STATUS.ARCHIVED : false;
 
   /* ── No access states ──
    * TL access rules:

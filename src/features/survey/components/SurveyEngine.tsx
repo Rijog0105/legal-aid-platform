@@ -155,6 +155,20 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
             setDynamicQuestions(qstns.map(q => {
               const isOptionalFollowUp = q.question_code.endsWith('Details') || 
                                          q.question_code.endsWith('Reason');
+              
+              let questionType = q.question_type;
+              let questionOptions = q.question_options;
+              
+              if (q.question_code === 'q7PendingLitigationDuration') {
+                questionType = 'select';
+                questionOptions = [
+                  { label: 'Less than 1 year (1 ವರ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ)', value: 'Less than 1 year' },
+                  { label: '1–3 years (1-3 ವರ್ಷಗಳು)', value: '1–3 years' },
+                  { label: '3–5 years (3-5 ವರ್ಷಗಳು)', value: '3–5 years' },
+                  { label: 'More than 5 years (5 ವರ್ಷಕ್ಕಿಂತ ಹೆಚ್ಚು)', value: 'More than 5 years' }
+                ];
+              }
+
               return {
                 id: q.question_code,
                 sectionId: secs.find(s => s.id === q.section_id)?.id || 'sec_preliminary',
@@ -162,9 +176,9 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                 numberLabel: q.question_code.toUpperCase(),
                 questionText: q.question_text,
                 description: q.validation_rules?.description || '',
-                type: q.question_type as any,
+                type: questionType as any,
                 required: q.is_required && !isOptionalFollowUp,
-                options: q.question_options || [],
+                options: questionOptions || [],
                 conditionalLogic: q.conditional_logic && q.conditional_logic.dependsOnQuestionId ? {
                   dependsOnQuestionId: q.conditional_logic.dependsOnQuestionId,
                   showIfValue: q.conditional_logic.showIfValue
@@ -1135,26 +1149,26 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(currentQuestion.id, 'Yes')}
-                      className={`py-4 px-6 rounded-xl border-2 font-bold text-sm flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`h-14 px-6 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm select-none active:scale-95 ${
                         answers[currentQuestion.id as keyof SurveyResponseData] === 'Yes'
-                          ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                          ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/20'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-350 hover:bg-slate-50'
                       }`}
                     >
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
                       <span>Yes (ಹೌದು)</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(currentQuestion.id, 'No')}
-                      className={`py-4 px-6 rounded-xl border-2 font-bold text-sm flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`h-14 px-6 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm select-none active:scale-95 ${
                         answers[currentQuestion.id as keyof SurveyResponseData] === 'No'
-                          ? 'bg-rose-50 border-rose-500 text-rose-800 shadow-sm'
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                          ? 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/20'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-350 hover:bg-slate-50'
                       }`}
                     >
-                      <XCircle className="w-5 h-5 text-rose-600" />
+                      <XCircle className="w-5 h-5 shrink-0 text-rose-600" />
                       <span>No (ಇಲ್ಲ)</span>
                     </button>
                   </div>
@@ -1164,28 +1178,28 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                     <>
                       {currentQuestion.id === 'q6HasVehicle' && (
                         <div className="mt-6 pt-5 border-t border-slate-100 space-y-4 animate-fadeIn">
-                          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          <div className="text-xs font-bold text-slate-550 uppercase tracking-wider">
                             Additional Vehicle Details (ವಾಹನ ವಿವರಗಳು)
                           </div>
                           
                           {/* Driving Licence */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                             <div>
                               <span className="text-sm font-semibold text-slate-800 block">Driving Licence (ಚಾಲನಾ ಪರವಾನಗಿ) <span className="text-rose-600">*</span></span>
-                              <span className="text-xs text-slate-400">Do you have a valid driving licence?</span>
+                              <span className="text-xs text-slate-500">Do you have a valid driving licence?</span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2.5 shrink-0">
                               {['Yes', 'No'].map((val) => (
                                 <button
                                   type="button"
                                   key={val}
                                   onClick={() => handleAnswerChange('q6aDrivingLicense', val)}
-                                  className={`px-4 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                                  className={`w-20 h-12 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                                     answers.q6aDrivingLicense === val
                                       ? val === 'Yes'
-                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
-                                        : 'bg-rose-50 border-rose-500 text-rose-800'
-                                      : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-50'
+                                        ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/10'
+                                        : 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/10'
+                                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                   }`}
                                 >
                                   {val}
@@ -1195,23 +1209,23 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                           </div>
 
                           {/* Insurance Coverage */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                             <div>
                               <span className="text-sm font-semibold text-slate-800 block">Insurance Coverage (ವಿಮಾ ಸೌಲಭ್ಯ) <span className="text-rose-600">*</span></span>
-                              <span className="text-xs text-slate-400">Is the vehicle insured?</span>
+                              <span className="text-xs text-slate-500">Is the vehicle insured?</span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2.5 shrink-0">
                               {['Yes', 'No'].map((val) => (
                                 <button
                                   type="button"
                                   key={val}
                                   onClick={() => handleAnswerChange('q6bInsuranceCoverage', val)}
-                                  className={`px-4 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                                  className={`w-20 h-12 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                                     answers.q6bInsuranceCoverage === val
                                       ? val === 'Yes'
-                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
-                                        : 'bg-rose-50 border-rose-500 text-rose-800'
-                                      : 'bg-white border-slate-200 text-slate-655 hover:bg-slate-50'
+                                        ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/10'
+                                        : 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/10'
+                                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                   }`}
                                 >
                                   {val}
@@ -1221,23 +1235,23 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                           </div>
 
                           {/* Registration Certificate */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                             <div>
                               <span className="text-sm font-semibold text-slate-800 block">Registration Certificate (RC Book) <span className="text-rose-600">*</span></span>
-                              <span className="text-xs text-slate-400">Do you have a valid RC book?</span>
+                              <span className="text-xs text-slate-500">Do you have a valid RC book?</span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2.5 shrink-0">
                               {['Yes', 'No'].map((val) => (
                                 <button
                                   type="button"
                                   key={val}
                                   onClick={() => handleAnswerChange('q6cRegistrationCertificate', val)}
-                                  className={`px-4 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                                  className={`w-20 h-12 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                                     answers.q6cRegistrationCertificate === val
                                       ? val === 'Yes'
-                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
-                                        : 'bg-rose-50 border-rose-500 text-rose-800'
-                                      : 'bg-white border-slate-200 text-slate-655 hover:bg-slate-50'
+                                        ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/10'
+                                        : 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/10'
+                                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                   }`}
                                 >
                                   {val}
@@ -1510,44 +1524,31 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
               {/* Family Members Roster Input Section */}
               {currentQuestion?.type === 'family_grid' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-indigo-600" />
-                      Family Members Added: {(answers.familyMembers || []).length}
+                  <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <span className="text-sm font-bold text-slate-805 flex items-center gap-2">
+                      <Users className="w-4.5 h-4.5 text-indigo-600" />
+                      Family Members List (ಕುಟುಂಬದ ಸದಸ್ಯರ ಪಟ್ಟಿ)
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleAddFamilyMember}
-                      className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-sm transition-all cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Member</span>
-                    </button>
+                    <span className="bg-indigo-100 text-indigo-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
+                      {(answers.familyMembers || []).length} added
+                    </span>
                   </div>
 
                   {(answers.familyMembers || []).length === 0 ? (
                     <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl text-xs text-slate-400">
-                      No family members added yet. Click &quot;Add Member&quot; to begin.
+                      No family members added yet. Click &quot;Add Family Member&quot; below to begin.
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                    <div className="space-y-3">
                       {(answers.familyMembers || []).map((m, idx) => (
                         <div
                           key={m.id || idx}
-                          className="p-4 bg-white border border-slate-200 rounded-xl space-y-3 shadow-sm"
+                          className="p-4 bg-white border border-slate-200 rounded-xl space-y-3 shadow-sm animate-fadeIn"
                         >
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <span className="text-xs font-bold text-slate-800">
                               Member #{m.slNo || idx + 1}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveFamilyMember(idx)}
-                              className="text-rose-600 hover:text-rose-800 p-1 text-xs font-bold flex items-center gap-1 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Remove</span>
-                            </button>
                           </div>
                           
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1560,7 +1561,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                                 placeholder="Enter name"
                                 value={m.name}
                                 onChange={(e) => handleUpdateFamilyMember(idx, 'name', e.target.value)}
-                                className="w-full p-2 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-medium"
+                                className="w-full p-2.5 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-medium"
                               />
                             </div>
                             
@@ -1573,7 +1574,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                                 placeholder="Age"
                                 value={m.age}
                                 onChange={(e) => handleUpdateFamilyMember(idx, 'age', e.target.value)}
-                                className="w-full p-2 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-medium"
+                                className="w-full p-2.5 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-medium"
                               />
                             </div>
 
@@ -1584,7 +1585,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                               <select
                                 value={m.gender}
                                 onChange={(e) => handleUpdateFamilyMember(idx, 'gender', e.target.value)}
-                                className="w-full p-2 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold"
+                                className="w-full p-2.5 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-semibold h-[34px]"
                               >
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
@@ -1592,10 +1593,30 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                               </select>
                             </div>
                           </div>
+
+                          <div className="pt-2 border-t border-slate-100 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFamilyMember(idx)}
+                              className="text-slate-400 hover:text-rose-600 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer border border-slate-200 hover:border-rose-250 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-rose-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Remove Member</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={handleAddFamilyMember}
+                    className="w-full h-12 border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50 hover:bg-indigo-100 text-indigo-750 hover:text-indigo-850 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm select-none active:scale-[0.98]"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>+ Add Family Member (ಕುಟುಂಬ ಸದಸ್ಯರನ್ನು ಸೇರಿಸಿ)</span>
+                  </button>
                 </div>
               )}
 
@@ -1616,14 +1637,14 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                           key={opt.value}
                           type="button"
                           onClick={() => handleUpdateDocSurvey(currentQuestion.id, { hasDocument: opt.value as any })}
-                          className={`py-3 px-3 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer ${
+                          className={`h-12 px-3 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                             currentDocItem.hasDocument === opt.value
                               ? opt.value === 'Yes'
-                                ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
+                                ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/10'
                                 : opt.value === 'No'
-                                ? 'bg-rose-50 border-rose-500 text-rose-800 shadow-sm'
+                                ? 'bg-rose-50 border-rose-500 text-rose-800 ring-2 ring-rose-500/10'
                                 : 'bg-slate-200 border-slate-400 text-slate-800'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-350'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                           }`}
                         >
                           {opt.label}
@@ -1661,9 +1682,9 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                               key={status.value}
                               type="button"
                               onClick={() => handleUpdateDocSurvey(currentQuestion.id, { whetherApplied: status.value as any })}
-                              className={`py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all cursor-pointer ${
+                              className={`h-12 px-3 rounded-xl border-2 text-xs font-semibold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                                 currentDocItem.whetherApplied === status.value
-                                  ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-bold shadow-sm'
+                                  ? 'bg-indigo-55 border-indigo-500 text-indigo-900 font-bold ring-2 ring-indigo-500/10'
                                   : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                               }`}
                             >
@@ -1753,18 +1774,18 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
             </div>
 
             {/* Bottom Card Navigation Footer */}
-            <div className="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between gap-3">
+            <div className="mt-8 pt-5 border-t border-slate-100 grid grid-cols-2 md:flex md:items-center md:justify-between gap-4">
               <button
                 type="button"
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
-                className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                className={`h-12 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                   currentIndex === 0
-                    ? 'opacity-30 cursor-not-allowed bg-slate-150 text-slate-400'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-705'
+                    ? 'opacity-30 cursor-not-allowed bg-slate-150 text-slate-450 border border-slate-200'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 shadow-sm'
                 }`}
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-5 h-5 shrink-0" />
                 <span>Previous</span>
               </button>
 
@@ -1772,19 +1793,19 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                 type="button"
                 onClick={handleNext}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-xl font-black text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition-all cursor-pointer"
+                className="h-12 px-6 rounded-xl font-black text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95"
               >
                 {isSubmitting ? (
                   <span>Submitting...</span>
                 ) : currentIndex === totalQuestions - 1 ? (
                   <>
-                    <ShieldCheck className="w-4 h-4" />
+                    <ShieldCheck className="w-5 h-5 shrink-0" />
                     <span>Submit Survey</span>
                   </>
                 ) : (
                   <>
                     <span>Next</span>
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5 shrink-0" />
                   </>
                 )}
               </button>

@@ -26,6 +26,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Spinner, ProjectStatusBadge } from '@/components/ui';
 import { fetchMyProjectAssignment } from '@/features/volunteer/services/volunteerService';
 import { ROUTES } from '@/constants';
+import { deriveProjectStatus } from '@/utils/projectLifecycle';
 
 export const FacultySurveyDashboard: React.FC = () => {
   const { roleName, personId } = useAuth();
@@ -198,7 +199,7 @@ export const FacultySurveyDashboard: React.FC = () => {
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                   {assignedProject.camp_name}
                 </h1>
-                <ProjectStatusBadge status={assignedProject.status} />
+                <ProjectStatusBadge status={deriveProjectStatus(assignedProject)} />
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg px-2.5 py-1">

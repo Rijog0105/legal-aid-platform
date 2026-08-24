@@ -21,7 +21,7 @@
  */
 
 import type { Project, Activity } from '@/types';
-import type { ActivityStatus } from '@/constants';
+import type { ActivityStatus, ProjectStatus } from '@/constants';
 
 /* ─── Phase state type ───────────────────────────────────────── */
 
@@ -174,4 +174,21 @@ export function deriveActivityStatus(
     // After Camp Phase
     return 'completed';
   }
+}
+
+export function deriveProjectStatus(
+  project: Project,
+  now: Date = new Date()
+): ProjectStatus {
+  if (project.status === 'archived') {
+    return 'archived';
+  }
+  const lc = getProjectLifecycleState(project, now);
+  if (lc.isCompleted) {
+    return 'completed';
+  }
+  if (lc.surveyStart && now.getTime() >= lc.surveyStart.getTime()) {
+    return 'active';
+  }
+  return 'draft';
 }

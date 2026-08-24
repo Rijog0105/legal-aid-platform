@@ -85,6 +85,7 @@ export async function createAttendanceSession(payload: CreateSessionPayload): Pr
       .from('camp_people')
       .select('person_id, camp_role')
       .eq('camp_id', payload.camp_id)
+      .or(`phase.eq.${payload.phase},phase.is.null`)
       .in('camp_role', ['volunteer', 'team_lead']);
 
     const personIds = roster?.map((r) => r.person_id) || [];
@@ -270,7 +271,18 @@ export async function fetchSessionDashboardData(
     outside: number;
   };
 }> {
-  // 1. Fetch Roster
+  // 1. Fetch the session's phase
+  const { data: sessionData, error: sessionErr } = await supabase
+    .from('attendance_sessions')
+    .select('phase')
+    .eq('id', sessionId)
+    .single();
+
+  if (sessionErr || !sessionData) {
+    throw new Error(sessionErr?.message || 'Session not found');
+  }
+
+  // 2. Fetch Roster
   const { data: roster, error: rosterErr } = await supabase
     .from('camp_people')
     .select(`
@@ -279,6 +291,7 @@ export async function fetchSessionDashboardData(
       person:persons(id, full_name, usn_employee_id, category)
     `)
     .eq('camp_id', projectId)
+    .or(`phase.eq.${sessionData.phase},phase.is.null`)
     .in('camp_role', ['volunteer', 'team_lead']);
 
   if (rosterErr) throw new Error(rosterErr.message);
@@ -447,14 +460,24 @@ export async function fetchCompletedSessionsWithStats(
   const sessions = await fetchCompletedSessions(campId, phase);
   if (sessions.length === 0) return [];
 
-  // Fetch roster
-  const { data: roster } = await supabase
-    .from('camp_people')
-    .select('person_id')
-    .eq('camp_id', campId)
-    .in('camp_role', ['volunteer', 'team_lead']);
+  // Fetch roster counts for both phases separately (including legacy records)
+  const [surveyRosterRes, campRosterRes] = await Promise.all([
+    supabase
+      .from('camp_people')
+      .select('person_id', { count: 'exact', head: true })
+      .eq('camp_id', campId)
+      .or('phase.eq.survey,phase.is.null')
+      .in('camp_role', ['volunteer', 'team_lead']),
+    supabase
+      .from('camp_people')
+      .select('person_id', { count: 'exact', head: true })
+      .eq('camp_id', campId)
+      .or('phase.eq.camp,phase.is.null')
+      .in('camp_role', ['volunteer', 'team_lead']),
+  ]);
 
-  const totalRoster = roster?.length || 0;
+  const surveyRosterCount = surveyRosterRes.count || 0;
+  const campRosterCount = campRosterRes.count || 0;
 
   // Fetch present count
   const sessionIds = sessions.map((s) => s.id);
@@ -472,7 +495,7 @@ export async function fetchCompletedSessionsWithStats(
   return sessions.map((s) => ({
     ...s,
     present_count: statsMap.get(s.id) || 0,
-    total_roster: totalRoster,
+    total_roster: s.phase === 'survey' ? surveyRosterCount : campRosterCount,
   }));
 }
 
@@ -490,14 +513,24 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
 }> {
   const sessions = await fetchCompletedSessions(campId);
 
-  // Fetch roster
-  const { data: roster } = await supabase
-    .from('camp_people')
-    .select('person_id')
-    .eq('camp_id', campId)
-    .in('camp_role', ['volunteer', 'team_lead']);
+  // Fetch roster counts for both phases separately (including legacy records)
+  const [surveyRosterRes, campRosterRes] = await Promise.all([
+    supabase
+      .from('camp_people')
+      .select('person_id')
+      .eq('camp_id', campId)
+      .or('phase.eq.survey,phase.is.null')
+      .in('camp_role', ['volunteer', 'team_lead']),
+    supabase
+      .from('camp_people')
+      .select('person_id')
+      .eq('camp_id', campId)
+      .or('phase.eq.camp,phase.is.null')
+      .in('camp_role', ['volunteer', 'team_lead']),
+  ]);
 
-  const totalRoster = roster?.length || 0;
+  const surveyRoster = surveyRosterRes.data?.length || 0;
+  const campRoster = campRosterRes.data?.length || 0;
 
   let surveyCheckIn = 'Not Conducted';
   let surveyCheckOut = 'Not Conducted';
@@ -512,7 +545,10 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
   const campCheckIns = sessions.filter((s) => s.phase === 'camp' && s.session_type === 'check_in');
   const campCheckOuts = sessions.filter((s) => s.phase === 'camp' && s.session_type === 'check_out');
 
-  totalExpected = sessions.length * totalRoster;
+  const surveySessions = sessions.filter((s) => s.phase === 'survey');
+  const campSessions = sessions.filter((s) => s.phase === 'camp');
+
+  totalExpected = (surveySessions.length * surveyRoster) + (campSessions.length * campRoster);
 
   if (sessions.length > 0) {
     const { data: records } = await supabase
@@ -522,9 +558,6 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
       .eq('status', 'present');
     totalPresent = records?.length || 0;
   }
-
-  const surveySessions = sessions.filter((s) => s.phase === 'survey');
-  const campSessions = sessions.filter((s) => s.phase === 'camp');
 
   let surveyPercentage: number | null = null;
   let campPercentage: number | null = null;
@@ -536,7 +569,7 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
       .in('session_id', surveySessions.map((s) => s.id))
       .eq('status', 'present');
     const surveyPresent = surveyRecords?.length || 0;
-    const surveyExpected = surveySessions.length * totalRoster;
+    const surveyExpected = surveySessions.length * surveyRoster;
     surveyPercentage = surveyExpected > 0 ? Math.round((surveyPresent / surveyExpected) * 100) : null;
   }
 
@@ -547,7 +580,7 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
       .in('session_id', campSessions.map((s) => s.id))
       .eq('status', 'present');
     const campPresent = campRecords?.length || 0;
-    const campExpected = campSessions.length * totalRoster;
+    const campExpected = campSessions.length * campRoster;
     campPercentage = campExpected > 0 ? Math.round((campPresent / campExpected) * 100) : null;
   }
 
@@ -560,8 +593,9 @@ export async function fetchProjectAttendanceOverview(campId: string): Promise<{
       .eq('session_id', latest.id)
       .eq('status', 'present');
 
+    const activeRoster = latest.phase === 'survey' ? surveyRoster : campRoster;
     const dateStr = new Date(latest.starts_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-    return `${count || 0}/${totalRoster} Present (${dateStr})`;
+    return `${count || 0}/${activeRoster} Present (${dateStr})`;
   };
 
   surveyCheckIn = await formatLatestSession(surveyCheckIns);

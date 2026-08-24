@@ -40,6 +40,7 @@ const ROLE_SECTIONS: { role: ProjectRole; label: string; allowedCategories: Pers
 
 interface AssignPersonModalProps {
   campId: string; // campId is expected by ProjectPeopleTab to match the interface, let's keep it but internalize it as projectId
+  phase?: 'survey' | 'camp';
   alreadyAssignedPersonIds: string[];
   onClose: () => void;
   onAssigned: () => void;
@@ -47,6 +48,7 @@ interface AssignPersonModalProps {
 
 export function AssignPersonModal({
   campId: projectId,
+  phase,
   alreadyAssignedPersonIds,
   onClose,
   onAssigned,
@@ -105,7 +107,7 @@ export function AssignPersonModal({
     setIsSaving(true);
     setError(null);
     try {
-      await assignMultiplePeopleToProject(projectId, Array.from(selectedIds), projectRole);
+      await assignMultiplePeopleToProject(projectId, Array.from(selectedIds), projectRole, phase || 'camp');
       onAssigned();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to assign people');

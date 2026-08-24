@@ -152,11 +152,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 const assignment = await fetchMyProjectAssignment(profile.person_id);
                 if (assignment && assignment.campPerson?.camp_role === 'team_lead') {
                   const lc = getProjectLifecycleState(assignment.camp);
-                  if (lc.state !== 'completed' && lc.state !== 'draft') {
+                  const assignedPhase = (assignment.campPerson as any).phase;
+                  const isPhaseActive =
+                    assignedPhase === null || // Legacy matches any active phase
+                    (lc.isSurveyActive && assignedPhase === 'survey') ||
+                    (lc.isCampActive && assignedPhase === 'camp') ||
+                    (lc.isBetweenPhases && assignedPhase === 'camp');
+
+                  if (lc.state !== 'completed' && lc.state !== 'draft' && isPhaseActive) {
                     console.log('[AuthProvider] Active Team Lead assignment detected. Overriding UI role.');
                     roleOverride = 'team_lead';
                   } else {
-                    console.log('[AuthProvider] Team Lead assignment is inactive or completed (lifecycle state:', lc.state, '). Reverting to volunteer UI.');
+                    console.log('[AuthProvider] Team Lead assignment is inactive, phase mismatch, or completed. Reverting to volunteer UI.');
                   }
                 }
               } catch (err) {
