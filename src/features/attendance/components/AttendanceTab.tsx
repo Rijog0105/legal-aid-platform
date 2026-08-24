@@ -196,11 +196,15 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
     }
   };
 
+  const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied' | 'checking'>('checking');
+
   // Capture Faculty GPS location
-  const captureLocation = () => {
+  const captureLocation = useCallback((isAuto = false) => {
     setGpsLoading(true);
     setGpsError(null);
-    setFacultyCoords(null);
+    if (!isAuto) {
+      setFacultyCoords(null);
+    }
 
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -216,20 +220,121 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
           accuracy: position.coords.accuracy,
         });
         setGpsLoading(false);
+        setGpsError(null);
+        setPermissionState('granted');
       },
       (error) => {
         let msg = 'Failed to capture GPS location.';
         if (error.code === error.PERMISSION_DENIED) {
           msg = 'Location access denied. Please grant location permissions in your browser.';
+          setPermissionState('denied');
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          msg = 'Location unavailable. Please check your device GPS/network signal.';
         } else if (error.code === error.TIMEOUT) {
-          msg = 'Location request timed out. Make sure location services are enabled.';
+          msg = 'Location request timed out. Please try again in an open area.';
         }
         setGpsError(msg);
         setGpsLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  };
+  }, []);
+
+  // Check permission state on mount
+  useEffect(() => {
+    let active = true;
+
+    async function checkPermission() {
+      if (!navigator.geolocation) {
+        setPermissionState('denied');
+        setGpsError('Geolocation is not supported by your browser.');
+        return;
+      }
+
+      if (!navigator.permissions || !navigator.permissions.query) {
+        // Fallback for Safari/browsers lacking Permissions query support
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (!active) return;
+            setFacultyCoords({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+            });
+            setPermissionState('granted');
+            setGpsError(null);
+          },
+          (err) => {
+            if (!active) return;
+            if (err.code === err.PERMISSION_DENIED) {
+              setPermissionState('denied');
+              setGpsError('Location access denied. Please grant location permissions in your browser.');
+            } else {
+              setPermissionState('prompt');
+            }
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+        return;
+      }
+
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' });
+        if (!active) return;
+        
+        setPermissionState(result.state);
+
+        if (result.state === 'granted') {
+          captureLocation(true);
+        } else if (result.state === 'prompt') {
+          captureLocation(true);
+        } else if (result.state === 'denied') {
+          setGpsError('Location access denied. Please grant location permissions in your browser.');
+        }
+
+        result.onchange = () => {
+          if (!active) return;
+          setPermissionState(result.state);
+          if (result.state === 'granted') {
+            captureLocation(true);
+          } else if (result.state === 'denied') {
+            setFacultyCoords(null);
+            setGpsError('Location access denied. Please grant location permissions in your browser.');
+          }
+        };
+      } catch (err) {
+        console.warn('Geolocation permission query error:', err);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (!active) return;
+            setFacultyCoords({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+            });
+            setPermissionState('granted');
+            setGpsError(null);
+          },
+          (err) => {
+            if (!active) return;
+            if (err.code === err.PERMISSION_DENIED) {
+              setPermissionState('denied');
+              setGpsError('Location access denied. Please grant location permissions in your browser.');
+            } else {
+              setPermissionState('prompt');
+            }
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      }
+    }
+
+    checkPermission();
+
+    return () => {
+      active = false;
+    };
+  }, [captureLocation]);
 
   // Start Session handler
   const handleStartSession = async () => {
@@ -633,31 +738,84 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                         size="sm" 
                         variant="outline" 
                         leftIcon={<Compass size={13} />} 
-                        onClick={captureLocation} 
+                        onClick={() => captureLocation(false)} 
                         isLoading={gpsLoading}
+                        disabled={permissionState === 'denied'}
                         className="px-4 py-2.5 rounded-xl text-xs font-semibold border-surface-300 text-surface-700 hover:bg-slate-50 transition-all"
                       >
                         Capture Location
                       </Button>
                     </div>
 
+                    {/* Permission Status Displays */}
+                    {permissionState === 'checking' && (
+                      <div className="flex items-center gap-2 text-xs text-surface-500 py-2">
+                        <Spinner size="sm" />
+                        <span>Checking browser location permission...</span>
+                      </div>
+                    )}
+
+                    {permissionState === 'prompt' && !facultyCoords && (
+                      <div className="bg-blue-50 border border-blue-150 rounded-xl p-4 space-y-3">
+                        <div className="flex items-start gap-2.5 text-xs text-blue-800">
+                          <Compass className="text-blue-600 shrink-0 mt-0.5" size={16} />
+                          <div className="space-y-1">
+                            <p className="font-bold">Location Permission Needed</p>
+                            <p className="text-blue-700">Please grant location permission to verify your attendance zone before starting.</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => captureLocation(false)}
+                          leftIcon={<Compass size={13} />}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-xs"
+                        >
+                          Enable Location Access
+                        </Button>
+                      </div>
+                    )}
+
+                    {permissionState === 'denied' && (
+                      <div className="bg-red-50 border border-red-150 rounded-xl p-4 space-y-2.5">
+                        <div className="flex items-start gap-2.5 text-xs text-red-800">
+                          <AlertTriangle className="text-red-650 shrink-0 mt-0.5" size={16} />
+                          <div className="space-y-1">
+                            <p className="font-bold">Location Permission Denied</p>
+                            <p className="text-red-700">Location access is blocked. To start attendance, please enable location permission in your settings:</p>
+                          </div>
+                        </div>
+                        <ul className="list-disc pl-5 text-[11px] text-red-700 space-y-1.5 bg-white border border-red-100 rounded-lg p-3">
+                          <li><strong>iOS / Safari:</strong> Open iOS Settings App &gt; Safari &gt; Location &gt; change setting to <strong>Allow</strong>.</li>
+                          <li><strong>Android / Chrome:</strong> Tap the padlock icon in the browser address bar &gt; Permission &gt; enable <strong>Location</strong>.</li>
+                          <li><strong>Desktop / Edge / Chrome:</strong> Click site settings in the URL bar and allow <strong>Location</strong>.</li>
+                        </ul>
+                        <p className="text-[10px] text-red-600 italic">After updating your settings, tap "Capture Location" above to verify.</p>
+                      </div>
+                    )}
+
+                    {/* Coordinates captured state */}
                     {facultyCoords ? (
                       <div className="text-xs text-surface-600 bg-white border border-surface-100 rounded-xl p-3.5 flex items-center justify-between">
-                        <span>Coordinates Captured Successfully:</span>
+                        <span className="flex items-center gap-1 text-emerald-700 font-medium">
+                          <CheckCircle size={14} /> Coordinates Verified
+                        </span>
                         <span className="font-mono font-bold text-surface-900 bg-surface-50 px-2.5 py-1 rounded border border-surface-100 text-xs">
                           {facultyCoords.latitude.toFixed(6)}, {facultyCoords.longitude.toFixed(6)}
                         </span>
                       </div>
                     ) : (
-                      <div className="text-xs text-surface-500 flex items-center gap-2">
-                        <AlertCircle size={15} className="text-amber-500 shrink-0" />
-                        <span>Please capture your current GPS location to start the attendance session.</span>
-                      </div>
+                      permissionState !== 'prompt' && permissionState !== 'denied' && permissionState !== 'checking' && (
+                        <div className="text-xs text-surface-500 flex items-center gap-2">
+                          <AlertCircle size={15} className="text-amber-500 shrink-0" />
+                          <span>Please capture your current GPS location to start the attendance session.</span>
+                        </div>
+                      )
                     )}
 
-                    {gpsError && (
-                      <div className="text-xs text-red-650 bg-red-50 border border-red-100 rounded-xl p-3">
-                        {gpsError}
+                    {gpsError && permissionState !== 'denied' && (
+                      <div className="text-xs text-red-650 bg-red-50 border border-red-100 rounded-xl p-3 flex items-center gap-2">
+                        <AlertCircle size={15} className="text-red-650 shrink-0" />
+                        <span>{gpsError}</span>
                       </div>
                     )}
                   </div>
