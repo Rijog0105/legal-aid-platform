@@ -402,7 +402,26 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       const compressedUrl = await compressImage(file);
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + new Date().toLocaleDateString();
 
-      // Fetch Geolocation GPS Coordinates
+      // 1. Immediately update state with the photo and save the draft to ensure the user gets instant visual feedback
+      const updatedPhotoAnswers = { 
+        ...answers, 
+        proofPhotoUrl: compressedUrl, 
+        photoCapturedAt: timeStr 
+      };
+      setAnswers((prev) => ({
+        ...prev,
+        ...updatedPhotoAnswers,
+      }));
+      const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
+      if (draftKey) {
+        surveyService.saveDraft({
+          answers: updatedPhotoAnswers,
+          currentIndex,
+          campId: selectedCamp?.id || campId,
+        }, draftKey);
+      }
+
+      // 2. Query GPS in the background to enrich metadata if available
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -414,40 +433,23 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
               accuracy: pos.coords.accuracy,
               formattedLocation: `${lat}° N, ${lng}° E`,
             };
-            const updatedPhotoAnswers = { ...answers, proofPhotoUrl: compressedUrl, gpsLocation: gpsObj, photoCapturedAt: timeStr };
-            setAnswers((prev) => ({
-              ...prev,
-              ...updatedPhotoAnswers,
-            }));
-            const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
-            if (draftKey) {
-              surveyService.saveDraft({
-                answers: updatedPhotoAnswers,
-                currentIndex,
-                campId: selectedCamp?.id || campId,
-              }, draftKey);
-            } else {
-              console.info('[SurveyEngine] Photo upload draft not saved: missing identifiers');
-            }
+            setAnswers((prev) => {
+              const enriched = { ...prev, gpsLocation: gpsObj };
+              if (draftKey) {
+                surveyService.saveDraft({
+                  answers: enriched,
+                  currentIndex,
+                  campId: selectedCamp?.id || campId,
+                }, draftKey);
+              }
+              return enriched;
+            });
           },
           () => {
-            // Geolocation fallback
-            const fallbackGps: GpsLocationData = {
-              latitude: 12.9716,
-              longitude: 77.5946,
-              formattedLocation: '12.9716° N, 77.5946° E (Location Tagged)',
-            };
-            setAnswers((prev) => ({
-              ...prev,
-              proofPhotoUrl: compressedUrl,
-              gpsLocation: fallbackGps,
-              photoCapturedAt: timeStr,
-            }));
+            console.log('[SurveyEngine] Background GPS query failed or timed out for proof photo. Proceeding with photo only.');
           },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
         );
-      } else {
-        handleAnswerChange('proofPhotoUrl', compressedUrl);
       }
     } catch (err) {
       console.error('Image compression error', err);
