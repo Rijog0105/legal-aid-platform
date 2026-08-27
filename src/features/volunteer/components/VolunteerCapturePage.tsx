@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, type ChangeEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Camera, ChevronLeft, MapPin, AlertCircle, CheckCircle, Compass } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useGeolocation } from '@/hooks/useGeolocation';
+import { useGeolocation, type GeolocationCoords } from '@/hooks/useGeolocation';
 import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { useActivityPhotos } from '@/features/volunteer/hooks/useActivityPhotos';
 import { uploadPhoto } from '@/features/volunteer/services/photoService';
@@ -52,16 +52,19 @@ export function VolunteerCapturePage() {
     captureLocation
   } = useGeolocation();
 
-  const handleCaptureClick = async () => {
+  // Ref to track in-flight background geolocation promise
+  const activeGpsPromiseRef = useRef<Promise<GeolocationCoords | null> | null>(null);
+
+  const handleCaptureClick = () => {
     setUploadError(null);
     
-    // Attempt location acquisition but do not block photo capture if it fails
-    let position = capturedCoords;
-    if (!position && permissionState !== 'denied') {
-      position = await captureLocation(false);
-    }
-
+    // Open camera immediately
     fileInputRef.current?.click();
+
+    // Start background geolocation capture if coordinates are not yet available
+    if (!capturedCoords && permissionState !== 'denied') {
+      activeGpsPromiseRef.current = captureLocation(false);
+    }
   };
 
   const maxPhotos =
@@ -95,7 +98,13 @@ export function VolunteerCapturePage() {
     setIsUploading(true);
     setUploadError(null);
     try {
-      const position = capturedCoords;
+      // If location query is in-flight, await it up to 3 seconds before proceeding to upload
+      let position = capturedCoords;
+      if (!position && activeGpsPromiseRef.current) {
+        console.log('[VolunteerCapturePage] Awaiting background GPS capture (max 3s)...');
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+        position = await Promise.race([activeGpsPromiseRef.current, timeoutPromise]);
+      }
 
       await uploadPhoto({
         projectId: project.id,
@@ -110,6 +119,7 @@ export function VolunteerCapturePage() {
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     } finally {
       setIsUploading(false);
+      activeGpsPromiseRef.current = null;
     }
   };
 
@@ -206,6 +216,11 @@ export function VolunteerCapturePage() {
             {capturedCoords.latitude.toFixed(5)}, {capturedCoords.longitude.toFixed(5)}
           </span>
         </div>
+      ) : gpsLoading ? (
+        <div className="flex items-center gap-1.5 px-4 py-3 bg-blue-50 border border-blue-250 rounded-xl text-blue-800 text-xs font-medium animate-pulse">
+          <Compass size={15} className="text-blue-600 flex-shrink-0 animate-spin" />
+          Getting location…
+        </div>
       ) : permissionState === 'denied' || gpsError ? (
         <div className="flex flex-col gap-1.5 px-4 py-3 bg-amber-50 border border-amber-250 rounded-xl text-amber-800 text-xs">
           <div className="flex items-center gap-1.5 font-medium">
@@ -237,17 +252,12 @@ export function VolunteerCapturePage() {
       <button
         onClick={handleCaptureClick}
         disabled={!canCapture}
-        className="w-full flex flex-col items-center gap-2 p-6 rounded-2xl bg-primary-600 text-white font-medium text-sm shadow-md shadow-primary-600/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform"
+        className="w-full flex flex-col items-center gap-2 p-6 rounded-2xl bg-primary-600 text-white font-medium text-sm shadow-md shadow-primary-600/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform cursor-pointer"
       >
         {isUploading ? (
           <>
             <Spinner size="sm" />
             <span>Uploading…</span>
-          </>
-        ) : gpsLoading ? (
-          <>
-            <Spinner size="sm" />
-            <span>Acquiring GPS location…</span>
           </>
         ) : (
           <>

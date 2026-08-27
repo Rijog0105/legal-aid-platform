@@ -15,8 +15,16 @@ export interface GeolocationCoords {
   accuracy?: number | null;
 }
 
+// Module-level cache for geolocation coordinates to share fresh data across components
+let globalCachedCoords: GeolocationCoords | null = null;
+let globalLastCapturedAt: number | null = null;
+const CACHE_FRESHNESS_MS = 45000; // 45 seconds freshness threshold
+
+// Global in-flight promise reference to prevent concurrent simultaneous browser location queries
+let globalInFlightPromise: Promise<GeolocationCoords | null> | null = null;
+
 export function useGeolocation(options: PositionOptions = { enableHighAccuracy: true, timeout: 10000 }) {
-  const [coords, setCoords] = useState<GeolocationCoords | null>(null);
+  const [coords, setCoords] = useState<GeolocationCoords | null>(globalCachedCoords);
   const [isLoading, setIsLoading] = useState(false);
   const [errorType, setErrorType] = useState<GeolocationErrorType | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -31,55 +39,93 @@ export function useGeolocation(options: PositionOptions = { enableHighAccuracy: 
     };
   }, []);
 
+  // Store options in a ref to decouple them from the captureLocation callback's dependency array
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+
   const captureLocation = useCallback((isAuto = false): Promise<GeolocationCoords | null> => {
-    return new Promise((resolve) => {
-      setIsLoading(true);
-      setErrorType(null);
-      setErrorMessage(null);
-      if (!isAuto) {
-        setCoords(null);
+    // 1. Check if cached coordinates are fresh
+    if (globalCachedCoords && globalLastCapturedAt && (Date.now() - globalLastCapturedAt < CACHE_FRESHNESS_MS)) {
+      console.log('[useGeolocation] Reusing fresh cached coordinates:', globalCachedCoords);
+      if (isMounted.current) {
+        setCoords(globalCachedCoords);
+        setErrorType(null);
+        setErrorMessage(null);
+        setPermissionState('granted');
+      }
+      return Promise.resolve(globalCachedCoords);
+    }
+
+    // 2. If there is already an in-flight promise, return it to prevent duplicate requests
+    if (globalInFlightPromise) {
+      console.log('[useGeolocation] Reusing in-flight location request.');
+      // Keep UI loading state in sync
+      if (isMounted.current) {
+        setIsLoading(true);
+      }
+      return globalInFlightPromise;
+    }
+
+    const newPromise = new Promise<GeolocationCoords | null>((resolve) => {
+      if (isMounted.current) {
+        setIsLoading(true);
+        setErrorType(null);
+        setErrorMessage(null);
+        if (!isAuto) {
+          setCoords(null);
+        }
       }
 
       if (!navigator.geolocation) {
         const msg = 'Geolocation is not supported by your browser/device.';
-        setErrorType('unsupported');
-        setErrorMessage(msg);
-        setIsLoading(false);
-        setPermissionState('denied');
+        if (isMounted.current) {
+          setErrorType('unsupported');
+          setErrorMessage(msg);
+          setIsLoading(false);
+          setPermissionState('denied');
+        }
+        globalInFlightPromise = null;
         resolve(null);
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          if (!isMounted.current) {
-            resolve(null);
-            return;
-          }
+          globalInFlightPromise = null;
+          
           const newCoords = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
           };
-          setCoords(newCoords);
-          setIsLoading(false);
-          setErrorType(null);
-          setErrorMessage(null);
-          setPermissionState('granted');
+          
+          // Update global cache
+          globalCachedCoords = newCoords;
+          globalLastCapturedAt = Date.now();
+
+          if (isMounted.current) {
+            setCoords(newCoords);
+            setIsLoading(false);
+            setErrorType(null);
+            setErrorMessage(null);
+            setPermissionState('granted');
+          }
           resolve(newCoords);
         },
         (err) => {
-          if (!isMounted.current) {
-            resolve(null);
-            return;
-          }
+          globalInFlightPromise = null;
+          
           let type: GeolocationErrorType = 'unknown';
           let msg = 'An unexpected geolocation error occurred.';
 
           if (err.code === err.PERMISSION_DENIED) {
             type = 'denied';
             msg = 'Location access denied. Please grant location permissions in your browser settings.';
-            setPermissionState('denied');
+            if (isMounted.current) {
+              setPermissionState('denied');
+            }
           } else if (err.code === err.POSITION_UNAVAILABLE) {
             type = 'unavailable';
             msg = 'Location unavailable. Please check your device GPS/network signal.';
@@ -88,15 +134,20 @@ export function useGeolocation(options: PositionOptions = { enableHighAccuracy: 
             msg = 'Location request timed out. Please try again in an open area.';
           }
 
-          setErrorType(type);
-          setErrorMessage(msg);
-          setIsLoading(false);
+          if (isMounted.current) {
+            setErrorType(type);
+            setErrorMessage(msg);
+            setIsLoading(false);
+          }
           resolve(null);
         },
-        options
+        optionsRef.current
       );
     });
-  }, [options]);
+
+    globalInFlightPromise = newPromise;
+    return newPromise;
+  }, []);
 
   const checkPermissionState = useCallback(async () => {
     if (!navigator.geolocation) {
@@ -110,31 +161,9 @@ export function useGeolocation(options: PositionOptions = { enableHighAccuracy: 
 
     if (!navigator.permissions || !navigator.permissions.query) {
       // Fallback for Safari/browsers lacking Permissions query support
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          if (!isMounted.current) return;
-          const newCoords = {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          };
-          setCoords(newCoords);
-          setPermissionState('granted');
-          setErrorType(null);
-          setErrorMessage(null);
-        },
-        (err) => {
-          if (!isMounted.current) return;
-          if (err.code === err.PERMISSION_DENIED) {
-            setPermissionState('denied');
-            setErrorType('denied');
-            setErrorMessage('Location access denied. Please grant location permissions in your browser.');
-          } else {
-            setPermissionState('prompt');
-          }
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
+      if (isMounted.current) {
+        setPermissionState('prompt');
+      }
       return;
     }
 
@@ -144,21 +173,11 @@ export function useGeolocation(options: PositionOptions = { enableHighAccuracy: 
       
       setPermissionState(result.state as PermissionState);
 
-      if (result.state === 'granted') {
-        captureLocation(true);
-      } else if (result.state === 'prompt') {
-        captureLocation(true);
-      } else if (result.state === 'denied') {
-        setErrorType('denied');
-        setErrorMessage('Location access denied. Please grant location permissions in your browser settings.');
-      }
-
+      // Listen for permission change, but do NOT automatically start tracking GPS here
       result.onchange = () => {
         if (!isMounted.current) return;
         setPermissionState(result.state as PermissionState);
-        if (result.state === 'granted') {
-          captureLocation(true);
-        } else if (result.state === 'denied') {
+        if (result.state === 'denied') {
           setCoords(null);
           setErrorType('denied');
           setErrorMessage('Location access denied. Please grant location permissions in your browser settings.');
@@ -166,34 +185,11 @@ export function useGeolocation(options: PositionOptions = { enableHighAccuracy: 
       };
     } catch (err) {
       console.warn('Geolocation permission query error:', err);
-      // Fallback probe
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          if (!isMounted.current) return;
-          const newCoords = {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          };
-          setCoords(newCoords);
-          setPermissionState('granted');
-          setErrorType(null);
-          setErrorMessage(null);
-        },
-        (err) => {
-          if (!isMounted.current) return;
-          if (err.code === err.PERMISSION_DENIED) {
-            setPermissionState('denied');
-            setErrorType('denied');
-            setErrorMessage('Location access denied. Please grant location permissions in your browser.');
-          } else {
-            setPermissionState('prompt');
-          }
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
+      if (isMounted.current) {
+        setPermissionState('prompt');
+      }
     }
-  }, [captureLocation]);
+  }, []);
 
   useEffect(() => {
     checkPermissionState();
@@ -201,7 +197,7 @@ export function useGeolocation(options: PositionOptions = { enableHighAccuracy: 
 
   return {
     coords,
-    isLoading,
+    isLoading: isLoading || !!globalInFlightPromise,
     errorType,
     error: errorMessage,
     permissionState,

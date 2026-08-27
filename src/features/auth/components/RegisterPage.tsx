@@ -69,6 +69,7 @@ export function RegisterPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmittedSuccess, setIsSubmittedSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
   const {
     register,
@@ -112,6 +113,7 @@ export function RegisterPage() {
       return;
     }
 
+    setSubmittedEmail(values.email);
     setIsSubmittedSuccess(true);
   };
 
@@ -137,23 +139,45 @@ export function RegisterPage() {
       {/* Floating Card */}
       <div className="w-full max-w-4xl bg-white rounded-3xl border border-surface-200 shadow-sm p-6 sm:p-8 md:p-10">
         {isSubmittedSuccess ? (
-          <div className="text-center space-y-5 animate-fade-in max-w-lg mx-auto py-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+          <div className="text-center space-y-6 animate-fade-in max-w-lg mx-auto py-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
               <CheckCircle2 size={36} />
             </div>
-            <h2 className="text-2xl font-bold text-surface-900">Registration Submitted!</h2>
-            <p className="text-sm text-surface-600 leading-relaxed">
-              Thank you for registering. Your request has been sent for approval. Your account will become active once verified by a Faculty Coordinator or Administrator.
-            </p>
-            <div className="p-4 rounded-2xl bg-surface-50 border border-surface-200 text-xs text-surface-500 text-left space-y-1">
-              <p><span className="font-semibold text-surface-700">Status:</span> Pending Verification</p>
-              <p><span className="font-semibold text-surface-700">Next Step:</span> You can sign in once your account is approved.</p>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-slate-900">Registration Successful!</h2>
+              <p className="text-sm text-slate-600">
+                Your account has been created successfully.
+              </p>
             </div>
+            
+            <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100 text-slate-800 text-sm space-y-3 max-w-md mx-auto shadow-sm text-center">
+              <p className="font-bold flex items-center justify-center gap-2 text-indigo-950">
+                <span>📧</span> Please check your email to verify your account.
+              </p>
+              <p className="text-xs text-indigo-900 leading-relaxed">
+                We’ve sent a verification link to {submittedEmail ? <span className="font-bold text-indigo-950">{submittedEmail}</span> : 'your registered email address'}.
+                You must verify your email before you can log in.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-left space-y-3">
+              <div>
+                <span className="font-bold text-slate-700">Didn't receive the email?</span>
+                <p className="mt-0.5 text-slate-500">Check your Inbox and your <span className="font-semibold text-slate-700">Spam/Junk</span> folder.</p>
+              </div>
+              <div className="border-t border-slate-200 pt-2.5 mt-2.5">
+                <span className="font-bold text-slate-700">Account Activation Workflow:</span>
+                <p className="mt-1 text-slate-500">
+                  After completing email verification, your account registration goes through a standard approval process by a Faculty Coordinator or Administrator before you can log in.
+                </p>
+              </div>
+            </div>
+
             <div className="pt-4">
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.LOGIN)}
-                className="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm shadow-md transition-all cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm shadow-md transition-all cursor-pointer select-none active:scale-95"
               >
                 Return to Login
               </button>
