@@ -37,12 +37,21 @@ export async function uploadPhoto({
   longitude = null,
 }: UploadPhotoInput): Promise<Photo> {
   const path = buildStoragePath(projectId, activityId, file);
+  console.log('[photoService.uploadPhoto] Storage Path:', path);
+  console.log('[photoService.uploadPhoto] File type:', file.type, 'File size:', file.size);
 
+  console.log('[photoService.uploadPhoto] Starting Supabase storage upload...');
   const { error: uploadError } = await supabase.storage
     .from(APP_CONFIG.PHOTO_BUCKET)
     .upload(path, file, { contentType: file.type, upsert: false });
-  if (uploadError) throw new Error(uploadError.message);
+  
+  if (uploadError) {
+    console.error('[photoService.uploadPhoto] Supabase Storage upload error:', uploadError);
+    throw new Error(`Storage upload failed: ${uploadError.message}`);
+  }
+  console.log('[photoService.uploadPhoto] Supabase Storage upload succeeded!');
 
+  console.log('[photoService.uploadPhoto] Starting Database insert into photos...');
   const { data, error } = await supabase
     .from('photos')
     .insert([
@@ -59,10 +68,13 @@ export async function uploadPhoto({
     .single();
 
   if (error) {
+    console.error('[photoService.uploadPhoto] Database insert error:', error);
+    console.log('[photoService.uploadPhoto] Cleaning up uploaded storage file...');
     await supabase.storage.from(APP_CONFIG.PHOTO_BUCKET).remove([path]);
-    throw new Error(error.message);
+    throw new Error(`Database insert failed: ${error.message}`);
   }
 
+  console.log('[photoService.uploadPhoto] Database insert succeeded! Data:', data);
   return data as Photo;
 }
 

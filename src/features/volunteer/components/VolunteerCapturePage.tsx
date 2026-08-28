@@ -15,6 +15,55 @@ import { ROUTES, APP_CONFIG } from '@/constants';
 import type { Activity } from '@/types';
 import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 
+const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Canvas toBlob returned null'));
+            }
+          },
+          'image/jpeg',
+          0.6
+        );
+      };
+      img.onerror = () => reject(new Error('Failed to load image for compression'));
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file for compression'));
+    reader.readAsDataURL(file);
+  });
+};
+
 /**
  * Volunteer photo capture flow — select an activity, then capture/upload
  * a photo for it. Auto-triggers camera/file-picker if activity was selected prior to navigation.
@@ -88,16 +137,43 @@ export function VolunteerCapturePage() {
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !project || !selectedActivity || !userId) return;
+    if (!file || !project || !selectedActivity || !userId) {
+      console.log('[VolunteerCapturePage] handleFileChange returned early due to missing values:', {
+        hasFile: !!file,
+        hasProject: !!project,
+        hasSelectedActivity: !!selectedActivity,
+        hasUserId: !!userId
+      });
+      return;
+    }
+
+    console.log('[VolunteerCapturePage] ORIGINAL FILE:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified
+    });
 
     if (file.size > APP_CONFIG.MAX_PHOTO_SIZE_MB * 1024 * 1024) {
       setUploadError(`Photo must be smaller than ${APP_CONFIG.MAX_PHOTO_SIZE_MB}MB`);
+      console.warn('[VolunteerCapturePage] File blocked: size exceeds max limit');
       return;
     }
 
     setIsUploading(true);
     setUploadError(null);
     try {
+      console.log('[VolunteerCapturePage] Starting image compression...');
+      const compressedBlob = await compressImage(file);
+      console.log('[VolunteerCapturePage] Compression finished. Blob size:', compressedBlob.size);
+      
+      const compressedFile = new File([compressedBlob], file.name, { type: 'image/jpeg' });
+      console.log('[VolunteerCapturePage] COMPRESSED FILE:', {
+        name: compressedFile.name,
+        type: compressedFile.type,
+        size: compressedFile.size
+      });
+
       // If location query is in-flight, await it up to 3 seconds before proceeding to upload
       let position = capturedCoords;
       if (!position && activeGpsPromiseRef.current) {
@@ -105,17 +181,25 @@ export function VolunteerCapturePage() {
         const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
         position = await Promise.race([activeGpsPromiseRef.current, timeoutPromise]);
       }
+      console.log('[VolunteerCapturePage] Geolocation position for upload:', position ? {
+        lat: position.latitude,
+        lng: position.longitude
+      } : 'No GPS');
 
-      await uploadPhoto({
+      console.log('[VolunteerCapturePage] Calling uploadPhoto()...');
+      const result = await uploadPhoto({
         projectId: project.id,
         activityId: selectedActivity.id,
         uploadedBy: userId,
-        file,
+        file: compressedFile,
         latitude: position?.latitude ?? null,
         longitude: position?.longitude ?? null,
       });
+      console.log('[VolunteerCapturePage] uploadPhoto() succeeded! Result:', result);
+      
       reloadPhotos();
     } catch (err) {
+      console.error('[VolunteerCapturePage] uploadPhoto() failed with error:', err);
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     } finally {
       setIsUploading(false);
