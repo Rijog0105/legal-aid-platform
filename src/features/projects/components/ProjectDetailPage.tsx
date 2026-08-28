@@ -70,21 +70,21 @@ type SurveySubTab = 'dashboard' | 'schedule' | 'people' | 'attendance' | 'forms'
 type CampSubTab = 'activities' | 'photos' | 'budget' | 'schedule' | 'people' | 'attendance';
 
 const SURVEY_SUB_TABS = [
-  { key: 'dashboard', label: 'Survey Dashboard', icon: <ClipboardList size={20} /> },
   { key: 'schedule', label: 'Schedule Survey', icon: <Calendar size={20} /> },
   { key: 'people', label: 'Assign People', icon: <Users size={20} /> },
   { key: 'attendance', label: 'Attendance', icon: <CheckCircle size={20} /> },
-  { key: 'forms', label: 'Survey Forms', icon: <FileText size={20} /> },
   { key: 'budget', label: 'Survey Budget', icon: <DollarSign size={20} /> },
+  { key: 'forms', label: 'Survey Forms', icon: <FileText size={20} /> },
+  { key: 'dashboard', label: 'Survey Dashboard', icon: <ClipboardList size={20} /> },
 ] as const;
 
 const CAMP_SUB_TABS = [
-  { key: 'activities', label: 'Activities', icon: <Layers size={20} /> },
-  { key: 'photos', label: 'Documentation Photos', icon: <Camera size={20} /> },
-  { key: 'budget', label: 'Camp Budget', icon: <DollarSign size={20} /> },
   { key: 'schedule', label: 'Schedule Camp', icon: <Calendar size={20} /> },
   { key: 'people', label: 'Assign People', icon: <Users size={20} /> },
+  { key: 'activities', label: 'Activities', icon: <Layers size={20} /> },
   { key: 'attendance', label: 'Attendance', icon: <CheckCircle size={20} /> },
+  { key: 'budget', label: 'Camp Budget', icon: <DollarSign size={20} /> },
+  { key: 'photos', label: 'Documentation Photos', icon: <Camera size={20} /> },
 ] as const;
 
 /* ─── Component ─────────────────────────────────────────── */
