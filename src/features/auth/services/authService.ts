@@ -94,6 +94,12 @@ export function onAuthStateChange(
 
 export async function fetchUserProfile(authUserId: string): Promise<UserWithDetails | null> {
   console.log('[authService] BEFORE fetchUserProfile() for authUserId:', authUserId);
+  
+  if (!navigator.onLine) {
+    console.warn('[authService] fetchUserProfile failed: network offline');
+    throw new Error('NETWORK_UNAVAILABLE');
+  }
+
   try {
     const { data, error } = await supabase
       .from('users')
@@ -108,23 +114,28 @@ export async function fetchUserProfile(authUserId: string): Promise<UserWithDeta
 
     if (error) {
       console.error('[authService] fetchUserProfile Supabase error returned:', error);
+      return null;
     }
 
     const typedData = data as UserWithDetails | null;
     console.log('[authService] AFTER fetchUserProfile() returned profile:', typedData);
-    console.log('[authService] returned role:', typedData?.role);
-    console.log('[authService] returned person:', typedData?.person);
-
-    if (error || !data) {
-      console.log('[authService] fetchUserProfile returning null due to error or missing data');
-      return null;
-    }
-
-    console.log('[authService] fetchUserProfile returning valid UserWithDetails profile');
     return typedData;
   } catch (err) {
     console.error('[authService] fetchUserProfile caught exception:', err);
-    console.log('[authService] fetchUserProfile returning null due to exception');
+    
+    // Detect if this is a network/fetch exception
+    const errStr = String(err).toLowerCase();
+    const isNetworkError = 
+      errStr.includes('failed to fetch') || 
+      errStr.includes('networkerror') || 
+      errStr.includes('load failed') || 
+      errStr.includes('unreachable') || 
+      errStr.includes('network') ||
+      errStr.includes('cors');
+      
+    if (isNetworkError) {
+      throw new Error('NETWORK_UNAVAILABLE');
+    }
     return null;
   }
 }

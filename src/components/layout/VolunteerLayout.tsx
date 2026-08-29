@@ -6,6 +6,7 @@ import { ROUTES, ROLES } from '@/constants';
 import { fetchNotifications, markNotificationRead } from '@/features/attendance/services/attendanceService';
 import type { Notification } from '@/types';
 import { supabase } from '@/services/supabase';
+import { NetworkStatusBar } from '@/components/pwa/NetworkStatusBar';
 
 /**
  * Mobile-first layout for volunteers with bottom navigation and in-app Notification Center.
@@ -203,6 +204,7 @@ export function VolunteerLayout() {
           </div>
         </div>
       )}
+      <NetworkStatusBar />
     </div>
   );
 }

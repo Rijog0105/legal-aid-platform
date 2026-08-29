@@ -23,6 +23,7 @@ import { surveyService } from '@/services/surveyService';
 import { surveyTemplateService } from '../services/surveyTemplateService';
 import { surveyQuestionService } from '../services/surveyQuestionService';
 import { surveySubmissionService } from '../services/surveySubmissionService';
+import { offlineSurveyService } from '@/services/offlineSurveyService';
 import { Spinner } from '@/components/ui';
 import { uploadSurveyProofPhoto } from '@/features/volunteer/services/photoService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -139,61 +140,87 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
   const [activeTemplate, setActiveTemplate] = useState<any>(null);
   const [dynamicSections, setDynamicSections] = useState<any[]>([]);
   const [dynamicQuestions, setDynamicQuestions] = useState<any[]>([]);
+  const mapDatabaseQuestions = (qstns: any[], secs: any[]) => {
+    return qstns.map(q => {
+      const isOptionalFollowUp = q.question_code.endsWith('Details') || 
+                                 q.question_code.endsWith('Reason');
+      
+      let questionType = q.question_type;
+      let questionOptions = q.question_options;
+      
+      if (q.question_code === 'q7PendingLitigationDuration') {
+        questionType = 'select';
+        questionOptions = [
+          { label: 'Less than 1 year (1 ವರ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ)', value: 'Less than 1 year' },
+          { label: '1–3 years (1-3 ವರ್ಷಗಳು)', value: '1–3 years' },
+          { label: '3–5 years (3-5 ವರ್ಷಗಳು)', value: '3–5 years' },
+          { label: 'More than 5 years (5 ವರ್ಷಕ್ಕಿಂತ ಹೆಚ್ಚು)', value: 'More than 5 years' }
+        ];
+      }
+
+      return {
+        id: q.question_code,
+        sectionId: secs.find(s => s.id === q.section_id)?.id || 'sec_preliminary',
+        sectionTitle: secs.find(s => s.id === q.section_id)?.title || 'Section',
+        numberLabel: q.question_code.toUpperCase(),
+        questionText: q.question_text,
+        description: q.validation_rules?.description || '',
+        type: questionType as any,
+        required: q.is_required && !isOptionalFollowUp,
+        options: questionOptions || [],
+        conditionalLogic: q.conditional_logic && q.conditional_logic.dependsOnQuestionId ? {
+          dependsOnQuestionId: q.conditional_logic.dependsOnQuestionId,
+          showIfValue: q.conditional_logic.showIfValue
+        } : undefined,
+        rawQuestion: q
+      };
+    });
+  };
 
   useEffect(() => {
     async function loadSurveyTemplate() {
       setLoadingTemplate(true);
+      
+      // 1. Try online path first
       try {
         const activeTpl = await surveyTemplateService.fetchActiveTemplate();
         if (activeTpl) {
           const secs = await surveyQuestionService.fetchSections(activeTpl.id);
           const qstns = await surveyQuestionService.fetchQuestions(activeTpl.id);
           if (secs.length > 0 && qstns.length > 0) {
-            console.log("activeTemplate loaded status: SUCCESS", activeTpl);
+            console.log("activeTemplate loaded status: SUCCESS (Online)", activeTpl);
+            
+            // Cache to IndexedDB asynchronously for offline fallbacks
+            await offlineSurveyService.cacheSurveyData(activeTpl, secs, qstns);
+
             setActiveTemplate(activeTpl);
             setDynamicSections(secs);
-            setDynamicQuestions(qstns.map(q => {
-              const isOptionalFollowUp = q.question_code.endsWith('Details') || 
-                                         q.question_code.endsWith('Reason');
-              
-              let questionType = q.question_type;
-              let questionOptions = q.question_options;
-              
-              if (q.question_code === 'q7PendingLitigationDuration') {
-                questionType = 'select';
-                questionOptions = [
-                  { label: 'Less than 1 year (1 ವರ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ)', value: 'Less than 1 year' },
-                  { label: '1–3 years (1-3 ವರ್ಷಗಳು)', value: '1–3 years' },
-                  { label: '3–5 years (3-5 ವರ್ಷಗಳು)', value: '3–5 years' },
-                  { label: 'More than 5 years (5 ವರ್ಷಕ್ಕಿಂತ ಹೆಚ್ಚು)', value: 'More than 5 years' }
-                ];
-              }
-
-              return {
-                id: q.question_code,
-                sectionId: secs.find(s => s.id === q.section_id)?.id || 'sec_preliminary',
-                sectionTitle: secs.find(s => s.id === q.section_id)?.title || 'Section',
-                numberLabel: q.question_code.toUpperCase(),
-                questionText: q.question_text,
-                description: q.validation_rules?.description || '',
-                type: questionType as any,
-                required: q.is_required && !isOptionalFollowUp,
-                options: questionOptions || [],
-                conditionalLogic: q.conditional_logic && q.conditional_logic.dependsOnQuestionId ? {
-                  dependsOnQuestionId: q.conditional_logic.dependsOnQuestionId,
-                  showIfValue: q.conditional_logic.showIfValue
-                } : undefined,
-                rawQuestion: q
-              };
-            }));
+            setDynamicQuestions(mapDatabaseQuestions(qstns, secs));
             setLoadingTemplate(false);
             return;
           }
         }
       } catch (err) {
-        console.error('Error loading template', err);
+        console.warn('[SurveyEngine] Failed to load survey template online. Trying offline cache fallback...', err);
       }
-      console.log("activeTemplate loaded status: FAILED");
+
+      // 2. Try offline IndexedDB cache fallback
+      try {
+        const cachedData = await offlineSurveyService.getCachedSurveyData();
+        if (cachedData) {
+          console.log("activeTemplate loaded status: SUCCESS (Offline Cache)", cachedData.template);
+          setActiveTemplate(cachedData.template);
+          setDynamicSections(cachedData.sections);
+          setDynamicQuestions(mapDatabaseQuestions(cachedData.questions, cachedData.sections));
+          setLoadingTemplate(false);
+          return;
+        }
+      } catch (fallbackErr) {
+        console.error('[SurveyEngine] Error loading from offline cache fallback:', fallbackErr);
+      }
+
+      // 3. Fall back to hardcoded default questionnaire (offline and no cache is present)
+      console.log("activeTemplate loaded status: FAILED (Fallback to hardcoded survey questions)");
       setActiveTemplate(null);
       setDynamicSections(SURVEY_SECTIONS);
       const mappedFallbackQuestions = SURVEY_QUESTIONS.map((q) => {
@@ -215,29 +242,77 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittedSurvey, setSubmittedSurvey] = useState<SurveyResponseData | null>(null);
+  const [isOfflineSubmitted, setIsOfflineSubmitted] = useState<boolean>(false);
   const [autoSaveText, setAutoSaveText] = useState<string>('Draft saved');
 
-  useEffect(() => {
+  const saveBothDrafts = (updatedAnswers: any, indexVal: number) => {
     const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
-    if (!draftKey) {
-      console.info('[SurveyEngine] Draft not loaded: missing identifiers');
-      return;
+    if (draftKey) {
+      const targetCampId = selectedCamp?.id || campId;
+      // 1. Fast UI/compatibility layer (localStorage)
+      surveyService.saveDraft({ answers: updatedAnswers, currentIndex: indexVal, campId: targetCampId }, draftKey);
+      
+      // 2. Authoritative durable layer (IndexedDB)
+      if (userId && targetCampId && activeTemplate?.id) {
+        offlineSurveyService.saveDraft(
+          draftKey,
+          userId,
+          targetCampId,
+          activeTemplate.id,
+          updatedAnswers,
+          indexVal
+        );
+      }
     }
-    const draft = surveyService.getDraft(draftKey);
-    if (draft && draft.answers && draft.answers.surveyReferenceId) {
-      // Verify draft is not for an already submitted survey
-      surveyService.isSurveyReferenceSubmitted(draft.answers.surveyReferenceId).then((exists) => {
-        if (exists) {
-          console.warn('[SurveyEngine] Discarding stale draft with submitted reference', draft.answers.surveyReferenceId);
-          surveyService.clearDraft(draftKey);
-        } else {
+  };
+
+  useEffect(() => {
+    async function loadDraft() {
+      const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
+      if (!draftKey) {
+        console.info('[SurveyEngine] Draft not loaded: missing identifiers');
+        return;
+      }
+
+      // Try IndexedDB first (durable authoritative storage)
+      let draft = await offlineSurveyService.getDraft(draftKey);
+      
+      // Fallback to localStorage
+      if (!draft) {
+        draft = surveyService.getDraft(draftKey);
+        if (draft) {
+          console.info('[SurveyEngine] Restored draft from localStorage fallback.');
+        }
+      } else {
+        console.info('[SurveyEngine] Restored draft from IndexedDB.');
+      }
+
+      if (draft && draft.answers && draft.answers.surveyReferenceId) {
+        const restoreDraft = () => {
           setAnswers((prev) => ({ ...prev, ...draft.answers }));
           if (typeof draft.currentIndex === 'number') {
             setCurrentIndex(draft.currentIndex);
           }
+        };
+
+        // Verify draft is not for an already submitted survey
+        try {
+          const exists = await surveyService.isSurveyReferenceSubmitted(draft.answers.surveyReferenceId);
+          if (exists) {
+            console.warn('[SurveyEngine] Discarding stale draft with submitted reference', draft.answers.surveyReferenceId);
+            surveyService.clearDraft(draftKey);
+            await offlineSurveyService.clearDraft(draftKey);
+          } else {
+            restoreDraft();
+          }
+        } catch (err) {
+          // If offline, restore the draft anyway as fallback
+          console.warn('[SurveyEngine] Network error checking draft reference status. Restoring draft anyway...', err);
+          restoreDraft();
         }
-      });
+      }
     }
+    loadDraft();
   }, [userId, selectedCamp?.id, campId, activeTemplate?.id]);
   const debugDraftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
   console.log('[SurveyLifecycle] draft storage exists:', debugDraftKey ? !!surveyService.getDraft(debugDraftKey) : false);
@@ -332,12 +407,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
         updated.q11UnemployedReason = undefined;
       }
 
-      const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
-      if (draftKey) {
-        surveyService.saveDraft({ answers: updated, currentIndex, campId: selectedCamp?.id || campId }, draftKey);
-      } else {
-        console.info(`[SurveyEngine] Draft not saved: missing identifiers (userId: ${userId}, campId: ${selectedCamp?.id || campId}, templateId: ${activeTemplate?.id})`);
-      }
+      saveBothDrafts(updated, currentIndex);
       return updated;
     });
     setAutoSaveText('Draft auto-saved');
@@ -412,14 +482,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
         ...prev,
         ...updatedPhotoAnswers,
       }));
-      const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
-      if (draftKey) {
-        surveyService.saveDraft({
-          answers: updatedPhotoAnswers,
-          currentIndex,
-          campId: selectedCamp?.id || campId,
-        }, draftKey);
-      }
+      saveBothDrafts(updatedPhotoAnswers, currentIndex);
 
       // 2. Query GPS in the background to enrich metadata if available
       if (navigator.geolocation) {
@@ -435,13 +498,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
             };
             setAnswers((prev) => {
               const enriched = { ...prev, gpsLocation: gpsObj };
-              if (draftKey) {
-                surveyService.saveDraft({
-                  answers: enriched,
-                  currentIndex,
-                  campId: selectedCamp?.id || campId,
-                }, draftKey);
-              }
+              saveBothDrafts(enriched, currentIndex);
               return enriched;
             });
           },
@@ -564,12 +621,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       setDirection(1);
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
-      const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
-      if (draftKey) {
-        surveyService.saveDraft({ answers, currentIndex: nextIdx, campId: selectedCamp?.id || campId }, draftKey);
-      } else {
-        console.info(`[SurveyEngine] Draft not saved on next: missing identifiers (userId: ${userId}, campId: ${selectedCamp?.id || campId}, templateId: ${activeTemplate?.id})`);
-      }
+      saveBothDrafts(answers, nextIdx);
     } else {
       handleFinalSubmission();
     }
@@ -580,12 +632,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       setDirection(-1);
       const prevIdx = currentIndex - 1;
       setCurrentIndex(prevIdx);
-      const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
-      if (draftKey) {
-        surveyService.saveDraft({ answers, currentIndex: prevIdx, campId: selectedCamp?.id || campId }, draftKey);
-      } else {
-        console.info(`[SurveyEngine] Draft not saved on previous: missing identifiers (userId: ${userId}, campId: ${selectedCamp?.id || campId}, templateId: ${activeTemplate?.id})`);
-      }
+      saveBothDrafts(answers, prevIdx);
     }
   };
 
@@ -633,6 +680,16 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       return;
     }
 
+    // Enforce photo size limit guard for offline storage safety
+    if (answers.proofPhotoUrl && answers.proofPhotoUrl.startsWith('data:image/')) {
+      const approxSizeBytes = answers.proofPhotoUrl.length * 0.75;
+      const maxSizeBytes = 1.5 * 1024 * 1024; // 1.5 MB
+      if (approxSizeBytes > maxSizeBytes) {
+        setValidationError('The verification photo is too large to save offline. Please try capturing a new photo or using a smaller image.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     const targetCampId = (selectedCamp?.id || campId || answers.campId) as string;
     if (!targetCampId) {
@@ -641,6 +698,128 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       return;
     }
 
+    // Helper to map dynamic questions answers
+    const buildAnswersPayload = (finalPhotoPath: string | null) => {
+      return dynamicQuestions.map((dq) => {
+        const rawQ = (dq as any).rawQuestion;
+        const qVal = dq.id === 'proofPhotoUrl' ? (finalPhotoPath || answers.proofPhotoUrl) : answers[dq.id as keyof SurveyResponseData];
+        
+        let payload: any = {};
+        if (dq.id === 'q6HasVehicle') {
+          payload = {
+            q6aDrivingLicense: answers.q6aDrivingLicense || 'No',
+            q6bInsuranceCoverage: answers.q6bInsuranceCoverage || 'No',
+            q6cRegistrationCertificate: answers.q6cRegistrationCertificate || 'No'
+          };
+        } else if (dq.id === 'q8MembershipOrganization') {
+          payload = {
+            q8aSelfHelpGroup: answers.q8aSelfHelpGroup || 'No',
+            q8bMicroFinanceGroup: answers.q8bMicroFinanceGroup || 'No',
+            q8cMilkProcurersCoop: answers.q8cMilkProcurersCoop || 'No',
+            q8dOtherOrg: answers.q8dOtherOrg || 'No',
+            q8dOtherOrgName: answers.q8dOtherOrgName || ''
+          };
+        } else if (dq.id === 'q2MainOccupation') {
+          payload = { q2MainOccupationOther: answers.q2MainOccupationOther || '' };
+        } else if (dq.id === 'q3HouseType') {
+          payload = { q3HouseTypeOther: answers.q3HouseTypeOther || '' };
+        } else if (dq.id === 'q9EducationQualification') {
+          payload = { q9EducationQualificationOther: answers.q9EducationQualificationOther || '' };
+        } else if (dq.id === 'q11NatureOfEmployment') {
+          payload = {
+            q11UnemployedCount: answers.q11UnemployedCount || '',
+            q11UnemployedReason: answers.q11UnemployedReason || ''
+          };
+        }
+
+        return {
+          question_id: rawQ.id,
+          answer_value: Array.isArray(qVal) || typeof qVal === 'object' ? null : String(qVal ?? ''),
+          answer_payload: Array.isArray(qVal) || typeof qVal === 'object' ? qVal : payload,
+        };
+      });
+    };
+
+    // ─── OFFLINE SUBMISSION QUEUEING ───
+    if (!navigator.onLine) {
+      console.log('[SurveyEngine] Device is offline. Queueing submission...');
+      try {
+        const refId = answers.surveyReferenceId as string;
+        const exists = await offlineSurveyService.hasPendingSubmission(refId);
+
+        const offlineResponse: SurveyResponseData = {
+          ...(answers as SurveyResponseData),
+          proofPhotoUrl: answers.proofPhotoUrl, // retain base64 offline
+          campId: targetCampId,
+          villageDistrict: answers.villageDistrict || (selectedCamp ? `${selectedCamp.village_name}, ${selectedCamp.district}` : 'Village'),
+          submittedBy: userId || 'volunteer_anon',
+          submittedByName: profile?.person?.full_name || 'Volunteer Surveyor',
+          submittedAt: new Date().toISOString(),
+          status: 'submitted',
+        };
+
+        if (exists) {
+          console.warn('[SurveyEngine] Survey already in offline queue:', refId);
+        } else {
+          // Construct offline submit payload (using base64 inline photo)
+          const offlineSubmitPayload = {
+            camp_id: targetCampId,
+            template_id: activeTemplate.id,
+            survey_reference_id: refId,
+            submitted_by: userId || 'volunteer_anon',
+            gps_latitude: answers.gpsLocation?.latitude,
+            gps_longitude: answers.gpsLocation?.longitude,
+            gps_accuracy: answers.gpsLocation?.accuracy,
+            proof_photo_url: null, // will upload and resolve during sync
+            device_telemetry: {
+              userAgent: navigator.userAgent,
+              platform: navigator.platform,
+              offline: true
+            },
+            sync_status: 'pending' as const,
+            answers: buildAnswersPayload(null),
+          };
+
+          // Store in IndexedDB pendingSurveySubmissions
+          await offlineSurveyService.queueSubmission({
+            surveyReferenceId: refId,
+            userId: userId || 'volunteer_anon',
+            campId: targetCampId,
+            templateId: activeTemplate.id,
+            payload: offlineSubmitPayload
+          });
+          console.info('[SurveyEngine] Survey successfully saved to local IndexedDB queue.');
+        }
+
+        // Clear active drafts only AFTER the pending record has been successfully written
+        const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
+        if (draftKey) {
+          surveyService.clearDraft(draftKey);
+          await offlineSurveyService.clearDraft(draftKey);
+        }
+
+        setSubmittedSurvey(offlineResponse);
+        setIsOfflineSubmitted(true);
+        setValidationError(null);
+        setIsSubmitting(false);
+
+        if (onComplete) {
+          onComplete(refId);
+        }
+        return;
+      } catch (err: any) {
+        console.error('[SurveyEngine] Failed to save offline submission:', err);
+        setValidationError(
+          `Failed to save survey offline: ${err.message || 'IndexedDB error'}. ` +
+          'Your answers remain safe as a draft on this device, but the survey could not be queued. ' +
+          'Please connect to the internet to submit.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // ─── ONLINE SUBMISSION PIPELINE ───
     let storagePath = answers.proofPhotoUrl;
     if (answers.proofPhotoUrl.startsWith('data:image/')) {
       try {
@@ -682,44 +861,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
         platform: navigator.platform,
       },
       sync_status: 'synced' as const,
-      answers: dynamicQuestions.map((dq) => {
-        const rawQ = (dq as any).rawQuestion;
-        const qVal = dq.id === 'proofPhotoUrl' ? storagePath : finalResponse[dq.id as keyof SurveyResponseData];
-        
-        let payload: any = {};
-        if (dq.id === 'q6HasVehicle') {
-          payload = {
-            q6aDrivingLicense: finalResponse.q6aDrivingLicense || 'No',
-            q6bInsuranceCoverage: finalResponse.q6bInsuranceCoverage || 'No',
-            q6cRegistrationCertificate: finalResponse.q6cRegistrationCertificate || 'No'
-          };
-        } else if (dq.id === 'q8MembershipOrganization') {
-          payload = {
-            q8aSelfHelpGroup: finalResponse.q8aSelfHelpGroup || 'No',
-            q8bMicroFinanceGroup: finalResponse.q8bMicroFinanceGroup || 'No',
-            q8cMilkProcurersCoop: finalResponse.q8cMilkProcurersCoop || 'No',
-            q8dOtherOrg: finalResponse.q8dOtherOrg || 'No',
-            q8dOtherOrgName: finalResponse.q8dOtherOrgName || ''
-          };
-        } else if (dq.id === 'q2MainOccupation') {
-          payload = { q2MainOccupationOther: finalResponse.q2MainOccupationOther || '' };
-        } else if (dq.id === 'q3HouseType') {
-          payload = { q3HouseTypeOther: finalResponse.q3HouseTypeOther || '' };
-        } else if (dq.id === 'q9EducationQualification') {
-          payload = { q9EducationQualificationOther: finalResponse.q9EducationQualificationOther || '' };
-        } else if (dq.id === 'q11NatureOfEmployment') {
-          payload = {
-            q11UnemployedCount: finalResponse.q11UnemployedCount || '',
-            q11UnemployedReason: finalResponse.q11UnemployedReason || ''
-          };
-        }
-
-        return {
-          question_id: rawQ.id,
-          answer_value: Array.isArray(qVal) || typeof qVal === 'object' ? null : String(qVal ?? ''),
-          answer_payload: Array.isArray(qVal) || typeof qVal === 'object' ? qVal : payload,
-        };
-      }),
+      answers: buildAnswersPayload(storagePath),
     };
 
     const res = await surveySubmissionService.submitSurvey(submitPayload);
@@ -730,6 +872,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
       if (draftKey) {
         surveyService.clearDraft(draftKey);
+        await offlineSurveyService.clearDraft(draftKey);
       } else {
         console.warn('[SurveyEngine] Could not clear draft on submission success: missing identifiers');
       }
@@ -745,6 +888,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
     const draftKey = makeDraftKey(userId, selectedCamp?.id || campId, activeTemplate?.id);
     if (draftKey) {
       surveyService.clearDraft(draftKey);
+      offlineSurveyService.clearDraft(draftKey);
     } else {
       console.warn('[SurveyEngine] Could not clear draft on reset: missing identifiers');
     }
@@ -797,21 +941,27 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
     });
     setCurrentIndex(0);
     setSubmittedSurvey(null);
+    setIsOfflineSubmitted(false);
   };
 
   // ─── AUTO-GENERATED INDIVIDUAL REPORT DISPLAY ON SUBMIT ───
   if (submittedSurvey) {
     return (
       <div className="min-h-screen bg-slate-100 dark:bg-slate-950 p-4 sm:p-8 space-y-6">
-        <div className="max-w-4xl mx-auto bg-emerald-600 text-white p-4 sm:p-6 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className={`max-w-4xl mx-auto ${isOfflineSubmitted ? 'bg-amber-600' : 'bg-emerald-600'} text-white p-4 sm:p-6 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4`}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">Survey Submitted & Individual Report Auto-Generated!</h2>
-              <p className="text-xs text-emerald-100">
-                Official Data Collection Sheet generated for Ref ID: <span className="font-mono font-bold">{submittedSurvey.surveyReferenceId}</span>
+              <h2 className="text-lg font-bold">
+                {isOfflineSubmitted ? 'Survey Saved Offline & Individual Report Generated!' : 'Survey Submitted & Individual Report Auto-Generated!'}
+              </h2>
+              <p className="text-xs text-indigo-50/90">
+                {isOfflineSubmitted 
+                  ? `Saved locally on device (Ref ID: ${submittedSurvey.surveyReferenceId}) — will sync automatically when internet is restored.`
+                  : `Official Data Collection Sheet generated for Ref ID: ${submittedSurvey.surveyReferenceId}`
+                }
               </p>
             </div>
           </div>
@@ -1774,6 +1924,20 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                 </div>
               )}
             </div>
+
+            {/* Offline Submission Help Text */}
+            {currentIndex === totalQuestions - 1 && (
+              <div className="mt-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-500 leading-normal flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                <div>
+                  {navigator.onLine ? (
+                    <p>Your survey will be submitted normally to the server.</p>
+                  ) : (
+                    <p>Your device is offline. Your survey is saved on this device and will sync automatically when internet returns.</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Bottom Card Navigation Footer */}
             <div className="mt-8 pt-5 border-t border-slate-100 grid grid-cols-2 md:flex md:items-center md:justify-between gap-4">

@@ -10,6 +10,8 @@ import { supabase } from '@/services/supabase';
 import { fetchMyProjectAssignment } from '@/features/volunteer/services/volunteerService';
 import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 import type { RoleName } from '@/constants';
+import { offlineDb } from '@/db/offlineDb';
+import type { UserWithDetails } from '@/types';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -104,8 +106,73 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (session?.user) {
           console.log('[AuthProvider] 2. BEFORE fetchUserProfile() for user.id:', session.user.id);
-          const profile = await fetchUserProfile(session.user.id);
-          console.log('[AuthProvider] 3. AFTER fetchUserProfile() returned profile:', profile?.person?.full_name, '| role:', profile?.role?.name);
+          let profile: UserWithDetails | null = null;
+          let roleOverride: RoleName | null = null;
+          let isOfflineMode = false;
+
+          try {
+            profile = await fetchUserProfile(session.user.id);
+          } catch (fetchErr: any) {
+            if (fetchErr.message === 'NETWORK_UNAVAILABLE') {
+              console.warn('[AuthProvider] Network unavailable. Attempting offline fallback profile...');
+              const cachedRecord = await offlineDb.offlineCachedUserProfiles.get(session.user.id);
+              
+              if (cachedRecord) {
+                // Enforce security boundaries: Offline access ONLY for volunteer / team_lead
+                if (cachedRecord.roleName !== 'volunteer' && cachedRecord.roleName !== 'team_lead') {
+                  console.error('[AuthProvider] Offline access restricted. Administrative roles require internet connection.');
+                  store.reset();
+                  store.setAuthError('Offline access is only available for Volunteer and Team Lead roles. Please connect to the internet to access administrative features.');
+                  store.setLoading(false);
+                  store.setInitialized(true);
+                  return;
+                }
+
+                console.info('[AuthProvider] Restored session from offline profile cache:', cachedRecord.displayName);
+                isOfflineMode = true;
+                roleOverride = cachedRecord.roleName as RoleName;
+                
+                profile = {
+                  id: cachedRecord.userId,
+                  auth_user_id: cachedRecord.userId,
+                  person_id: cachedRecord.personId,
+                  role_id: '',
+                  is_active: true,
+                  created_at: cachedRecord.cached_at,
+                  role: {
+                    id: '',
+                    name: cachedRecord.roleName as RoleName,
+                    created_at: cachedRecord.cached_at
+                  },
+                  person: {
+                    id: cachedRecord.personId,
+                    full_name: cachedRecord.displayName,
+                    category: 'student',
+                    designation: null,
+                    organization: null,
+                    phone: '',
+                    email: session.user.email || '',
+                    usn_employee_id: '',
+                    department: '',
+                    semester: null,
+                    registration_status: 'approved',
+                    created_at: cachedRecord.cached_at
+                  }
+                };
+              } else {
+                console.error('[AuthProvider] Network offline and no cached profile exists.');
+                store.reset();
+                store.setAuthError('No offline profile found. Please connect to the internet to initialize offline access.');
+                store.setLoading(false);
+                store.setInitialized(true);
+                return;
+              }
+            } else {
+              throw fetchErr;
+            }
+          }
+
+          console.log('[AuthProvider] 3. AFTER fetchUserProfile() resolved. Profile:', profile?.person?.full_name, '| isOfflineMode:', isOfflineMode);
 
           if (!profile) {
             console.log('[AuthProvider] Profile not found. Checking if user already exists in public.users...');
@@ -145,29 +212,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
             store.reset();
             store.setAuthError('Your session is no longer valid. Please sign in again.');
           } else {
-            // Dynamic role override logic for student/volunteer accounts temporarily promoted to Team Lead
-            let roleOverride: RoleName | null = null;
-            if (profile.role?.name === 'volunteer') {
-              try {
-                const assignment = await fetchMyProjectAssignment(profile.person_id);
-                if (assignment && assignment.campPerson?.camp_role === 'team_lead') {
-                  const lc = getProjectLifecycleState(assignment.camp);
-                  const assignedPhase = (assignment.campPerson as any).phase;
-                  const isPhaseActive =
-                    assignedPhase === null || // Legacy matches any active phase
-                    (lc.isSurveyActive && assignedPhase === 'survey') ||
-                    (lc.isCampActive && assignedPhase === 'camp') ||
-                    (lc.isBetweenPhases && assignedPhase === 'camp');
+            // Profile is found. If online, fetch assignments and write/update cache
+            if (!isOfflineMode) {
+              let campAssignment: any = null;
+              
+              if (profile.role?.name === 'volunteer') {
+                try {
+                  const assignment = await fetchMyProjectAssignment(profile.person_id);
+                  if (assignment) {
+                    campAssignment = {
+                      camp: assignment.camp,
+                      campPerson: assignment.campPerson
+                    };
 
-                  if (lc.state !== 'completed' && lc.state !== 'draft' && isPhaseActive) {
-                    console.log('[AuthProvider] Active Team Lead assignment detected. Overriding UI role.');
-                    roleOverride = 'team_lead';
-                  } else {
-                    console.log('[AuthProvider] Team Lead assignment is inactive, phase mismatch, or completed. Reverting to volunteer UI.');
+                    if (assignment.campPerson?.camp_role === 'team_lead') {
+                      const lc = getProjectLifecycleState(assignment.camp);
+                      const assignedPhase = (assignment.campPerson as any).phase;
+                      const isPhaseActive =
+                        assignedPhase === null || // Legacy matches any active phase
+                        (lc.isSurveyActive && assignedPhase === 'survey') ||
+                        (lc.isCampActive && assignedPhase === 'camp') ||
+                        (lc.isBetweenPhases && assignedPhase === 'camp');
+
+                      if (lc.state !== 'completed' && lc.state !== 'draft' && isPhaseActive) {
+                        console.log('[AuthProvider] Active Team Lead assignment detected. Overriding UI role.');
+                        roleOverride = 'team_lead';
+                      } else {
+                        console.log('[AuthProvider] Team Lead assignment is inactive, phase mismatch, or completed. Reverting to volunteer UI.');
+                      }
+                    }
                   }
+                } catch (err) {
+                  console.error('[AuthProvider] Error resolving dynamic team_lead role:', err);
                 }
-              } catch (err) {
-                console.error('[AuthProvider] Error resolving dynamic team_lead role:', err);
+              }
+
+              // Save/update user profile cache in IndexedDB
+              try {
+                await offlineDb.offlineCachedUserProfiles.put({
+                  userId: session.user.id,
+                  personId: profile.person_id,
+                  roleName: roleOverride || profile.role?.name || 'volunteer',
+                  displayName: profile.person?.full_name || 'Volunteer',
+                  campAssignment,
+                  cached_at: new Date().toISOString()
+                });
+                console.info('[AuthProvider] Updated offline profile cache.');
+              } catch (dbErr) {
+                console.error('[AuthProvider] Failed to write offline profile cache to IndexedDB:', dbErr);
               }
             }
 
