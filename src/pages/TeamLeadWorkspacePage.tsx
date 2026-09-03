@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
-import { Card, Spinner } from '@/components/ui';
+import { Spinner } from '@/components/ui';
 import {
-  Camera, ClipboardList, Image as ImageIcon, FileText, DollarSign,
-  MapPin, ArrowRight, Calendar, Clock,
+  Camera,
+  ClipboardList,
+  MapPin,
+  ArrowRight,
+  Clock,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import { ROUTES, PROJECT_STATUS } from '@/constants';
-import { getProjectLifecycleState, PHASE_STATE_LABELS, deriveProjectStatus } from '@/utils/projectLifecycle';
+import { getProjectLifecycleState, deriveProjectStatus } from '@/utils/projectLifecycle';
 import { supabase } from '@/services/supabase';
 
 export function TeamLeadWorkspacePage() {
@@ -48,15 +53,6 @@ export function TeamLeadWorkspacePage() {
   const lifecycleState = lifecycle?.state ?? null;
   const isArchived = project ? deriveProjectStatus(project) === PROJECT_STATUS.ARCHIVED : false;
 
-  /* ── No access states ──
-   * TL access rules:
-   *   draft | survey_scheduled → NO ACCESS (before survey)
-   *   survey_active           → FULL ACCESS
-   *   between_phases          → REVIEW/PREP ACCESS
-   *   camp_scheduled          → ACCESS (rare: camp set but no survey)
-   *   camp_active             → FULL ACCESS
-   *   completed | archived    → NO ACCESS
-   */
   const noAccess =
     !lifecycle ||
     !project ||
@@ -71,252 +67,202 @@ export function TeamLeadWorkspacePage() {
   const renderNoAccessCard = () => {
     if (!project) {
       return (
-        <Card>
-          <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
-            <MapPin className="w-8 h-8 text-surface-400" />
-            <p className="text-sm font-semibold text-surface-800">No active project assigned</p>
-            <p className="text-xs text-surface-500">Contact your faculty coordinator for project assignment.</p>
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-10 text-center space-y-3">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+            <MapPin size={26} />
           </div>
-        </Card>
+          <h3 className="text-base font-bold text-slate-900">No Active Project Assigned</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            You are not currently assigned as Team Lead for an active legal aid camp project. Please contact your Faculty Coordinator.
+          </p>
+        </div>
       );
     }
 
     if (isArchived || lifecycleState === 'completed') {
       return (
-        <Card>
-          <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-surface-100 flex items-center justify-center">
-              <Clock className="w-7 h-7 text-surface-400" />
-            </div>
-            <p className="text-base font-semibold text-surface-800">Project Completed</p>
-            <p className="text-sm text-surface-500">{project.camp_name} has concluded.</p>
-            <div className="flex flex-col gap-2 w-full max-w-xs mx-auto text-left text-xs bg-surface-50 p-4 rounded-xl border border-surface-200 mt-2">
-              <div className="flex justify-between items-center">
-                <span className="text-surface-500 font-medium">Survey Forms Submitted:</span>
-                <span className="font-bold text-primary-600">{surveyCount}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-surface-500 font-medium">Documentation Photos Submitted:</span>
-                <span className="font-bold text-emerald-600">{photoCount}</span>
-              </div>
-            </div>
-            <p className="text-xs text-surface-400 max-w-sm mt-2">
-              All phases have ended. Historical data is available for Faculty review.
-            </p>
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+            <CheckCircle2 size={28} />
           </div>
-        </Card>
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Project Concluded</h3>
+            <p className="text-xs text-slate-500">{project.camp_name} has completed all field phases.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto text-left">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Surveys Submitted</span>
+              <p className="text-xl font-black text-indigo-600 mt-0.5">{surveyCount}</p>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Photos Captured</span>
+              <p className="text-xl font-black text-emerald-600 mt-0.5">{photoCount}</p>
+            </div>
+          </div>
+        </div>
       );
     }
 
-    /* Before survey phase (draft / survey_scheduled) */
-    const surveyDate = project.report_settings?.survey_date;
-    const surveyStart = project.report_settings?.survey_start_time;
-    const surveyDateStr = surveyDate
-      ? new Date(`${surveyDate}T${surveyStart || '00:00'}`).toLocaleDateString('en-IN', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        })
-      : null;
-
     return (
-      <Card>
-        <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
-            <Calendar className="w-7 h-7 text-blue-500" />
-          </div>
-          <p className="text-base font-semibold text-surface-800">Survey Phase Scheduled</p>
-          <p className="text-sm text-surface-500">{project.camp_name}</p>
-          {surveyDateStr ? (
-            <p className="text-xs text-blue-600 font-semibold">{surveyDateStr}</p>
-          ) : (
-            <p className="text-xs text-surface-400 italic">Survey schedule not yet set by Faculty.</p>
-          )}
-          <p className="text-xs text-surface-400 max-w-sm mt-1">
-            Your workspace will be accessible once the Survey Phase begins.
-          </p>
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 text-center space-y-3">
+        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+          <Clock size={28} />
         </div>
-      </Card>
+        <h3 className="text-base font-bold text-slate-900">Project Scheduled</h3>
+        <p className="text-xs text-slate-500 max-w-md mx-auto">
+          Team Lead workspace tools activate automatically once the survey or camp phase begins.
+        </p>
+      </div>
     );
   };
 
   return (
-    <div className="space-y-6 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-      {/* ─── Header ─── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-surface-900">
-            Welcome, {displayName || 'Team Lead'}
-          </h1>
-          <p className="text-sm text-surface-500 mt-0.5">
-            {project ? project.camp_name : 'Team Lead Workspace'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {lifecycle && (
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              lifecycleState === 'survey_active' ? 'bg-blue-100 text-blue-800' :
-              lifecycleState === 'camp_active' ? 'bg-emerald-100 text-emerald-800' :
-              lifecycleState === 'between_phases' ? 'bg-amber-100 text-amber-800' :
-              lifecycleState === 'completed' ? 'bg-surface-100 text-surface-500' :
-              'bg-slate-100 text-slate-600'
-            }`}>
-              {PHASE_STATE_LABELS[lifecycle.state]}
-            </span>
-          )}
-          <div className="px-3 py-1 rounded-full bg-accent-100 text-accent-800 text-xs font-semibold">
-            Team Lead
+    <div className="space-y-6 max-w-6xl mx-auto animate-fade-in pb-12">
+      {/* ─── Hero Header ─── */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-[11px] font-bold text-indigo-700">
+              <ShieldCheck size={13} />
+              <span>Team Lead Command Center</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Welcome back, {displayName || 'Team Lead'}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Manage on-ground field data collection, photo documentation, and team coordination.
+            </p>
           </div>
+
+          {project && (
+            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0">
+                <MapPin size={18} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Camp</span>
+                <p className="text-xs font-bold text-slate-900 truncate">{project.camp_name}</p>
+                <p className="text-[11px] text-slate-500 truncate">{project.village_name}, {project.district}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {projectError && (
-        <Card>
-          <p className="text-sm text-red-600 text-center py-4">{projectError}</p>
-        </Card>
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs">
+          {projectError}
+        </div>
       )}
 
-      {/* ─── No-access state ─── */}
-      {noAccess && renderNoAccessCard()}
+      {noAccess ? (
+        renderNoAccessCard()
+      ) : (
+        <div className="space-y-6">
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Survey Submissions</span>
+              <p className="text-2xl font-black text-indigo-600 mt-1">{surveyCount}</p>
+              <span className="text-[11px] font-semibold text-slate-500">Household responses recorded</span>
+            </div>
 
-      {/* ─── Launchpad Cards — visible when TL has access ─── */}
-      {!noAccess && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Volunteer Mode Card */}
-          <Link
-            to={ROUTES.VOLUNTEER_HOME}
-            className="group relative flex items-center justify-between p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-          >
-            <div className="flex items-center gap-5 sm:gap-6">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                <Camera size={28} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                  Volunteer Mode
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed max-w-lg">
-                  Fill surveys and capture photos exactly like a volunteer.
-                </p>
-              </div>
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Activity Photos</span>
+              <p className="text-2xl font-black text-emerald-600 mt-1">{photoCount}</p>
+              <span className="text-[11px] font-semibold text-slate-500">Documented by team</span>
             </div>
-            <div className="text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1.5 transition-all duration-300 flex-shrink-0 pr-2">
-              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-          </Link>
 
-          {/* Survey Dashboard Card */}
-          <Link
-            to={ROUTES.TEAM_LEAD_SURVEYS}
-            className="group relative flex items-center justify-between p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-          >
-            <div className="flex items-center gap-5 sm:gap-6">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                <ClipboardList size={28} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                  Survey Dashboard
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed max-w-lg">
-                  {lifecycleState === 'between_phases'
-                    ? 'Review completed survey forms and analytics.'
-                    : 'View total, completed, and pending survey forms.'}
-                </p>
-              </div>
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phase Status</span>
+              <p className="text-base font-bold text-slate-900 mt-2 capitalize">{lifecycleState?.replace('_', ' ')}</p>
+              <span className="text-[11px] font-semibold text-slate-500">Operational state</span>
             </div>
-            <div className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1.5 transition-all duration-300 flex-shrink-0 pr-2">
-              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-          </Link>
 
-          {/* Activity Photos Card */}
-          {project ? (
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Village</span>
+              <p className="text-base font-bold text-slate-900 mt-2 truncate">{project?.village_name}</p>
+              <span className="text-[11px] font-semibold text-slate-500">{project?.taluk}</span>
+            </div>
+          </div>
+
+          {/* Action Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Direct Volunteer Mode / Survey Action */}
             <Link
-              to={ROUTES.TEAM_LEAD_PHOTOS}
-              className="group relative flex items-center justify-between p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+              to={ROUTES.VOLUNTEER_HOME}
+              className="group bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-md hover:shadow-xl hover:scale-[1.01] transition-all flex flex-col justify-between"
             >
-              <div className="flex items-center gap-5 sm:gap-6">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                  <ImageIcon size={28} />
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 text-amber-300 flex items-center justify-center group-hover:scale-105 transition-transform backdrop-blur-md">
+                  <ClipboardList size={24} />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                    Activity Photos
+                <div>
+                  <div className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-300 mb-1">
+                    Fieldwork Action
+                  </div>
+                  <h3 className="text-base font-bold text-white">
+                    Conduct Survey / Field Mode
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed max-w-lg">
-                    View all volunteer photographs grouped by activity.
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                    Transform to Volunteer Field Mode to conduct door-to-door household surveys and submit records directly.
                   </p>
                 </div>
               </div>
-              <div className="text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1.5 transition-all duration-300 flex-shrink-0 pr-2">
-                <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300 pt-4 mt-4 border-t border-white/10">
+                <span>Enter Volunteer Field View</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
-          ) : (
-            <div className="flex items-center justify-between p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl opacity-50 cursor-not-allowed text-left">
-              <div className="flex items-center gap-5 sm:gap-6">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center flex-shrink-0">
-                  <ImageIcon size={28} />
+
+            {/* Photos & Activity Documentation */}
+            <Link
+              to={ROUTES.TEAM_LEAD_PHOTOS}
+              className="group bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 hover:shadow-md hover:border-indigo-300 transition-all flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Camera size={24} />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-base sm:text-lg font-bold text-slate-405 leading-tight">
-                    Activity Photos
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                    Activity Photos & Documentation
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-lg">
-                    View all volunteer photographs grouped by activity.
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Review, approve, and organize high-resolution activity photos uploaded by student volunteers.
                   </p>
                 </div>
               </div>
-              <div className="text-slate-300 flex-shrink-0 pr-2">
-                <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 pt-4 mt-4 border-t border-slate-100">
+                <span>Open Documentation Portal</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
-          )}
+            </Link>
 
-          {/* Survey Reports Card */}
-          <Link
-            to={ROUTES.TEAM_LEAD_REPORTS}
-            className="group relative flex items-center justify-between p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-          >
-            <div className="flex items-center gap-5 sm:gap-6">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                <FileText size={28} />
+            {/* Surveys & Reports */}
+            <Link
+              to={ROUTES.TEAM_LEAD_SURVEYS}
+              className="group bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <ClipboardList size={24} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
+                    Household Survey Dashboard
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Monitor survey intake progress, view vulnerable household flags, and audit field submissions.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                  Survey Reports
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed max-w-lg">
-                  Access individual beneficiary reports and project survey metrics.
-                </p>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 pt-4 mt-4 border-t border-slate-100">
+                <span>View Survey Submissions</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
-            <div className="text-slate-400 group-hover:text-amber-600 group-hover:translate-x-1.5 transition-all duration-300 flex-shrink-0 pr-2">
-              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-          </Link>
-
-          {/* Budget Card */}
-          <Link
-            to={ROUTES.TEAM_LEAD_BUDGET}
-            className="group relative flex items-center justify-between p-6 sm:p-8 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary-500/20 md:col-span-2"
-          >
-            <div className="flex items-center gap-5 sm:gap-6">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                <DollarSign size={28} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                  Budget
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed max-w-lg">
-                  Monitor requested, spent, and remaining project budget allocation.
-                </p>
-              </div>
-            </div>
-            <div className="text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1.5 transition-all duration-300 flex-shrink-0 pr-2">
-              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
       )}
     </div>

@@ -1,12 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Scale, Users, CheckCircle2, Activity, Layers, ArrowRight } from 'lucide-react';
+import {
+  Users,
+  CheckCircle2,
+  Activity,
+  FolderKanban,
+  ArrowRight,
+  Plus,
+  FileText,
+  Sparkles,
+} from 'lucide-react';
 import { ROUTES } from '@/constants';
 import { Spinner } from '@/components/ui';
 import { fetchProjects } from '@/features/projects/services/projectService';
 import { fetchPeople } from '@/features/people/services/peopleService';
 import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 
+/**
+ * Compact Single-Page Control Center Dashboard (No Scrolling Required on Standard Displays)
+ * Houses the 3 core platform modules (Projects, People Registry, Survey Analytics) and quick metrics.
+ */
 export function DashboardPage() {
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState({
@@ -57,177 +70,172 @@ export function DashboardPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-8 md:gap-10 w-full py-2 animate-fade-in">
-      {/* ─── Page Title Header ─── */}
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm flex-shrink-0">
-          <Scale size={26} />
-        </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">Faculty Control Center</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2.5 leading-normal">
-            Central management for legal aid projects, student delegations, and institutional registries.
+    <div className="flex flex-col gap-4 w-full mx-auto animate-fade-in">
+      {/* ─── Compact Top Hero Header ─── */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg shadow-slate-900/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden shrink-0">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[10px] font-bold text-indigo-200">
+            <Sparkles size={11} className="text-amber-400" />
+            <span>Faculty & Administrative Command Center</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
+            Legal Aid Clinic Platform
+          </h1>
+          <p className="text-[11px] text-slate-300">
+            Institutional management for legal awareness drives, household surveys, roll calls, and automated report preparation.
           </p>
         </div>
+
+        <div className="relative z-10 flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => navigate(ROUTES.PROJECT_CREATE)}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-bold text-xs shadow-md shadow-indigo-500/25 transition-all cursor-pointer"
+          >
+            <Plus size={15} />
+            <span>New Legal Aid Project</span>
+          </button>
+        </div>
       </div>
 
-      {/* ─── Primary Cards Grid ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        {/* Card 1: Projects */}
-        <button
+      {/* ─── Compact 4-Metric Grid ─── */}
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Total Projects
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <FolderKanban size={15} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-slate-900 mt-1">{metrics.totalProjects}</p>
+            <span className="text-[10px] font-semibold text-slate-400">Configured Legal Camps</span>
+          </div>
+
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                People Directory
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Users size={15} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-slate-900 mt-1">{metrics.registeredPeople}</p>
+            <span className="text-[10px] font-semibold text-slate-400">Students & Faculty</span>
+          </div>
+
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Active Operations
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <Activity size={15} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-amber-600 mt-1">{metrics.activeProjects}</p>
+            <span className="text-[10px] font-semibold text-slate-400">Fieldwork In Progress</span>
+          </div>
+
+          <div className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Completed
+              </span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 size={15} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-emerald-600 mt-1">{metrics.completedProjects}</p>
+            <span className="text-[10px] font-semibold text-slate-400">Archived Reports</span>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 3 Primary Modules in One Compact View (Projects, People, Survey Analytics) ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Module 1: Legal Aid Projects */}
+        <div
           onClick={() => navigate(ROUTES.PROJECTS)}
-          className="group relative overflow-hidden bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] rounded-3xl p-8 sm:p-10 text-white cursor-pointer shadow-lg shadow-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/35 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[280px] text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+          className="group bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between"
         >
-          {/* Classical Temple SVG Illustration */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 160 140"
-            className="absolute right-0 bottom-0 w-44 h-44 text-white opacity-[0.15] pointer-events-none select-none transition-transform duration-500 group-hover:scale-105 group-hover:translate-x-1"
-            fill="currentColor"
-          >
-            {/* Pediment (Triangle roof) */}
-            <path d="M10 40 L80 15 L150 40 Z" />
-            {/* Architrave */}
-            <rect x="15" y="40" width="130" height="8" rx="2" />
-            <rect x="20" y="48" width="120" height="4" />
-            {/* Pillars */}
-            <rect x="28" y="52" width="10" height="60" rx="1" />
-            <rect x="52" y="52" width="10" height="60" rx="1" />
-            <rect x="76" y="52" width="10" height="60" rx="1" />
-            <rect x="100" y="52" width="10" height="60" rx="1" />
-            <rect x="122" y="52" width="10" height="60" rx="1" />
-            {/* Base Steps */}
-            <rect x="10" y="112" width="140" height="6" rx="1" />
-            <rect x="5" y="118" width="150" height="8" rx="2" />
-          </svg>
-
-          <div>
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 ring-1 ring-white/15">
-              <Layers className="w-6 h-6 text-white" />
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <FolderKanban size={20} />
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">Legal Aid Projects</h2>
-            <p className="text-blue-50 text-xs sm:text-sm leading-relaxed max-w-xs mt-2.5 font-medium">
-              Create, schedule, assign delegations, and monitor project documentation & reporting.
-            </p>
-          </div>
-
-          <div className="pt-6">
-            <span className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white text-blue-700 font-bold text-xs hover:bg-blue-50 active:scale-95 transition-all shadow-sm">
-              Open Project Registry <ArrowRight size={14} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </div>
-        </button>
-
-        {/* Card 2: People Registry */}
-        <button
-          onClick={() => navigate(ROUTES.PEOPLE)}
-          className="group relative overflow-hidden bg-gradient-to-br from-[#10b981] to-[#047857] rounded-3xl p-8 sm:p-10 text-white cursor-pointer shadow-lg shadow-emerald-500/10 hover:shadow-2xl hover:shadow-emerald-500/35 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[280px] text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
-        >
-          {/* People/Group SVG Illustration */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 160 140"
-            className="absolute right-0 bottom-0 w-44 h-44 text-white opacity-[0.15] pointer-events-none select-none transition-transform duration-500 group-hover:scale-105 group-hover:translate-x-1"
-            fill="currentColor"
-          >
-            {/* Left person */}
-            <circle cx="50" cy="55" r="18" />
-            <path d="M20 100 A22 22 0 0 1 80 100 Z" />
-            {/* Center / Front person */}
-            <circle cx="95" cy="45" r="22" />
-            <path d="M60 95 A28 28 0 0 1 130 95 Z" />
-            {/* Right person */}
-            <circle cx="130" cy="65" r="14" />
-            <path d="M105 105 A18 18 0 0 1 155 105 Z" />
-          </svg>
-
-          <div>
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 ring-1 ring-white/15">
-              <Users className="w-6 h-6 text-white" />
+            <div>
+              <h2 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                Legal Aid Projects
+              </h2>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Configure Survey & Camp phases, track GPS attendance sessions, assign student volunteers, and manage budgets.
+              </p>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">People Registry</h2>
-            <p className="text-emerald-50 text-xs sm:text-sm leading-relaxed max-w-xs mt-2.5 font-medium">
-              Manage institutional directory of Faculty, Student Volunteers, Team Leads, and Guests.
-            </p>
           </div>
 
-          <div className="pt-6">
-            <span className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white text-emerald-700 font-bold text-xs hover:bg-emerald-50 active:scale-95 transition-all shadow-sm">
-              Manage Directory <ArrowRight size={14} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </div>
-        </button>
-      </div>
-
-      {/* ─── System Overview Section ─── */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm mt-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-650 flex items-center justify-center flex-shrink-0">
-            <Activity size={20} />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight leading-none">System Overview</h2>
-            <p className="text-xs text-slate-500 mt-2 leading-none">
-              Real-time overview of your legal aid management system.
-            </p>
+          <div className="flex items-center justify-between pt-3.5 mt-3.5 border-t border-slate-100 text-xs font-bold text-indigo-600">
+            <span>Manage All Projects</span>
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Spinner size="md" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 mt-8">
-            {/* Metric 1: Total Projects */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-150 flex items-center gap-4 hover:bg-slate-50/50 hover:border-slate-200 transition-all shadow-xs border-b-4 border-b-violet-500">
-              <div className="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center flex-shrink-0">
-                <Layers size={22} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-violet-600 leading-none">{metrics.totalProjects}</p>
-                <p className="text-xs font-bold text-slate-800 uppercase tracking-tight mt-2.5 leading-none">Total Projects</p>
-                <p className="text-[10px] text-slate-400 mt-1.5 leading-none font-medium">All time projects</p>
-              </div>
+        {/* Module 2: People Directory */}
+        <div
+          onClick={() => navigate(ROUTES.PEOPLE)}
+          className="group bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer flex flex-col justify-between"
+        >
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Users size={20} />
             </div>
-
-            {/* Metric 2: Registered People */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-150 flex items-center gap-4 hover:bg-slate-50/50 hover:border-slate-200 transition-all shadow-xs border-b-4 border-b-emerald-500">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                <Users size={22} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-emerald-600 leading-none">{metrics.registeredPeople}</p>
-                <p className="text-xs font-bold text-slate-800 uppercase tracking-tight mt-2.5 leading-none">Registered People</p>
-                <p className="text-[10px] text-slate-400 mt-1.5 leading-none font-medium">Faculty, volunteers & guests</p>
-              </div>
-            </div>
-
-            {/* Metric 3: Active Projects */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-150 flex items-center gap-4 hover:bg-slate-50/50 hover:border-slate-200 transition-all shadow-xs border-b-4 border-b-blue-500">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                <Activity size={22} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-blue-600 leading-none">{metrics.activeProjects}</p>
-                <p className="text-xs font-bold text-slate-800 uppercase tracking-tight mt-2.5 leading-none">Active Projects</p>
-                <p className="text-[10px] text-slate-400 mt-1.5 leading-none font-medium">Currently running</p>
-              </div>
-            </div>
-
-            {/* Metric 4: Completed Projects */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-150 flex items-center gap-4 hover:bg-slate-50/50 hover:border-slate-200 transition-all shadow-xs border-b-4 border-b-orange-500">
-              <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 size={22} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-orange-600 leading-none">{metrics.completedProjects}</p>
-                <p className="text-xs font-bold text-slate-800 uppercase tracking-tight mt-2.5 leading-none">Completed Projects</p>
-                <p className="text-[10px] text-slate-400 mt-1.5 leading-none font-medium">Successfully completed</p>
-              </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
+                People Directory & Approvals
+              </h2>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Approve or reject student registrations, manage faculty coordinators, and maintain external guest records.
+              </p>
             </div>
           </div>
-        )}
+
+          <div className="flex items-center justify-between pt-3.5 mt-3.5 border-t border-slate-100 text-xs font-bold text-emerald-600">
+            <span>Open Directory & Approvals</span>
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
+
+        {/* Module 3: Survey Analytics & Reports */}
+        <div
+          onClick={() => navigate(ROUTES.SURVEYS)}
+          className="group bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-purple-300 transition-all cursor-pointer flex flex-col justify-between"
+        >
+          <div className="space-y-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <FileText size={20} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 group-hover:text-purple-600 transition-colors">
+                Survey Analytics & Reports
+              </h2>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Consolidate household vulnerabilities, view demographic charts, audit responses, and export PDF reports.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-3.5 mt-3.5 border-t border-slate-100 text-xs font-bold text-purple-600">
+            <span>View Analytics & Reports</span>
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
       </div>
     </div>
   );

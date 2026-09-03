@@ -1,48 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ─── Design Tokens ──────────────────────────────────────────── */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Indigo primary palette */
-  --color-primary-50: oklch(0.97 0.02 280);
-  --color-primary-100: oklch(0.93 0.04 280);
-  --color-primary-200: oklch(0.87 0.08 280);
-  --color-primary-300: oklch(0.78 0.12 280);
-  --color-primary-400: oklch(0.68 0.16 275);
-  --color-primary-500: oklch(0.55 0.20 272);
-  --color-primary-600: oklch(0.48 0.22 270);
-  --color-primary-700: oklch(0.42 0.20 270);
-  --color-primary-800: oklch(0.35 0.16 270);
-  --color-primary-900: oklch(0.28 0.12 270);
+  /* Primary Brand - Deep Royal Indigo */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
 
-  /* Emerald accent palette */
-  --color-accent-50: oklch(0.97 0.02 160);
-  --color-accent-100: oklch(0.93 0.04 160);
-  --color-accent-200: oklch(0.87 0.08 160);
-  --color-accent-300: oklch(0.78 0.12 160);
-  --color-accent-400: oklch(0.68 0.16 160);
-  --color-accent-500: oklch(0.55 0.18 160);
-  --color-accent-600: oklch(0.48 0.16 160);
+  /* Accent - REVA Institutional Deep Orange */
+  --color-brand-orange: #f37021;
+  --color-brand-orange-hover: #e05e10;
 
   /* Neutrals */
-  --color-surface-50: oklch(0.985 0.002 250);
-  --color-surface-100: oklch(0.97 0.004 250);
-  --color-surface-200: oklch(0.93 0.006 250);
-  --color-surface-300: oklch(0.88 0.008 250);
-  --color-surface-400: oklch(0.72 0.01 250);
-  --color-surface-500: oklch(0.55 0.012 250);
-  --color-surface-600: oklch(0.44 0.01 250);
-  --color-surface-700: oklch(0.37 0.01 250);
-  --color-surface-800: oklch(0.27 0.01 250);
-  --color-surface-900: oklch(0.20 0.01 250);
-  --color-surface-950: oklch(0.14 0.01 250);
-
-  /* Status colors */
-  --color-success: oklch(0.60 0.18 150);
-  --color-warning: oklch(0.75 0.15 75);
-  --color-danger: oklch(0.55 0.20 25);
-  --color-info: oklch(0.60 0.15 240);
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
 }
 
 /* ─── Base Styles ─────────────────────────────────────────────── */
@@ -50,21 +39,21 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   min-height: 100dvh;
-  background-color: var(--color-surface-50);
-  color: var(--color-surface-900);
-  line-height: 1.6;
+  background-color: #f8fafc;
+  color: #0f172a;
+  line-height: 1.5;
 }
 
 #root {
@@ -73,17 +62,38 @@ body {
   flex-direction: column;
 }
 
-/* ─── Utility Classes ──────────────────────────────────────────── */
-.glass {
-  background: oklch(1 0 0 / 0.65);
-  backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid oklch(1 0 0 / 0.25);
+/* ─── Elevated Card & Surface Components ─────────────────────────── */
+.card-modern {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glass-dark {
-  background: oklch(0.15 0.01 250 / 0.7);
+.card-modern:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+}
+
+.card-elevated {
+  background: #ffffff;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
+}
+
+/* ─── Glassmorphism ────────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid oklch(1 0 0 / 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 /* ─── Scrollbar ────────────────────────────────────────────────── */
@@ -97,46 +107,37 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.7 0.01 250 / 0.4);
+  background: rgba(148, 163, 184, 0.35);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.6 0.01 250 / 0.6);
+  background: rgba(100, 116, 139, 0.55);
 }
 
 /* ─── Focus Styles ─────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--color-primary-500);
+  outline: 2px solid #4f46e5;
   outline-offset: 2px;
 }
 
-/* ─── Animations ───────────────────────────────────────────────── */
+/* ─── Smooth Micro-Animations ──────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out both;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.animate-slide-in {
-  animation: slideInRight 0.3s ease-out both;
-}
-
-.animate-pulse-soft {
-  animation: pulse-soft 2s ease-in-out infinite;
+.animate-scale-in {
+  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Override Tailwind v4 oklch colors to standard hex colors inside pdf pages to prevent html2canvas crashes */
@@ -198,13 +199,11 @@ body {
 }
 
 @media print {
-  /* Support multi-page layout block breaks in printable reports */
   [data-pdf-page] {
     page-break-after: always !important;
     break-after: page !important;
   }
 
-  /* Hide right sidebar, buttons, back buttons, and other utility chrome */
   aside,
   .print\:hidden,
   button,
@@ -214,7 +213,6 @@ body {
     display: none !important;
   }
 
-  /* Make content fill full printable area width */
   body,
   main,
   #root,
@@ -231,48 +229,26 @@ body {
     background: white !important;
     color: black !important;
   }
+}
 
-  /* Target outer layout containers */
-  .p-6, .lg\:p-8, .p-4, .sm\:p-8 {
-    padding: 0 !important;
+/* ─── PWA & Mobile Touch Optimization (iOS & Android) ──────────── */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 
-/* ─── Global Fix for Rounded Container Text Clipping ─── */
-/* Ensures text inside tables, card headers, and list items in rounded overflow-hidden containers has enough margin/padding from the curved border to prevent clipping */
-
-.overflow-hidden[class*="rounded-"] th:first-child,
-.overflow-hidden[class*="rounded-"] td:first-child,
-[class*="rounded-"] .overflow-x-auto th:first-child,
-[class*="rounded-"] .overflow-x-auto td:first-child {
-  padding-left: 1.25rem !important; /* At least 20px */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-.overflow-hidden.rounded-3xl th:first-child,
-.overflow-hidden.rounded-3xl td:first-child,
-.rounded-3xl .overflow-x-auto th:first-child,
-.rounded-3xl .overflow-x-auto td:first-child {
-  padding-left: 1.5rem !important; /* At least 24px */
-}
-
-.overflow-hidden[class*="rounded-"] th:last-child,
-.overflow-hidden[class*="rounded-"] td:last-child,
-[class*="rounded-"] .overflow-x-auto th:last-child,
-[class*="rounded-"] .overflow-x-auto td:last-child {
-  padding-right: 1.25rem !important; /* At least 20px */
-}
-
-.overflow-hidden.rounded-3xl th:last-child,
-.overflow-hidden.rounded-3xl td:last-child,
-.rounded-3xl .overflow-x-auto th:last-child,
-.rounded-3xl .overflow-x-auto td:last-child {
-  padding-right: 1.5rem !important; /* At least 24px */
-}
-
-/* Increase horizontal padding on card headers/inner divs in rounded-3xl overflow-hidden elements */
-.rounded-3xl.overflow-hidden > .p-5,
-.rounded-3xl.overflow-hidden > .p-4 {
-  padding-left: 1.5rem !important;
-  padding-right: 1.5rem !important;
+/* Prevent auto-zoom in iOS Safari when focusing form inputs */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 

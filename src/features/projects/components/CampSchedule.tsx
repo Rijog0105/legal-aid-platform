@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Card, Input } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROLES } from '@/constants';
 import type { Project } from '@/types';
@@ -54,7 +54,7 @@ export function CampSchedule({ project, onUpdate }: CampScheduleProps) {
         camp_date: values.camp_date,
         start_time: values.start_time || null,
         end_time: values.end_time || null,
-        village_name: values.venue, // Reuses village_name or stores specific venue
+        village_name: values.venue,
         report_settings: {
           ...currentSettings,
           camp_notes: values.camp_notes || undefined,
@@ -70,138 +70,163 @@ export function CampSchedule({ project, onUpdate }: CampScheduleProps) {
 
   if (isEditing || (!isScheduled && canEdit)) {
     return (
-      <Card className="p-6 max-w-xl mx-auto space-y-4">
-        <div className="border-b border-surface-100 pb-2">
-          <h3 className="text-base font-bold text-surface-900">
-            {isScheduled ? 'Edit Camp Schedule' : 'Schedule Camp Phase'}
-          </h3>
-          <p className="text-xs text-surface-500 mt-0.5">
-            Configure the final camp day setup, timing, booths, and guest schedules.
-          </p>
+      <div className="w-full flex justify-center">
+        <div className="p-6 sm:p-8 max-w-3xl w-full border border-slate-200 shadow-sm rounded-2xl bg-white space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+              {isScheduled ? 'Edit Camp Schedule' : 'Schedule Legal Aid Camp Day'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Configure the final camp day setup, timing, booths, and guest schedules.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <Input
+              label="Camp Day Date *"
+              id="camp_date"
+              type="date"
+              error={errors.camp_date?.message}
+              {...register('camp_date')}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Start Time"
+                id="start_time"
+                type="time"
+                error={errors.start_time?.message}
+                {...register('start_time')}
+              />
+              <Input
+                label="End Time"
+                id="end_time"
+                type="time"
+                error={errors.end_time?.message}
+                {...register('end_time')}
+              />
+            </div>
+
+            <Input
+              label="Camp Venue Location *"
+              id="venue"
+              placeholder="e.g. Govt Primary School Grounds, Chikkajala"
+              error={errors.venue?.message}
+              {...register('venue')}
+            />
+
+            <div className="space-y-1.5">
+              <label htmlFor="camp_notes" className="block text-xs font-bold text-slate-700">
+                Camp Setup & Operational Notes
+              </label>
+              <textarea
+                id="camp_notes"
+                rows={3}
+                placeholder="Stall arrangements, legal counselling desks, chief guest protocol…"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-2xs"
+                {...register('camp_notes')}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              {isScheduled && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {isSubmitting ? 'Saving…' : isScheduled ? 'Save Schedule' : 'Confirm & Schedule'}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label="Camp Date *"
-            id="camp_date"
-            type="date"
-            error={errors.camp_date?.message}
-            {...register('camp_date')}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Start Time"
-              id="start_time"
-              type="time"
-              error={errors.start_time?.message}
-              {...register('start_time')}
-            />
-            <Input
-              label="End Time"
-              id="end_time"
-              type="time"
-              error={errors.end_time?.message}
-              {...register('end_time')}
-            />
-          </div>
-
-          <Input
-            label="Venue / Location *"
-            id="venue"
-            placeholder="e.g. Gram Panchayat Hall / Primary School Compound"
-            error={errors.venue?.message}
-            {...register('venue')}
-          />
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="camp_notes" className="text-sm font-medium text-surface-700">
-              Camp Logistics / Notes
-            </label>
-            <textarea
-              id="camp_notes"
-              rows={3}
-              placeholder="e.g. Set up Booth 1-4 for legal advice. Roster verification starts at 8:30 AM…"
-              className="w-full px-4 py-2.5 rounded-xl border text-sm bg-white text-surface-900 border-surface-300 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-              {...register('camp_notes')}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            {isScheduled && (
-              <Button type="button" variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
-                Cancel
-              </Button>
-            )}
-            <Button type="submit" size="sm" isLoading={isSubmitting}>
-              Save Schedule
-            </Button>
-          </div>
-        </form>
-      </Card>
+      </div>
     );
   }
 
   if (!isScheduled) {
     return (
-      <Card className="p-8 text-center space-y-3 max-w-xl mx-auto border-dashed">
-        <Calendar className="w-12 h-12 text-surface-400 mx-auto" />
-        <h3 className="text-base font-bold text-surface-800">No Camp Scheduled</h3>
-        <p className="text-xs text-surface-500">
-          Faculty has not configured the schedule for the main camp phase yet.
-        </p>
-      </Card>
+      <div className="w-full flex justify-center">
+        <div className="p-8 max-w-xl w-full border border-slate-200 rounded-2xl bg-white text-center space-y-3">
+          <Calendar size={32} className="mx-auto text-slate-400" />
+          <h3 className="text-base font-bold text-slate-800">Camp Day Phase Not Scheduled</h3>
+          <p className="text-xs text-slate-500">
+            No camp day schedule has been published for this legal aid project yet.
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="p-6 max-w-xl mx-auto space-y-5">
-      <div className="flex items-center justify-between border-b border-surface-100 pb-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-emerald-600" />
-          <h3 className="text-base font-bold text-surface-900">Camp Schedule</h3>
+    <div className="w-full flex justify-center">
+      <div className="p-6 sm:p-8 max-w-3xl w-full border border-slate-200 shadow-sm rounded-2xl bg-white space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 block">
+              Active Phase Schedule
+            </span>
+            <h3 className="text-lg font-bold text-slate-900 mt-0.5">Legal Aid Camp Day Timeline</h3>
+          </div>
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="outline"
+              leftIcon={<Edit size={13} />}
+              onClick={() => setIsEditing(true)}
+              className="border-slate-200 hover:bg-slate-50 font-bold rounded-xl"
+            >
+              Edit Schedule
+            </Button>
+          )}
         </div>
-        {canEdit && (
-          <Button
-            size="sm"
-            variant="outline"
-            leftIcon={<Edit size={13} />}
-            onClick={() => setIsEditing(true)}
-          >
-            Edit Schedule
-          </Button>
-        )}
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-        <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
-          <span className="text-xs text-surface-400 block mb-0.5">Date</span>
-          <span className="font-semibold text-surface-800">{formatDate(project.camp_date)}</span>
-        </div>
-        <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
-          <span className="text-xs text-surface-400 block mb-0.5">Hours</span>
-          <span className="font-semibold text-surface-800 flex items-center gap-1">
-            <Clock size={12} className="text-surface-400" />
-            {project.start_time ?? '—'} – {project.end_time ?? '—'}
-          </span>
-        </div>
-        <div className="bg-surface-50 p-3 rounded-xl border border-surface-100">
-          <span className="text-xs text-surface-400 block mb-0.5">Venue</span>
-          <span className="font-semibold text-surface-800 flex items-center gap-1">
-            <MapPin size={12} className="text-surface-400" />
-            {currentSettings.venue ?? project.village_name}
-          </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="text-slate-500 font-medium flex items-center gap-1.5">
+              <Calendar size={14} className="text-indigo-600" /> Camp Day Date
+            </span>
+            <p className="text-sm font-bold text-slate-900">{formatDate(project.camp_date ?? '')}</p>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="text-slate-500 font-medium flex items-center gap-1.5">
+              <Clock size={14} className="text-indigo-600" /> Operating Window
+            </span>
+            <p className="text-sm font-bold text-slate-900">
+              {project.start_time || '09:00'} – {project.end_time || '17:00'}
+            </p>
+          </div>
+
+          <div className="sm:col-span-2 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="text-slate-500 font-medium flex items-center gap-1.5">
+              <MapPin size={14} className="text-indigo-600" /> Camp Venue Location
+            </span>
+            <p className="text-sm font-bold text-slate-900">
+              {currentSettings?.venue || project.village_name}
+            </p>
+          </div>
+
+          {currentSettings?.camp_notes && (
+            <div className="sm:col-span-2 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+              <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                <FileText size={14} className="text-indigo-600" /> Operational Notes
+              </span>
+              <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
+                {currentSettings.camp_notes}
+              </p>
+            </div>
+          )}
         </div>
       </div>
-
-      {currentSettings.camp_notes && (
-        <div className="bg-surface-50 p-4 rounded-xl border border-surface-100 text-xs">
-          <span className="font-bold text-surface-800 flex items-center gap-1.5 mb-1.5">
-            <FileText size={13} className="text-emerald-600" /> Logistics & Notes
-          </span>
-          <p className="text-surface-600 leading-relaxed whitespace-pre-wrap">{currentSettings.camp_notes}</p>
-        </div>
-      )}
-    </Card>
+    </div>
   );
 }

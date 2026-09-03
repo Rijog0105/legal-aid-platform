@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { ChevronLeft, MapPin, Filter } from 'lucide-react';
+import { ArrowLeft, MapPin, Filter } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { BudgetTab } from '@/features/budget';
-import { Card, Spinner, Button } from '@/components/ui';
+import { Spinner } from '@/components/ui';
 import { ROUTES } from '@/constants';
 import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 
@@ -21,7 +21,6 @@ export function TeamLeadBudgetPage() {
     targetProjectId
   );
 
-  // Default to survey tab if in survey phase, otherwise camp
   const lifecycle = project ? getProjectLifecycleState(project) : null;
   const defaultPhase = lifecycle?.isSurveyActive ? 'survey' : 'camp';
   const [activePhase, setActivePhase] = useState<'survey' | 'camp'>(defaultPhase);
@@ -39,25 +38,25 @@ export function TeamLeadBudgetPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto py-4">
+    <div className="space-y-6 max-w-5xl mx-auto py-2 animate-fade-in pb-12">
       {/* ─── Back Button & Project Selector ─── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <button
           onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}
-          className="flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
         >
-          <ChevronLeft size={16} />
-          Back to Team Lead Workspace
+          <ArrowLeft size={14} />
+          <span>Back to Team Lead Workspace</span>
         </button>
 
         {allAssignments.length > 1 && (
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-surface-200 shadow-sm text-xs">
-            <Filter size={13} className="text-surface-400" />
-            <span className="font-semibold text-surface-600">Assigned Project:</span>
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-2xl border border-slate-200 shadow-2xs text-xs">
+            <Filter size={13} className="text-slate-400" />
+            <span className="font-bold text-slate-600">Assigned Project:</span>
             <select
               value={project?.id ?? ''}
               onChange={(e) => handleProjectSelect(e.target.value)}
-              className="bg-transparent font-bold text-primary-700 focus:outline-none cursor-pointer"
+              className="bg-transparent font-bold text-indigo-700 focus:outline-none cursor-pointer text-xs"
             >
               {allAssignments.map((item) => (
                 <option key={item.camp.id} value={item.camp.id}>
@@ -72,51 +71,46 @@ export function TeamLeadBudgetPage() {
       {/* ─── Page Title Header ─── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-surface-900">Team Lead Budget Workspace</h1>
-          <p className="text-sm text-surface-500 mt-0.5">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Team Lead Budget Workspace</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             {project ? project.camp_name : 'No assigned project selected'}
           </p>
         </div>
-        <div className="px-3 py-1 rounded-full bg-accent-100 text-accent-800 text-xs font-semibold">
+        <span className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold">
           Team Lead
-        </div>
+        </span>
       </div>
 
       {error && (
-        <Card className="p-4 bg-red-50 border-red-200">
-          <p className="text-sm text-red-600 text-center">{error}</p>
-        </Card>
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-600 text-center font-medium">
+          {error}
+        </div>
       )}
 
       {!project && !isLoading ? (
-        <Card className="p-8 text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-surface-100 text-surface-400 flex items-center justify-center mx-auto">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-10 text-center space-y-3">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
             <MapPin size={24} />
           </div>
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold text-surface-800">No Project Assigned</h3>
-            <p className="text-xs text-surface-500 max-w-md mx-auto">
-              You are not currently assigned to a project. Contact your faculty coordinator.
-            </p>
-          </div>
-          <Button variant="secondary" size="sm" onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}>
-            Return to Workspace
-          </Button>
-        </Card>
+          <h3 className="text-base font-bold text-slate-900">No Project Assigned</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            You are not currently assigned to a project. Contact your Faculty Coordinator.
+          </p>
+        </div>
       ) : (
         project && (
           <div className="space-y-4">
             {/* ─── Survey / Camp Phase Segment Switcher ─── */}
-            <div className="flex items-center gap-1 bg-surface-100 p-1 rounded-xl border border-surface-200 w-fit">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 w-fit">
               {(['survey', 'camp'] as const).map((phase) => (
                 <button
                   key={phase}
                   type="button"
                   onClick={() => setActivePhase(phase)}
-                  className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activePhase === phase
-                      ? 'bg-white text-surface-900 shadow-sm border border-surface-200'
-                      : 'text-surface-500 hover:text-surface-800'
+                      ? 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {phase === 'survey' ? 'Survey Phase Budget' : 'Camp Phase Budget'}

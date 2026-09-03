@@ -1197,7 +1197,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
       )}
 
       {/* ─── MAIN SURVEY BODY ─── */}
-      <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-6 space-y-4">
+      <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-8 space-y-6">
         <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={currentQuestion?.id}
@@ -1206,27 +1206,27 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
             initial="enter"
             animate="center"
             exit="exit"
-            className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5"
+            className="bg-white border border-slate-200/90 rounded-3xl p-7 sm:p-10 shadow-sm space-y-8"
           >
             {/* Header Block within the Card */}
-            <div className="border-b border-slate-100 pb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="border-b border-slate-100 pb-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   {currentSection.title}
                 </span>
                 {currentQuestion?.required && (
-                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded">
+                  <span className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-lg">
                     Required *
                   </span>
                 )}
               </div>
               
-              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
                 {currentQuestion?.questionText}
               </h2>
 
               {currentQuestion?.description && (
-                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">
                   {currentQuestion.description}
                 </p>
               )}
@@ -1237,15 +1237,15 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3.5 bg-rose-50 border border-rose-100 text-rose-800 text-xs rounded-xl flex items-center gap-2"
+                className="p-4 bg-rose-50 border border-rose-100 text-rose-800 text-xs rounded-2xl flex items-center gap-2.5"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{validationError}</span>
+                <span className="font-semibold">{validationError}</span>
               </motion.div>
             )}
 
             {/* ─── SURVEY FORM FIELD INPUTS ─── */}
-            <div>
+            <div className="pt-1">
               {/* Text Input */}
               {currentQuestion?.type === 'text' && (
                 <input
@@ -1255,7 +1255,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                   onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                   placeholder={currentQuestion.placeholder || 'Type your answer here...'}
                   autoFocus
-                  className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400 font-medium shadow-sm"
+                  className="w-full px-4 py-3.5 text-sm rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-400 font-semibold shadow-xs"
                 />
               )}
 
@@ -1268,7 +1268,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                   onKeyDown={(e) => e.key === 'Enter' && handleNext()}
                   placeholder={currentQuestion.placeholder || 'Enter numeric value...'}
                   autoFocus
-                  className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400 font-medium shadow-sm"
+                  className="w-full px-4 py-3.5 text-sm rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-400 font-semibold shadow-xs"
                 />
               )}
 
@@ -1278,7 +1278,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                   type="date"
                   value={String(answers[currentQuestion.id as keyof SurveyResponseData] ?? '')}
                   onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                  className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium shadow-sm"
+                  className="w-full px-4 py-3.5 text-sm rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold shadow-xs"
                 />
               )}
 
@@ -1290,21 +1290,21 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                   onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
                   placeholder={currentQuestion.placeholder || 'Type detailed response...'}
                   autoFocus
-                  className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-400 font-medium shadow-sm"
+                  className="w-full px-4 py-3.5 text-sm rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-400 font-semibold shadow-xs"
                 />
               )}
 
               {/* Yes / No Options Selection */}
               {isYesNoOptions ? (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-8 animate-fadeIn">
+                  <div className="grid grid-cols-2 gap-5">
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(currentQuestion.id, 'Yes')}
-                      className={`h-14 px-6 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm select-none active:scale-95 ${
+                      className={`h-16 px-6 rounded-2xl border-2 font-bold text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-xs select-none active:scale-[0.98] ${
                         answers[currentQuestion.id as keyof SurveyResponseData] === 'Yes'
-                          ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/20'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-350 hover:bg-slate-50'
+                          ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-4 ring-emerald-500/15'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
@@ -1314,10 +1314,10 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(currentQuestion.id, 'No')}
-                      className={`h-14 px-6 rounded-xl border-2 font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm select-none active:scale-95 ${
+                      className={`h-16 px-6 rounded-2xl border-2 font-bold text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-xs select-none active:scale-[0.98] ${
                         answers[currentQuestion.id as keyof SurveyResponseData] === 'No'
-                          ? 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/20'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-350 hover:bg-slate-50'
+                          ? 'bg-rose-50 border-rose-500 text-rose-900 ring-4 ring-rose-500/15'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <XCircle className="w-5 h-5 shrink-0 text-rose-600" />
@@ -1329,28 +1329,28 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                   {answers[currentQuestion.id as keyof SurveyResponseData] === 'Yes' && (
                     <>
                       {currentQuestion.id === 'q6HasVehicle' && (
-                        <div className="mt-6 pt-5 border-t border-slate-100 space-y-4 animate-fadeIn">
-                          <div className="text-xs font-bold text-slate-550 uppercase tracking-wider">
+                        <div className="mt-8 pt-6 border-t border-slate-100 space-y-5 animate-fadeIn">
+                          <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                             Additional Vehicle Details (ವಾಹನ ವಿವರಗಳು)
                           </div>
                           
                           {/* Driving Licence */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                            <div>
-                              <span className="text-sm font-semibold text-slate-800 block">Driving Licence (ಚಾಲನಾ ಪರವಾನಗಿ) <span className="text-rose-600">*</span></span>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-50/80 rounded-2xl border border-slate-200 shadow-2xs">
+                            <div className="space-y-0.5">
+                              <span className="text-sm font-bold text-slate-800 block">Driving Licence (ಚಾಲನಾ ಪರವಾನಗಿ) <span className="text-rose-600">*</span></span>
                               <span className="text-xs text-slate-500">Do you have a valid driving licence?</span>
                             </div>
-                            <div className="flex gap-2.5 shrink-0">
+                            <div className="flex gap-3 shrink-0">
                               {['Yes', 'No'].map((val) => (
                                 <button
                                   type="button"
                                   key={val}
                                   onClick={() => handleAnswerChange('q6aDrivingLicense', val)}
-                                  className={`w-20 h-12 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
+                                  className={`w-20 h-12 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                                     answers.q6aDrivingLicense === val
                                       ? val === 'Yes'
-                                        ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/10'
-                                        : 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/10'
+                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-500/20'
+                                        : 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-500/20'
                                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                   }`}
                                 >
@@ -1361,22 +1361,22 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                           </div>
 
                           {/* Insurance Coverage */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                            <div>
-                              <span className="text-sm font-semibold text-slate-800 block">Insurance Coverage (ವಿಮಾ ಸೌಲಭ್ಯ) <span className="text-rose-600">*</span></span>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-50/80 rounded-2xl border border-slate-200 shadow-2xs">
+                            <div className="space-y-0.5">
+                              <span className="text-sm font-bold text-slate-800 block">Insurance Coverage (ವಿಮಾ ಸೌಲಭ್ಯ) <span className="text-rose-600">*</span></span>
                               <span className="text-xs text-slate-500">Is the vehicle insured?</span>
                             </div>
-                            <div className="flex gap-2.5 shrink-0">
+                            <div className="flex gap-3 shrink-0">
                               {['Yes', 'No'].map((val) => (
                                 <button
                                   type="button"
                                   key={val}
                                   onClick={() => handleAnswerChange('q6bInsuranceCoverage', val)}
-                                  className={`w-20 h-12 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
+                                  className={`w-20 h-12 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                                     answers.q6bInsuranceCoverage === val
                                       ? val === 'Yes'
-                                        ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/10'
-                                        : 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/10'
+                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-500/20'
+                                        : 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-500/20'
                                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                   }`}
                                 >
@@ -1387,22 +1387,22 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                           </div>
 
                           {/* Registration Certificate */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                            <div>
-                              <span className="text-sm font-semibold text-slate-800 block">Registration Certificate (RC Book) <span className="text-rose-600">*</span></span>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-50/80 rounded-2xl border border-slate-200 shadow-2xs">
+                            <div className="space-y-0.5">
+                              <span className="text-sm font-bold text-slate-800 block">Registration Certificate (RC Book) <span className="text-rose-600">*</span></span>
                               <span className="text-xs text-slate-500">Do you have a valid RC book?</span>
                             </div>
-                            <div className="flex gap-2.5 shrink-0">
+                            <div className="flex gap-3 shrink-0">
                               {['Yes', 'No'].map((val) => (
                                 <button
                                   type="button"
                                   key={val}
                                   onClick={() => handleAnswerChange('q6cRegistrationCertificate', val)}
-                                  className={`w-20 h-12 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
+                                  className={`w-20 h-12 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center select-none active:scale-95 ${
                                     answers.q6cRegistrationCertificate === val
                                       ? val === 'Yes'
-                                        ? 'bg-emerald-55 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/10'
-                                        : 'bg-rose-55 border-rose-500 text-rose-800 ring-2 ring-rose-500/10'
+                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-500/20'
+                                        : 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-500/20'
                                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                                   }`}
                                 >
@@ -1415,24 +1415,24 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                       )}
 
                       {currentQuestion.id === 'q8MembershipOrganization' && (
-                        <div className="mt-6 pt-5 border-t border-slate-100 space-y-4 animate-fadeIn">
-                          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <div className="mt-8 pt-6 border-t border-slate-100 space-y-5 animate-fadeIn">
+                          <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                             Organization Membership Details (ಸಂಸ್ಥೆಯ ಸದಸ್ಯತ್ವ ವಿವರಗಳು)
                           </div>
                           
-                          <div className="grid grid-cols-1 gap-2.5">
+                          <div className="grid grid-cols-1 gap-3.5">
                             {/* Self Help Group */}
                             <button
                               type="button"
                               onClick={() => handleAnswerChange('q8aSelfHelpGroup', answers.q8aSelfHelpGroup === 'Yes' ? 'No' : 'Yes')}
-                              className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              className={`w-full p-4.5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                                 answers.q8aSelfHelpGroup === 'Yes'
-                                  ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold'
+                                  ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-bold'
                                   : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                               }`}
                             >
                               <span className="text-sm font-semibold">Self Help Group (ಸ್ವಸಹಾಯ ಸಂಘ - SHG)</span>
-                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8aSelfHelpGroup === 'Yes' ? 'bg-indigo-600 border-indigo-650 text-white' : 'bg-white border-slate-350'}`}>
+                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8aSelfHelpGroup === 'Yes' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'}`}>
                                 {answers.q8aSelfHelpGroup === 'Yes' && <span className="text-xs font-black">✓</span>}
                               </div>
                             </button>
@@ -1441,14 +1441,14 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                             <button
                               type="button"
                               onClick={() => handleAnswerChange('q8bMicroFinanceGroup', answers.q8bMicroFinanceGroup === 'Yes' ? 'No' : 'Yes')}
-                              className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              className={`w-full p-4.5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                                 answers.q8bMicroFinanceGroup === 'Yes'
-                                  ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold'
+                                  ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-bold'
                                   : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                               }`}
                             >
                               <span className="text-sm font-semibold">Micro Finance Group (ಸೂಕ್ಷ್ಮ ಹಣಕಾಸು ಸಂಸ್ಥೆ)</span>
-                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8bMicroFinanceGroup === 'Yes' ? 'bg-indigo-600 border-indigo-650 text-white' : 'bg-white border-slate-350'}`}>
+                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8bMicroFinanceGroup === 'Yes' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'}`}>
                                 {answers.q8bMicroFinanceGroup === 'Yes' && <span className="text-xs font-black">✓</span>}
                               </div>
                             </button>
@@ -1457,14 +1457,14 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                             <button
                               type="button"
                               onClick={() => handleAnswerChange('q8cMilkProcurersCoop', answers.q8cMilkProcurersCoop === 'Yes' ? 'No' : 'Yes')}
-                              className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              className={`w-full p-4.5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                                 answers.q8cMilkProcurersCoop === 'Yes'
-                                  ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold'
+                                  ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-bold'
                                   : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                               }`}
                             >
                               <span className="text-sm font-semibold">Milk Producers Co-operative Association (ಹಾಲು ಉತ್ಪಾದಕರ ಸಹಕಾರ ಸಂಘ)</span>
-                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8cMilkProcurersCoop === 'Yes' ? 'bg-indigo-600 border-indigo-650 text-white' : 'bg-white border-slate-350'}`}>
+                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8cMilkProcurersCoop === 'Yes' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'}`}>
                                 {answers.q8cMilkProcurersCoop === 'Yes' && <span className="text-xs font-black">✓</span>}
                               </div>
                             </button>
@@ -1473,28 +1473,28 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                             <button
                               type="button"
                               onClick={() => handleAnswerChange('q8dOtherOrg', answers.q8dOtherOrg === 'Yes' ? 'No' : 'Yes')}
-                              className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              className={`w-full p-4.5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                                 answers.q8dOtherOrg === 'Yes'
-                                  ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold'
+                                  ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-bold'
                                   : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                               }`}
                             >
                               <span className="text-sm font-semibold">Other Organization (ಇತರೆ ಸಂಸ್ಥೆಗಳು)</span>
-                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8dOtherOrg === 'Yes' ? 'bg-indigo-600 border-indigo-650 text-white' : 'bg-white border-slate-350'}`}>
+                              <div className={`w-5 h-5 rounded border flex items-center justify-center ${answers.q8dOtherOrg === 'Yes' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'}`}>
                                 {answers.q8dOtherOrg === 'Yes' && <span className="text-xs font-black">✓</span>}
                               </div>
                             </button>
                           </div>
 
                           {answers.q8dOtherOrg === 'Yes' && (
-                            <div className="space-y-1.5 animate-fadeIn">
+                            <div className="space-y-2 animate-fadeIn pt-2">
                               <label className="text-xs font-bold text-slate-600 block">Please specify organization name (ದಯವಿಟ್ಟು ಹೆಸರನ್ನು ತಿಳಿಸಿ - Optional)</label>
                               <input
                                 type="text"
                                 value={answers.q8dOtherOrgName || ''}
                                 onChange={(e) => handleAnswerChange('q8dOtherOrgName', e.target.value)}
                                 placeholder="Enter organization name"
-                                className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium shadow-sm"
+                                className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium shadow-xs"
                               />
                             </div>
                           )}
@@ -1506,8 +1506,8 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
               ) : (
                 /* Multi-Option Radio Cards */
                 currentQuestion?.type === 'radio' && (
-                  <div className="space-y-4 animate-fadeIn">
-                    <div className="grid grid-cols-1 gap-2.5">
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="grid grid-cols-1 gap-4">
                       {currentQuestion.options?.map((opt) => {
                         const isSelected = answers[currentQuestion.id as keyof SurveyResponseData] === opt.value;
                         return (
@@ -1515,16 +1515,16 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                             key={opt.value}
                             type="button"
                             onClick={() => handleAnswerChange(currentQuestion.id, opt.value)}
-                            className={`w-full p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
+                            className={`w-full p-5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                               isSelected
-                                ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-bold shadow-sm'
+                                ? 'bg-indigo-50/80 border-indigo-500 text-indigo-900 font-bold shadow-sm ring-4 ring-indigo-500/10'
                                 : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100 hover:border-slate-300'
                             }`}
                           >
                             <span className="text-sm font-semibold">{opt.label}</span>
                             <div
                               className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                                isSelected ? 'border-indigo-600 bg-white text-indigo-650' : 'border-slate-300 bg-white'
+                                isSelected ? 'border-indigo-600 bg-white text-indigo-600' : 'border-slate-300 bg-white'
                               }`}
                             >
                               {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-indigo-600" />}
@@ -1536,27 +1536,27 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
 
                     {/* Specifying follow-up fields for other select choices */}
                     {currentQuestion.id === 'q2MainOccupation' && answers.q2MainOccupation === 'Other' && (
-                      <div className="space-y-1.5 animate-fadeIn">
+                      <div className="space-y-2 animate-fadeIn pt-2">
                         <label className="text-xs font-bold text-slate-600 block">Please specify occupation (ದಯವಿಟ್ಟು ವೃತ್ತಿಯನ್ನು ತಿಳಿಸಿ - Optional)</label>
                         <input
                           type="text"
                           value={answers.q2MainOccupationOther || ''}
                           onChange={(e) => handleAnswerChange('q2MainOccupationOther', e.target.value)}
                           placeholder="Specify occupation"
-                          className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium shadow-sm animate-fadeIn"
+                          className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium shadow-xs animate-fadeIn"
                         />
                       </div>
                     )}
 
                     {currentQuestion.id === 'q3HouseType' && answers.q3HouseType === 'Other' && (
-                      <div className="space-y-1.5 animate-fadeIn">
+                      <div className="space-y-2 animate-fadeIn pt-2">
                         <label className="text-xs font-bold text-slate-600 block">Please specify house type (ದಯವಿಟ್ಟು ಮನೆಯ ವಿಧವನ್ನು ತಿಳಿಸಿ - Optional)</label>
                         <input
                           type="text"
                           value={answers.q3HouseTypeOther || ''}
                           onChange={(e) => handleAnswerChange('q3HouseTypeOther', e.target.value)}
                           placeholder="Specify house type"
-                          className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium shadow-sm animate-fadeIn"
+                          className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium shadow-xs animate-fadeIn"
                         />
                       </div>
                     )}
@@ -1566,8 +1566,8 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
 
               {/* Select Input Options */}
               {currentQuestion?.type === 'select' && (
-                <div className="space-y-4 animate-fadeIn">
-                  <div className="grid grid-cols-1 gap-2.5">
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="grid grid-cols-1 gap-4">
                     {currentQuestion.options?.map((opt) => {
                       const isSelected = answers[currentQuestion.id as keyof SurveyResponseData] === opt.value;
                       return (
@@ -1575,9 +1575,9 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                           key={opt.value}
                           type="button"
                           onClick={() => handleAnswerChange(currentQuestion.id, opt.value)}
-                          className={`w-full p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
+                          className={`w-full p-5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-bold shadow-sm'
+                              ? 'bg-indigo-50/80 border-indigo-500 text-indigo-900 font-bold shadow-sm ring-4 ring-indigo-500/10'
                               : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100 hover:border-slate-300'
                           }`}
                         >
@@ -1589,25 +1589,25 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                   </div>
 
                   {currentQuestion.id === 'q9EducationQualification' && answers.q9EducationQualification === 'Other' && (
-                    <div className="space-y-1.5 animate-fadeIn">
+                    <div className="space-y-2 animate-fadeIn pt-2">
                       <label className="text-xs font-bold text-slate-600 block">Please specify qualification (ದಯವಿಟ್ಟು ವಿವರ ತಿಳಿಸಿ - Optional)</label>
                       <input
                         type="text"
                         value={answers.q9EducationQualificationOther || ''}
                         onChange={(e) => handleAnswerChange('q9EducationQualificationOther', e.target.value)}
                         placeholder="Specify qualification"
-                        className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium shadow-sm animate-fadeIn"
+                        className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium shadow-xs animate-fadeIn"
                       />
                     </div>
                   )}
 
                   {currentQuestion.id === 'q11NatureOfEmployment' && answers.q11NatureOfEmployment === 'Other' && (
-                    <div className="mt-6 pt-5 border-t border-slate-100 space-y-4 animate-fadeIn">
-                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <div className="mt-8 pt-6 border-t border-slate-100 space-y-5 animate-fadeIn">
+                      <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                         Unemployment Details (ನಿರುದ್ಯೋಗದ ವಿವರಗಳು - Optional)
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-2">
                           <label className="text-xs font-bold text-slate-600 block">Unemployed Members Count</label>
                           <input
                             type="number"
@@ -1615,17 +1615,17 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                             value={answers.q11UnemployedCount || ''}
                             onChange={(e) => handleAnswerChange('q11UnemployedCount', e.target.value)}
                             placeholder="Count"
-                            className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium shadow-sm"
+                            className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium shadow-xs"
                           />
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           <label className="text-xs font-bold text-slate-600 block">Reason for Unemployment</label>
                           <input
                             type="text"
                             value={answers.q11UnemployedReason || ''}
                             onChange={(e) => handleAnswerChange('q11UnemployedReason', e.target.value)}
                             placeholder="Reason"
-                            className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium shadow-sm"
+                            className="w-full px-4 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium shadow-xs"
                           />
                         </div>
                       </div>
@@ -1636,7 +1636,7 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
 
               {/* Checkbox / Multi-Select Input */}
               {currentQuestion?.type === 'checkbox' && (
-                <div className="grid grid-cols-1 gap-2.5">
+                <div className="grid grid-cols-1 gap-4">
                   {currentQuestion.options?.map((opt) => {
                     const currentArr = (answers[currentQuestion.id as keyof SurveyResponseData] as string[]) || [];
                     const isChecked = currentArr.includes(opt.value);
@@ -1653,15 +1653,15 @@ export const SurveyEngine: React.FC<SurveyEngineProps> = ({ campId, onComplete, 
                         key={opt.value}
                         type="button"
                         onClick={toggleCheckbox}
-                        className={`w-full p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
+                        className={`w-full p-5 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer ${
                           isChecked
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-900 font-bold shadow-sm'
+                            ? 'bg-indigo-50/80 border-indigo-500 text-indigo-900 font-bold shadow-sm ring-4 ring-indigo-500/10'
                             : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100 hover:border-slate-300'
                         }`}
                       >
                         <span className="text-sm font-semibold">{opt.label}</span>
                         <div
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${
                             isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
                           }`}
                         >

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Input } from '@/components/ui';
+import { Input } from '@/components/ui';
 import { APP_CONFIG } from '@/constants';
 import type { Project } from '@/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -45,7 +45,7 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
       taluk: '',
       district: '',
       state: 'Karnataka',
-      academic_year: '',
+      academic_year: '2026-27',
       max_photos_per_activity: APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY,
     },
   });
@@ -59,7 +59,7 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
         taluk: project.taluk,
         district: project.district,
         state: project.report_settings?.state ?? 'Karnataka',
-        academic_year: project.report_settings?.academic_year ?? '',
+        academic_year: project.report_settings?.academic_year ?? '2026-27',
         max_photos_per_activity:
           project.report_settings?.max_photos_per_activity ??
           APP_CONFIG.DEFAULT_MAX_PHOTOS_PER_ACTIVITY,
@@ -68,17 +68,15 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
   }, [project, reset]);
 
   const onSubmit = async (values: FormValues) => {
-    // Retain original camp_date/times if editing, otherwise assign default today's date.
-    // include_budget and include_survey_stats are always true — not configurable at creation.
     const payload = {
-      camp_name: values.camp_name,
-      description: values.description || null,
+      camp_name: values.camp_name.trim(),
+      description: values.description?.trim() || null,
       camp_date: project?.camp_date || new Date().toISOString().split('T')[0],
       start_time: project?.start_time || null,
       end_time: project?.end_time || null,
-      village_name: values.village_name,
-      taluk: values.taluk,
-      district: values.district,
+      village_name: values.village_name.trim(),
+      taluk: values.taluk.trim(),
+      district: values.district.trim(),
       report_settings: {
         include_budget: true,
         include_survey_stats: true,
@@ -88,8 +86,8 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
         survey_end_time: project?.report_settings?.survey_end_time,
         survey_notes: project?.report_settings?.survey_notes,
         camp_notes: project?.report_settings?.camp_notes,
-        state: values.state,
-        academic_year: values.academic_year || undefined,
+        state: values.state.trim(),
+        academic_year: values.academic_year?.trim() || undefined,
       },
     };
 
@@ -101,75 +99,80 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
       <div className="space-y-5">
+        {/* Project Name */}
         <Input
-          label="Project Name *"
+          label="Project Title *"
           id="camp_name"
-          placeholder="Rural Legal Awareness Project"
+          placeholder="e.g. Chikkajala Rural Legal Literacy & Aid Project"
           error={errors.camp_name?.message}
           {...register('camp_name')}
         />
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="description" className="text-sm font-medium text-surface-700">
-            Description
+        {/* Project Description */}
+        <div className="space-y-1.5">
+          <label htmlFor="description" className="block text-xs font-bold text-slate-700">
+            Project Description / Objectives
           </label>
           <textarea
             id="description"
             rows={3}
-            placeholder="Brief description of the project…"
-            className="w-full px-4 py-2.5 rounded-xl border text-sm bg-white text-surface-900 border-surface-300 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+            placeholder="Briefly state target community, socio-legal objectives, and scope…"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-2xs"
             {...register('description')}
           />
         </div>
 
+        {/* Location Row 1: Village & Taluk */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Village *"
+            label="Target Village / Ward *"
             id="village_name"
-            placeholder="Village name"
+            placeholder="e.g. Chikkajala"
             error={errors.village_name?.message}
             {...register('village_name')}
           />
           <Input
             label="Taluk *"
             id="taluk"
-            placeholder="Taluk"
+            placeholder="e.g. Bangalore North"
             error={errors.taluk?.message}
             {...register('taluk')}
           />
         </div>
 
+        {/* Location Row 2: District, State, Academic Year */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input
             label="District *"
             id="district"
-            placeholder="District"
+            placeholder="e.g. Bangalore Rural"
             error={errors.district?.message}
             {...register('district')}
           />
           <Input
             label="State *"
             id="state"
-            placeholder="State"
+            placeholder="e.g. Karnataka"
             error={errors.state?.message}
             {...register('state')}
           />
           <Input
             label="Academic Year"
             id="academic_year"
-            placeholder="2026-27"
+            placeholder="e.g. 2026-27"
             error={errors.academic_year?.message}
             {...register('academic_year')}
           />
         </div>
 
-        <div className="border-t border-surface-200 pt-5">
-          <p className="text-sm font-medium text-surface-700 mb-3">Settings</p>
-          <div className="w-full sm:w-48">
+        {/* Configuration */}
+        <div className="border-t border-slate-100 pt-5 space-y-3">
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Report Documentation Settings</span>
+          <div className="w-full sm:w-56">
             <Input
-              label="Max Photos / Activity"
+              label="Max Photos Per Activity"
               id="max_photos_per_activity"
               type="number"
               min={1}
@@ -180,13 +183,28 @@ export function ProjectForm({ project, onCancel, onSaved }: ProjectFormProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-surface-200">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+      <div className="flex items-center justify-end gap-2.5 pt-5 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+        >
           Cancel
-        </Button>
-        <Button type="submit" isLoading={isSubmitting}>
-          {isEdit ? 'Save Changes' : 'Create Project'}
-        </Button>
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-indigo-500/20 disabled:opacity-50 transition-all cursor-pointer"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <span>Saving…</span>
+            </>
+          ) : (
+            <span>{isEdit ? 'Update Project' : 'Create Project'}</span>
+          )}
+        </button>
       </div>
     </form>
   );

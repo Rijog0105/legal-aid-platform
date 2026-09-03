@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { X, Search, CheckSquare, Square } from 'lucide-react';
-import { Button, Badge, Spinner } from '@/components/ui';
+import { X, Search, CheckSquare, Square, Users } from 'lucide-react';
+import { Spinner } from '@/components/ui';
 import { PROJECT_ROLE, PERSON_CATEGORY, type ProjectRole, type PersonCategory } from '@/constants';
 import type { Person } from '@/types';
 import { fetchPeople } from '@/features/people/services/peopleService';
@@ -12,12 +12,6 @@ const ROLE_LABELS: Record<ProjectRole, string> = {
   [PROJECT_ROLE.GUEST]: 'Guest',
   [PROJECT_ROLE.VOLUNTEER]: 'Volunteer',
   [PROJECT_ROLE.TEAM_LEAD]: 'Team Lead',
-};
-
-const CATEGORY_BADGE: Record<PersonCategory, 'primary' | 'info' | 'default'> = {
-  [PERSON_CATEGORY.FACULTY]: 'primary',
-  [PERSON_CATEGORY.STUDENT]: 'info',
-  [PERSON_CATEGORY.EXTERNAL]: 'default',
 };
 
 const ROLE_SECTIONS: { role: ProjectRole; label: string; allowedCategories: PersonCategory[] }[] = [
@@ -39,7 +33,7 @@ const ROLE_SECTIONS: { role: ProjectRole; label: string; allowedCategories: Pers
 ];
 
 interface AssignPersonModalProps {
-  campId: string; // campId is expected by ProjectPeopleTab to match the interface, let's keep it but internalize it as projectId
+  campId: string;
   phase?: 'survey' | 'camp';
   alreadyAssignedPersonIds: string[];
   onClose: () => void;
@@ -75,7 +69,6 @@ export function AssignPersonModal({
     };
   }, [search]);
 
-  // People not already assigned, filtered by allowed category for the selected role
   const section = ROLE_SECTIONS.find((s) => s.role === projectRole);
   const allowedCategories = section?.allowedCategories ?? [];
 
@@ -116,7 +109,6 @@ export function AssignPersonModal({
     }
   };
 
-  // Reset selections when role changes
   const handleRoleChange = (role: ProjectRole) => {
     setProjectRole(role);
     setSelectedIds(new Set());
@@ -127,18 +119,22 @@ export function AssignPersonModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh]">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh] border border-slate-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-surface-900">Assign People to Project</h2>
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <Users size={18} />
+            </div>
+            <h2 className="text-base font-bold text-slate-900">Assign People to Project</h2>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:bg-surface-100 hover:text-surface-700 transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -146,9 +142,9 @@ export function AssignPersonModal({
 
         <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
           {/* Role selector tabs */}
-          <div>
-            <label className="block text-xs font-semibold text-surface-600 mb-2">
-              Assign as
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-700">
+              Assign Role in this Project
             </label>
             <div className="flex flex-wrap gap-2">
               {ROLE_SECTIONS.map((s) => (
@@ -156,64 +152,57 @@ export function AssignPersonModal({
                   key={s.role}
                   type="button"
                   onClick={() => handleRoleChange(s.role)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     projectRole === s.role
-                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                      : 'bg-white text-surface-600 border-surface-300 hover:border-primary-400 hover:text-primary-600'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
                   }`}
                 >
                   {ROLE_LABELS[s.role]}
                 </button>
               ))}
             </div>
-            {section && (
-              <p className="text-[11px] text-surface-400 mt-1.5">
-                Showing{' '}
-                {allowedCategories.map((c) => c).join(' / ')}{' '}
-                records only.
-              </p>
-            )}
           </div>
 
           {/* Search */}
           <div className="relative">
             <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none"
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
             />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name…"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-surface-300 text-sm bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
+              placeholder="Search by person name or SRN…"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-2xs"
             />
           </div>
 
           {/* People list with checkboxes */}
-          <div className="border border-surface-200 rounded-xl overflow-hidden">
+          <div className="border border-slate-200 rounded-2xl overflow-hidden">
             {/* Select-all header */}
             {availablePeople.length > 1 && (
-              <label className="flex items-center gap-3 px-4 py-2.5 bg-surface-50 border-b border-surface-200 cursor-pointer hover:bg-surface-100 transition-colors">
-                <span
-                  onClick={toggleAll}
-                  className="text-primary-600 flex-shrink-0 cursor-pointer"
-                >
-                  {allSelected ? <CheckSquare size={18} /> : <Square size={18} className="text-surface-400" />}
+              <div
+                onClick={toggleAll}
+                className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+              >
+                <span className="text-indigo-600 shrink-0">
+                  {allSelected ? <CheckSquare size={16} /> : <Square size={16} className="text-slate-400" />}
                 </span>
-                <span className="text-xs font-semibold text-surface-700">
-                  {allSelected ? 'Deselect all' : `Select all (${availablePeople.length})`}
+                <span className="text-xs font-bold text-slate-700">
+                  {allSelected ? 'Deselect All' : `Select All (${availablePeople.length})`}
                 </span>
-              </label>
+              </div>
             )}
 
-            <div className="max-h-52 overflow-y-auto divide-y divide-surface-100">
+            <div className="max-h-52 overflow-y-auto divide-y divide-slate-100">
               {isLoading ? (
                 <div className="flex justify-center py-8">
                   <Spinner size="sm" />
                 </div>
               ) : availablePeople.length === 0 ? (
-                <p className="text-sm text-surface-400 px-4 py-6 text-center">
+                <p className="text-xs text-slate-400 px-4 py-6 text-center">
                   {search ? 'No matching people found.' : 'All eligible people are already assigned.'}
                 </p>
               ) : (
@@ -222,31 +211,31 @@ export function AssignPersonModal({
                   return (
                     <label
                       key={p.id}
-                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm hover:bg-surface-50 transition-colors ${
-                        checked ? 'bg-primary-50' : ''
+                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-xs hover:bg-slate-50 transition-colors ${
+                        checked ? 'bg-indigo-50/50' : ''
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => togglePerson(p.id)}
-                        className="w-4 h-4 rounded text-primary-600 border-surface-300 cursor-pointer"
+                        className="w-4 h-4 rounded text-indigo-600 border-slate-300 cursor-pointer"
                       />
                       <span className="flex-1 min-w-0">
-                        <span className="font-medium text-surface-900 truncate block">{p.full_name}</span>
+                        <span className="font-bold text-slate-900 truncate block">{p.full_name}</span>
                         {p.category === 'student' && p.usn_employee_id ? (
-                          <span className="text-[11px] text-surface-500 font-medium block">
+                          <span className="text-[11px] text-slate-500 font-medium block">
                             SRN: <span className="font-mono">{p.usn_employee_id.replace(/^SRN:\s*/i, '')}</span>
                           </span>
                         ) : (
                           p.designation && (
-                            <span className="text-[11px] text-surface-400 block">{p.designation}</span>
+                            <span className="text-[11px] text-slate-400 block">{p.designation}</span>
                           )
                         )}
                       </span>
-                      <Badge variant={CATEGORY_BADGE[p.category]} className="flex-shrink-0 capitalize text-[10px]">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
                         {p.category}
-                      </Badge>
+                      </span>
                     </label>
                   );
                 })
@@ -255,28 +244,39 @@ export function AssignPersonModal({
           </div>
 
           {selectedIds.size > 0 && (
-            <p className="text-xs text-primary-700 font-semibold">
+            <p className="text-xs text-indigo-600 font-bold">
               {selectedIds.size} person{selectedIds.size !== 1 ? 's' : ''} selected as{' '}
               {ROLE_LABELS[projectRole]}
             </p>
           )}
 
-          {error && <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">{error}</p>}
+          {error && <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200">{error}</p>}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-200 bg-surface-50 flex-shrink-0">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
+        <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
+          <button
             type="button"
-            disabled={selectedIds.size === 0}
-            isLoading={isSaving}
-            onClick={handleAssign}
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
           >
-            Assign Selected ({selectedIds.size})
-          </Button>
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={selectedIds.size === 0 || isSaving}
+            onClick={handleAssign}
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
+          >
+            {isSaving ? (
+              <>
+                <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <span>Assigning…</span>
+              </>
+            ) : (
+              <span>Assign Selected ({selectedIds.size})</span>
+            )}
+          </button>
         </div>
       </div>
     </div>

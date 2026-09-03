@@ -4,7 +4,7 @@ import { surveyService } from '@/services/surveyService';
 import type { SurveyResponseData } from '@/types/survey';
 import { IndividualSurveyReport } from '@/features/reports/components/IndividualSurveyReport';
 import { Spinner } from '@/components/ui';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export const SurveyDetailsPage: React.FC = () => {
   const { surveyId } = useParams<{ surveyId: string }>();
@@ -21,13 +21,13 @@ export const SurveyDetailsPage: React.FC = () => {
       try {
         const data = await surveyService.fetchCompleteSurvey(surveyId);
         if (!data) {
-          setError(`Survey record not found in database for ID: ${surveyId}`);
+          setError(`Survey record not found for ID: ${surveyId}`);
         } else {
           setSurvey(data);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching survey details:', err);
-        setError(err.message || 'Failed to load survey details');
+        setError(err instanceof Error ? err.message : 'Failed to load survey details');
       } finally {
         setLoading(false);
       }
@@ -37,29 +37,30 @@ export const SurveyDetailsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8">
         <Spinner size="lg" />
-        <span className="text-xs font-semibold text-slate-500 mt-2">Loading hydrated survey collection details...</span>
+        <span className="text-xs font-semibold text-slate-500 mt-3">Loading survey record details…</span>
       </div>
     );
   }
 
   if (error || !survey) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center space-y-6">
-          <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-950/30 rounded-full flex items-center justify-center">
-            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-xl text-center space-y-4 animate-fade-in">
+          <div className="mx-auto w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
+            <AlertCircle size={26} />
           </div>
-          <h2 className="text-xl font-black text-slate-950 dark:text-white">Failed to Load Survey</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            {error || 'The requested survey record does not exist or could not be loaded from the database.'}
+          <h2 className="text-xl font-bold text-slate-900">Survey Record Not Found</h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            {error || 'The requested survey record does not exist or has been removed.'}
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="w-full py-3 bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold rounded-2xl text-xs transition-all shadow-md"
+            className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all cursor-pointer inline-flex items-center justify-center gap-2"
           >
-            Go Back
+            <ArrowLeft size={14} />
+            <span>Go Back</span>
           </button>
         </div>
       </div>

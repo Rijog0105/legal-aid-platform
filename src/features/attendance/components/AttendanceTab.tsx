@@ -438,7 +438,13 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                                 : '—'}
                             </td>
                             <td className="px-5 py-3">
-                              {attendee.distance !== null ? `${attendee.distance} m` : '—'}
+                              {attendee.distance !== null ? (
+                                <span className={attendee.gps_status === 'Outside Radius' || attendee.status === 'rejected' ? 'font-black text-red-600' : 'text-surface-700'}>
+                                  {attendee.distance} m
+                                </span>
+                              ) : (
+                                '—'
+                              )}
                             </td>
                             <td className="px-5 py-3">
                               <span
@@ -446,7 +452,7 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                                   attendee.gps_status === 'Within Radius'
                                     ? 'bg-emerald-50 text-emerald-700'
                                     : attendee.gps_status === 'Outside Radius'
-                                    ? 'bg-red-50 text-red-700'
+                                    ? 'bg-red-100 text-red-800 border border-red-200'
                                     : attendee.gps_status === 'No GPS'
                                     ? 'bg-amber-50 text-amber-700'
                                     : 'bg-surface-100 text-surface-600'
@@ -456,17 +462,22 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                               </span>
                             </td>
                             <td className="px-5 py-3">
-                              <span
-                                className={`px-2 py-1 rounded-lg text-[9px] font-extrabold uppercase ${
-                                  attendee.status === 'present'
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : attendee.status === 'rejected'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-amber-100 text-amber-800'
-                                }`}
-                              >
-                                {attendee.status}
-                              </span>
+                              {attendee.status === 'rejected' ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-300 shadow-2xs">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                                  REJECTED (OUT OF RADIUS)
+                                </span>
+                              ) : (
+                                <span
+                                  className={`px-2 py-1 rounded-lg text-[9px] font-extrabold uppercase ${
+                                    attendee.status === 'present'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-amber-100 text-amber-800'
+                                  }`}
+                                >
+                                  {attendee.status}
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -481,8 +492,8 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                     <div className="text-center py-6 text-xs text-surface-400 italic">No roster members assigned.</div>
                   ) : (
                     attendees.map((attendee) => (
-                      <div key={attendee.user_id} className="p-4 space-y-2 hover:bg-surface-50/50">
-                        <div className="flex items-center justify-between">
+                      <div key={attendee.user_id} className={`p-4 space-y-2 hover:bg-surface-50/50 ${attendee.status === 'rejected' ? 'bg-red-50/30' : ''}`}>
+                        <div className="flex items-center justify-between gap-2">
                           <div className="flex flex-col">
                             <span className="font-bold text-surface-900 text-sm">{attendee.name}</span>
                             {attendee.category === 'student' && attendee.usn_employee_id && (
@@ -491,21 +502,27 @@ export function AttendanceTab({ campId, phase }: AttendanceTabProps) {
                               </span>
                             )}
                           </div>
-                          <span
-                            className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase ${
-                              attendee.status === 'present'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : attendee.status === 'rejected'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-amber-100 text-amber-800'
-                            }`}
-                          >
-                            {attendee.status}
-                          </span>
+                          {attendee.status === 'rejected' ? (
+                            <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-300">
+                              REJECTED (OUT OF RADIUS)
+                            </span>
+                          ) : (
+                            <span
+                              className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase ${
+                                attendee.status === 'present'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}
+                            >
+                              {attendee.status}
+                            </span>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-1 text-xs text-surface-500">
                           <span>Role: {attendee.role}</span>
-                          <span>GPS: {attendee.gps_status}</span>
+                          <span className={attendee.gps_status === 'Outside Radius' ? 'text-red-700 font-bold' : ''}>
+                            GPS: {attendee.gps_status} {attendee.distance !== null ? `(${attendee.distance}m)` : ''}
+                          </span>
                           <span className="col-span-2">
                             Logged: {attendee.check_in_time ? new Date(attendee.check_in_time).toLocaleTimeString('en-IN') : '—'}
                           </span>

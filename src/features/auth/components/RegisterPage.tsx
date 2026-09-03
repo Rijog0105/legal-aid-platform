@@ -3,28 +3,58 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Scale, AlertCircle, Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
+import {
+  AlertCircle,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  ArrowLeft,
+  User,
+  Mail,
+  Phone,
+  GraduationCap,
+  Award,
+  Lock,
+  ArrowRight,
+  ShieldCheck,
+} from 'lucide-react';
 import { registerUser } from '@/features/auth/services/registrationService';
 import { ROUTES } from '@/constants';
 
 const registerSchema = z
   .object({
     category: z.enum(['student', 'faculty']),
-    full_name: z.string().min(1, 'Full Name is required').min(2, 'Full Name must be at least 2 characters'),
+    full_name: z
+      .string()
+      .min(1, 'Full Name is required')
+      .min(2, 'Full Name must be at least 2 characters'),
     email: z
       .string()
       .min(1, 'College Email is required')
-      .email('Enter a valid college email address')
+      .email('Enter a valid email address')
       .refine(
-        (val) => val.endsWith('.edu') || val.includes('@') || val.includes('.ac.in'),
-        'Please use your institutional college email'
+        (val) =>
+          val.includes('@') &&
+          (val.endsWith('.edu') ||
+            val.includes('.ac.in') ||
+            val.includes('.edu.in') ||
+            val.includes('@reva') ||
+            val.includes('@student') ||
+            val.includes('@university')),
+        'Please use your institutional or college email address'
       ),
-    phone: z.string().min(1, 'Phone Number is required').min(10, 'Enter a valid 10-digit phone number'),
+    phone: z
+      .string()
+      .min(1, 'Phone Number is required')
+      .min(10, 'Enter a valid 10-digit phone number'),
     usn_employee_id: z.string().optional(),
-    department: z.string().min(1, 'Department is required'),
+    department: z.string().min(1, 'Department / School is required'),
     semester: z.string().optional(),
     designation: z.string().optional(),
-    password: z.string().min(1, 'Password is required').min(6, 'Password must be at least 6 characters'),
+    password: z
+      .string()
+      .min(1, 'Password is required')
+      .min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(1, 'Confirm Password is required'),
   })
   .superRefine((data, ctx) => {
@@ -32,7 +62,7 @@ const registerSchema = z
       if (!data.usn_employee_id || !data.usn_employee_id.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'SRN is required',
+          message: 'SRN / Roll Number is required for students',
           path: ['usn_employee_id'],
         });
       }
@@ -47,13 +77,13 @@ const registerSchema = z
       if (!data.designation || !data.designation.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Designation is required',
+          message: 'Designation is required for faculty',
           path: ['designation'],
         });
       }
     }
 
-    if (data.password !== data.confirmPassword) {
+    if (data.password && data.confirmPassword && data.password !== data.confirmPassword) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Passwords do not match',
@@ -67,14 +97,15 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export function RegisterPage() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [successData, setSuccessData] = useState<{ email: string; category: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmittedSuccess, setIsSubmittedSuccess] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -84,383 +115,385 @@ export function RegisterPage() {
       email: '',
       phone: '',
       usn_employee_id: '',
-      department: '',
-      semester: '',
-      designation: '',
+      department: 'School of Legal Studies',
+      semester: 'Semester 1',
+      designation: 'Assistant Professor',
       password: '',
       confirmPassword: '',
     },
   });
 
-  const category = watch('category');
+  const selectedCategory = watch('category');
 
   const onSubmit = async (values: RegisterFormValues) => {
     setServerError(null);
-    const result = await registerUser({
-      full_name: values.full_name,
-      email: values.email,
-      phone: values.phone,
-      category: values.category,
-      usn_employee_id: values.usn_employee_id || null,
-      department: values.department,
-      semester: values.category === 'student' ? values.semester : null,
-      designation: values.category === 'faculty' ? values.designation : null,
-      password: values.password,
-    });
+    try {
+      const result = await registerUser({
+        email: values.email.trim(),
+        password: values.password,
+        full_name: values.full_name.trim(),
+        category: values.category,
+        phone: values.phone.trim(),
+        usn_employee_id: values.usn_employee_id ? values.usn_employee_id.trim() : undefined,
+        department: values.department.trim(),
+        semester: values.category === 'student' ? values.semester?.trim() : undefined,
+        designation: values.category === 'faculty' ? values.designation?.trim() : undefined,
+      });
 
-    if (!result.success) {
-      setServerError(result.error ?? 'Registration failed. Please try again.');
-      return;
+      if (!result.success) {
+        setServerError(result.error ?? 'Registration failed. Please verify your entries and try again.');
+        return;
+      }
+
+      setSuccessData({ email: values.email.trim(), category: values.category });
+    } catch (err) {
+      console.error('Registration error:', err);
+      setServerError('An unexpected error occurred during registration. Please try again.');
     }
-
-    setSubmittedEmail(values.email);
-    setIsSubmittedSuccess(true);
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
-      {/* Branding Header Area */}
-      <div className="w-full max-w-4xl flex flex-col sm:flex-row justify-between items-center mb-6 px-4 gap-4">
-        {/* REVA University Branding */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-2xl sm:text-3xl font-extrabold text-[#F37021] tracking-tight">REVA</span>
-          <span className="text-2xl sm:text-3xl font-semibold text-slate-800 tracking-tight">University</span>
-        </div>
+  /* ─── Success Confirmation Screen ─── */
+  if (successData) {
+    return (
+      <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center px-4 py-8 sm:px-6 relative overflow-hidden font-sans">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-80 bg-gradient-to-b from-orange-100/30 via-indigo-50/20 to-transparent blur-3xl pointer-events-none -z-10" />
 
-        {/* Civic Forge Labs / Product Branding */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shrink-0 shadow-sm">
-            <Scale size={18} className="text-white" />
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-10 max-w-md w-full text-center space-y-6 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.06)]">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm ring-4 ring-emerald-50/60">
+            <CheckCircle2 size={32} />
           </div>
-          <span className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Civic Forge Labs</span>
+
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-slate-900">Registration Submitted</h2>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Your application for <strong className="text-slate-800 font-semibold">{successData.email}</strong> has been received.
+            </p>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left text-xs space-y-2.5">
+            <p className="font-bold text-slate-800 flex items-center gap-1.5">
+              <ShieldCheck size={16} className="text-indigo-600 shrink-0" />
+              <span>Next Verification Steps</span>
+            </p>
+            <ol className="list-decimal pl-4 space-y-1.5 text-slate-600 text-[11px] leading-relaxed">
+              <li>Check your inbox and verify your email link from Supabase.</li>
+              <li>Your faculty coordinator will approve your account to activate access.</li>
+            </ol>
+          </div>
+
+          <button
+            onClick={() => navigate(ROUTES.LOGIN)}
+            className="w-full h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition-all cursor-pointer flex items-center justify-center"
+          >
+            Return to Sign In
+          </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Floating Card */}
-      <div className="w-full max-w-4xl bg-white rounded-3xl border border-surface-200 shadow-sm p-6 sm:p-8 md:p-10">
-        {isSubmittedSuccess ? (
-          <div className="text-center space-y-6 animate-fade-in max-w-lg mx-auto py-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
-              <CheckCircle2 size={36} />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-slate-900">Registration Successful!</h2>
-              <p className="text-sm text-slate-600">
-                Your account has been created successfully.
-              </p>
-            </div>
-            
-            <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100 text-slate-800 text-sm space-y-3 max-w-md mx-auto shadow-sm text-center">
-              <p className="font-bold flex items-center justify-center gap-2 text-indigo-950">
-                <span>📧</span> Please check your email to verify your account.
-              </p>
-              <p className="text-xs text-indigo-900 leading-relaxed">
-                We’ve sent a verification link to {submittedEmail ? <span className="font-bold text-indigo-950">{submittedEmail}</span> : 'your registered email address'}.
-                You must verify your email before you can log in.
-              </p>
-            </div>
+  return (
+    <div className="min-h-screen bg-[#fafbfc] flex flex-col justify-center items-center px-4 py-8 sm:px-6 relative overflow-hidden font-sans">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-80 bg-gradient-to-b from-orange-100/30 via-indigo-50/20 to-transparent blur-3xl pointer-events-none -z-10" />
 
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-left space-y-3">
-              <div>
-                <span className="font-bold text-slate-700">Didn't receive the email?</span>
-                <p className="mt-0.5 text-slate-500">Check your Inbox and your <span className="font-semibold text-slate-700">Spam/Junk</span> folder.</p>
-              </div>
-              <div className="border-t border-slate-200 pt-2.5 mt-2.5">
-                <span className="font-bold text-slate-700">Account Activation Workflow:</span>
-                <p className="mt-1 text-slate-500">
-                  After completing email verification, your account registration goes through a standard approval process by a Faculty Coordinator or Administrator before you can log in.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.LOGIN)}
-                className="w-full py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm shadow-md transition-all cursor-pointer select-none active:scale-95"
-              >
-                Return to Login
-              </button>
-            </div>
+      <div className="w-full max-w-lg space-y-6 relative z-10">
+        {/* Brand Header with Official REVA Logo */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-sm border border-slate-200/80">
+            <img
+              src="/reva-logo.png"
+              alt="REVA University Logo"
+              className="h-12 sm:h-14 w-auto object-contain"
+            />
           </div>
-        ) : (
-          <div>
-            {/* Back to Login link */}
+          <div className="space-y-0.5">
+            <p className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider">
+              School of Legal Studies
+            </p>
+            <p className="text-[11px] font-semibold text-slate-400">
+              Legal Aid Clinic & Fieldwork Operations Platform
+            </p>
+          </div>
+        </div>
+
+        {/* Register Card */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-9 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.06)] space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Create Account</h1>
+              <p className="text-xs text-slate-500 mt-0.5">Register for legal aid fieldwork and coordination</p>
+            </div>
             <Link
               to={ROUTES.LOGIN}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-primary-600 mb-6 transition-colors"
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1 shrink-0"
             >
-              <ArrowLeft size={14} /> Back to Sign In
+              <ArrowLeft size={13} /> Sign In
             </Link>
+          </div>
 
-            <h2 className="text-2xl font-extrabold text-slate-900 mb-1">Create an Account</h2>
-            <p className="text-sm text-slate-500 mb-6 animate-fade-in" key={category}>
-              {category === 'faculty'
-                ? 'Register as a Faculty Coordinator.'
-                : 'Register as a Student Volunteer.'}
-            </p>
+          {serverError && (
+            <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-red-50/90 border border-red-200/90 text-red-800 text-xs animate-fade-in">
+              <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
+              <span className="leading-relaxed font-semibold">{serverError}</span>
+            </div>
+          )}
 
-            {serverError && (
-              <div className="flex items-start gap-2.5 p-3.5 mb-5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs leading-relaxed animate-fade-in">
-                <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
-                <span>{serverError}</span>
+          {/* Role Switcher */}
+          <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setValue('category', 'student', { shouldValidate: true })}
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                selectedCategory === 'student'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <GraduationCap size={16} className="shrink-0" />
+              <span className="truncate">Student Volunteer</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setValue('category', 'faculty', { shouldValidate: true })}
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-2 sm:px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                selectedCategory === 'faculty'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Award size={16} className="shrink-0" />
+              <span className="truncate">Faculty Coordinator</span>
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5 sm:space-y-6">
+            {/* Full Name */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Full Name *</label>
+              <div
+                className={`relative flex items-center rounded-2xl border bg-slate-50/50 hover:bg-white focus-within:bg-white focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all ${
+                  errors.full_name ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                }`}
+              >
+                <div className="pl-4 pr-1 text-slate-400 pointer-events-none flex items-center">
+                  <User size={17} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. Rahul Sharma"
+                  {...register('full_name')}
+                  className="w-full px-3 py-3 rounded-2xl text-sm font-semibold bg-transparent text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                />
+              </div>
+              {errors.full_name && <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.full_name.message}</p>}
+            </div>
+
+            {/* Email & Phone */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">College Email *</label>
+                <div
+                  className={`relative flex items-center rounded-2xl border bg-slate-50/50 hover:bg-white focus-within:bg-white focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all ${
+                    errors.email ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="pl-4 pr-1 text-slate-400 pointer-events-none flex items-center">
+                    <Mail size={17} />
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="name@university.edu"
+                    {...register('email')}
+                    className="w-full px-3 py-3 rounded-2xl text-sm font-semibold bg-transparent text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                  />
+                </div>
+                {errors.email && <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.email.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Phone Number *</label>
+                <div
+                  className={`relative flex items-center rounded-2xl border bg-slate-50/50 hover:bg-white focus-within:bg-white focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all ${
+                    errors.phone ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="pl-4 pr-1 text-slate-400 pointer-events-none flex items-center">
+                    <Phone size={17} />
+                  </div>
+                  <input
+                    type="tel"
+                    placeholder="9876543210"
+                    {...register('phone')}
+                    className="w-full px-3 py-3 rounded-2xl text-sm font-semibold bg-transparent text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                  />
+                </div>
+                {errors.phone && <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.phone.message}</p>}
+              </div>
+            </div>
+
+            {/* Role-Specific Fields */}
+            {selectedCategory === 'student' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">SRN / Roll No *</label>
+                  <input
+                    type="text"
+                    placeholder="R22LA001"
+                    {...register('usn_employee_id')}
+                    className={`w-full px-3.5 py-3 rounded-2xl border text-sm font-semibold bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all ${
+                      errors.usn_employee_id ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                    }`}
+                  />
+                  {errors.usn_employee_id && <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.usn_employee_id.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Semester *</label>
+                  <select
+                    {...register('semester')}
+                    className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-sm font-semibold bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((sem) => (
+                      <option key={sem} value={`Semester ${sem}`}>
+                        Semester {sem}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Department *</label>
+                  <input
+                    type="text"
+                    placeholder="School of Legal Studies"
+                    {...register('department')}
+                    className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-sm font-semibold bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Designation *</label>
+                  <input
+                    type="text"
+                    placeholder="Assistant Professor"
+                    {...register('designation')}
+                    className={`w-full px-3.5 py-3 rounded-2xl border text-sm font-semibold bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all ${
+                      errors.designation ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                    }`}
+                  />
+                  {errors.designation && <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.designation.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Department / School *</label>
+                  <input
+                    type="text"
+                    placeholder="School of Legal Studies"
+                    {...register('department')}
+                    className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-sm font-semibold bg-slate-50/50 hover:bg-white focus:bg-white text-slate-900 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                  />
+                </div>
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
-              {/* Account Type Dropdown */}
-              <div>
-                <label htmlFor="category" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Account Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="category"
-                  {...register('category')}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
+            {/* Password & Confirm */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Password *</label>
+                <div
+                  className={`relative flex items-center rounded-2xl border bg-slate-50/50 hover:bg-white focus-within:bg-white focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all ${
+                    errors.password ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                  }`}
                 >
-                  <option value="student">Student Volunteer</option>
-                  <option value="faculty">Faculty</option>
-                </select>
+                  <div className="pl-4 pr-1 text-slate-400 pointer-events-none flex items-center">
+                    <Lock size={17} />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    {...register('password')}
+                    className="w-full px-3 py-3 rounded-2xl text-sm font-semibold bg-transparent text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="pr-3.5 pl-2 text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.password.message}</p>}
               </div>
 
-              {/* Form Grid Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                {/* Column 1 */}
-                <div className="space-y-5">
-                  {/* Full Name */}
-                  <div>
-                    <label htmlFor="full_name" className="block text-xs font-semibold text-slate-700 mb-1">
-                      Full Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="full_name"
-                      type="text"
-                      placeholder="e.g. Ananya Sharma"
-                      {...register('full_name')}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                    />
-                    {errors.full_name && (
-                      <p className="text-xs text-red-600 mt-1">{errors.full_name.message}</p>
-                    )}
-                  </div>
-
-                  {/* College Email */}
-                  <div>
-                    <label htmlFor="email" className="block text-xs font-semibold text-slate-700 mb-1">
-                      College Email <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      placeholder="name@university.edu"
-                      {...register('email')}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                    />
-                    {errors.email && (
-                      <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>
-                    )}
-                  </div>
-
-                  {/* SRN (Student Only) */}
-                  {category === 'student' && (
-                    <div className="animate-fade-in">
-                      <label htmlFor="usn_employee_id" className="block text-xs font-semibold text-slate-700 mb-1">
-                        SRN <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="usn_employee_id"
-                        type="text"
-                        placeholder="Enter your SRN"
-                        {...register('usn_employee_id')}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                      />
-                      {errors.usn_employee_id && (
-                        <p className="text-xs text-red-600 mt-1">{errors.usn_employee_id.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Designation (Faculty Only, Dropdown) */}
-                  {category === 'faculty' && (
-                    <div className="animate-fade-in">
-                      <label htmlFor="designation" className="block text-xs font-semibold text-slate-700 mb-1">
-                        Designation <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="designation"
-                        {...register('designation')}
-                        defaultValue=""
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
-                      >
-                        <option value="" disabled>Select Designation</option>
-                        <option value="Professor">Professor</option>
-                        <option value="Associate Professor">Associate Professor</option>
-                        <option value="Assistant Professor">Assistant Professor</option>
-                      </select>
-                      {errors.designation && (
-                        <p className="text-xs text-red-650 mt-1">{errors.designation.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Password */}
-                  <div>
-                    <label htmlFor="password" className="block text-xs font-semibold text-slate-700 mb-1">
-                      Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        {...register('password')}
-                        className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-1">Password must be at least 6 characters long.</p>
-                    {errors.password && (
-                      <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Column 2 */}
-                <div className="space-y-5">
-                  {/* Department */}
-                  <div>
-                    <label htmlFor="department" className="block text-xs font-semibold text-slate-700 mb-1">
-                      Department <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="department"
-                      type="text"
-                      placeholder="e.g. School of Law"
-                      {...register('department')}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                    />
-                    {errors.department && (
-                      <p className="text-xs text-red-600 mt-1">{errors.department.message}</p>
-                    )}
-                  </div>
-
-                  {/* Phone Number */}
-                  <div>
-                    <label htmlFor="phone" className="block text-xs font-semibold text-slate-700 mb-1">
-                      Phone Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      placeholder="9876543210"
-                      {...register('phone')}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                    />
-                    {errors.phone && (
-                      <p className="text-xs text-red-600 mt-1">{errors.phone.message}</p>
-                    )}
-                  </div>
-
-                  {/* Semester Dropdown (Student Only) */}
-                  {category === 'student' && (
-                    <div className="animate-fade-in">
-                      <label htmlFor="semester" className="block text-xs font-semibold text-slate-700 mb-1">
-                        Semester <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="semester"
-                        {...register('semester')}
-                        defaultValue=""
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all cursor-pointer"
-                      >
-                        <option value="" disabled>Select Semester</option>
-                        <option value="Semester 1">Semester 1</option>
-                        <option value="Semester 2">Semester 2</option>
-                        <option value="Semester 3">Semester 3</option>
-                        <option value="Semester 4">Semester 4</option>
-                        <option value="Semester 5">Semester 5</option>
-                        <option value="Semester 6">Semester 6</option>
-                        <option value="Semester 7">Semester 7</option>
-                        <option value="Semester 8">Semester 8</option>
-                      </select>
-                      {errors.semester && (
-                        <p className="text-xs text-red-600 mt-1">{errors.semester.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Employee ID (Faculty Only, Optional) */}
-                  {category === 'faculty' && (
-                    <div className="animate-fade-in">
-                      <label htmlFor="usn_employee_id" className="block text-xs font-semibold text-slate-700 mb-1">
-                        Employee ID <span className="text-slate-400 font-normal">(Optional)</span>
-                      </label>
-                      <input
-                        id="usn_employee_id"
-                        type="text"
-                        placeholder="Enter Employee ID"
-                        {...register('usn_employee_id')}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                      />
-                      {errors.usn_employee_id && (
-                        <p className="text-xs text-red-650 mt-1">{errors.usn_employee_id.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Confirm Password */}
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-700 mb-1">
-                      Confirm Password <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="confirmPassword"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      {...register('confirmPassword')}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all"
-                    />
-                    {errors.confirmPassword && (
-                      <p className="text-xs text-red-600 mt-1">{errors.confirmPassword.message}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit button */}
-              <div className="pt-4">
-                <button
-                  id="btn-register-submit"
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Confirm Password *</label>
+                <div
+                  className={`relative flex items-center rounded-2xl border bg-slate-50/50 hover:bg-white focus-within:bg-white focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all ${
+                    errors.confirmPassword ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                  }`}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Submitting Registration…
-                    </>
-                  ) : (
-                    'Submit Registration'
-                  )}
-                </button>
+                  <div className="pl-4 pr-1 text-slate-400 pointer-events-none flex items-center">
+                    <Lock size={17} />
+                  </div>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    {...register('confirmPassword')}
+                    className="w-full px-3 py-3 rounded-2xl text-sm font-semibold bg-transparent text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="pr-3.5 pl-2 text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                {errors.confirmPassword && <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.confirmPassword.message}</p>}
               </div>
+            </div>
 
-              <p className="text-xs text-slate-500 text-center pt-2">
-                Already registered?{' '}
-                <Link to={ROUTES.LOGIN} className="font-bold text-primary-600 hover:underline">
-                  Sign in here
-                </Link>
-              </p>
-            </form>
+            {/* Submit Button */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-indigo-600/25 disabled:opacity-60 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <span>Creating Account…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Create Institutional Account</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+            <span>Already registered? </span>
+            <Link to={ROUTES.LOGIN} className="font-bold text-indigo-600 hover:text-indigo-700 hover:underline">
+              Sign In
+            </Link>
           </div>
-        )}
+        </div>
+
+        {/* Security Trust Badge */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400">
+            <ShieldCheck size={14} className="text-slate-400" />
+            <span>Role-Based Access Control • Version 1.0.0</span>
+          </div>
+        </div>
       </div>
     </div>
   );

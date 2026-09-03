@@ -22,9 +22,8 @@ export function InstallPromptCard() {
       return;
     }
 
-    // 2. Role boundary check
-    const isAllowedRole = roleName === 'volunteer' || roleName === 'team_lead';
-    if (!isAuthenticated || !isAllowedRole) {
+    // 2. Auth check
+    if (!isAuthenticated) {
       return;
     }
 

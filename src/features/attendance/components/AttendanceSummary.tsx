@@ -364,7 +364,13 @@ export function AttendanceSummary({
                         : '—'}
                     </td>
                     <td className="px-5 py-3.5">
-                      {attendee.distance !== null ? `${attendee.distance} m` : '—'}
+                      {attendee.distance !== null ? (
+                        <span className={attendee.gps_status === 'Outside Radius' || attendee.status === 'rejected' ? 'font-black text-red-600' : 'text-surface-700'}>
+                          {attendee.distance} m
+                        </span>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
                       {attendee.status === 'pending' ? (
@@ -374,7 +380,7 @@ export function AttendanceSummary({
                           className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
                             attendee.gps_status === 'Within Radius'
                               ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-red-50 text-red-700'
+                              : 'bg-red-100 text-red-800 border border-red-200'
                           }`}
                         >
                           {attendee.gps_status}
@@ -382,17 +388,24 @@ export function AttendanceSummary({
                       )}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span
-                        className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase ${
-                          attendee.status === 'present'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : attendee.status === 'rejected'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {attendee.status === 'pending' ? 'ABSENT' : attendee.status}
-                      </span>
+                      {attendee.status === 'rejected' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-300 shadow-2xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                          REJECTED (OUT OF RADIUS)
+                        </span>
+                      ) : (
+                        <span
+                          className={`px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase ${
+                            attendee.status === 'present'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : attendee.status === 'pending'
+                              ? 'bg-surface-100 text-surface-600'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {attendee.status === 'pending' ? 'ABSENT' : attendee.status}
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 text-red-600 max-w-xs truncate" title={attendee.rejection_reason || ''}>
                       {attendee.rejection_reason || '—'}
@@ -410,8 +423,8 @@ export function AttendanceSummary({
             <div className="text-center py-8 text-xs text-surface-400 italic">No matching attendees found.</div>
           ) : (
             processedAttendees.map((attendee) => (
-              <div key={attendee.user_id} className="p-4 space-y-3.5 hover:bg-surface-50/20">
-                <div className="flex items-center justify-between">
+              <div key={attendee.user_id} className={`p-4 space-y-3.5 hover:bg-surface-50/20 ${attendee.status === 'rejected' ? 'bg-red-50/30' : ''}`}>
+                <div className="flex items-center justify-between gap-2">
                   <div>
                     <h4 className="font-bold text-surface-900 text-sm">{attendee.name}</h4>
                     {attendee.category === 'student' && attendee.usn_employee_id && (
@@ -421,17 +434,23 @@ export function AttendanceSummary({
                     )}
                     <span className="text-[10px] text-surface-400 block">{attendee.role}</span>
                   </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase ${
-                      attendee.status === 'present'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : attendee.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {attendee.status === 'pending' ? 'ABSENT' : attendee.status}
-                  </span>
+                  {attendee.status === 'rejected' ? (
+                    <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-300">
+                      REJECTED (OUT OF RADIUS)
+                    </span>
+                  ) : (
+                    <span
+                      className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase ${
+                        attendee.status === 'present'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : attendee.status === 'pending'
+                          ? 'bg-surface-100 text-surface-600'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {attendee.status === 'pending' ? 'ABSENT' : attendee.status}
+                    </span>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs pt-1.5 border-t border-surface-100">

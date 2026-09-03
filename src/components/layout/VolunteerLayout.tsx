@@ -6,10 +6,9 @@ import { ROUTES, ROLES } from '@/constants';
 import { fetchNotifications, markNotificationRead } from '@/features/attendance/services/attendanceService';
 import type { Notification } from '@/types';
 import { supabase } from '@/services/supabase';
-import { NetworkStatusBar } from '@/components/pwa/NetworkStatusBar';
 
 /**
- * Mobile-first layout for volunteers with bottom navigation and in-app Notification Center.
+ * Mobile-first field layout for volunteers with modern top bar and in-app Notification Center.
  */
 export function VolunteerLayout() {
   const { logout, displayName, roleName, userId } = useAuth();
@@ -25,7 +24,6 @@ export function VolunteerLayout() {
     try {
       const data = await fetchNotifications(userId);
       
-      // Parse session IDs from the notification links
       const sessionIds = data
         .map((n) => {
           const match = n.link?.match(/session_id=([^&]+)/);
@@ -34,7 +32,6 @@ export function VolunteerLayout() {
         .filter((id): id is string => !!id);
 
       if (sessionIds.length > 0) {
-        // Query status and expiry of those sessions in bulk
         const { data: sessions } = await supabase
           .from('attendance_sessions')
           .select('id, status, expires_at')
@@ -71,7 +68,7 @@ export function VolunteerLayout() {
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 20000); // Poll notifications every 20s
+    const interval = setInterval(loadNotifications, 20000);
     return () => clearInterval(interval);
   }, [loadNotifications]);
 
@@ -94,78 +91,100 @@ export function VolunteerLayout() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-50">
-      {/* ─── Top Bar ─── */}
-      <header className="sticky top-0 z-10 glass border-b border-surface-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isTeamLead && (
-              <button
-                onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}
-                className="flex items-center gap-0.5 text-xs font-semibold text-primary-600 bg-primary-50 px-2 py-1 rounded-lg border border-primary-100 hover:bg-primary-100 transition-colors cursor-pointer"
-                title="Back to Team Lead Workspace"
-              >
-                <ChevronLeft size={14} />
-                Workspace
-              </button>
-            )}
-            <div>
-              <h1 className="text-sm font-bold text-surface-900">Legal Aid Camp</h1>
-              <p className="text-xs text-surface-500">{displayName || (isTeamLead ? 'Team Lead' : 'Volunteer')}</p>
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans antialiased text-slate-900">
+      {/* ─── Modern App Header Bar ─── */}
+      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-3 sm:px-4 py-2.5 shadow-2xs">
+        <div className="max-w-lg mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+            <img
+              src="/reva-logo.png"
+              alt="REVA University"
+              className="h-7 sm:h-8 w-auto object-contain shrink-0"
+            />
+
+            <div className="flex items-center border-l border-slate-200 pl-1.5 sm:pl-2 shrink-0">
+              <span className="text-[10px] sm:text-[11px] font-black tracking-tight text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded-md sm:rounded-lg border border-indigo-100 shadow-2xs">
+                CivicForgeLabs
+              </span>
+            </div>
+
+            <div className="border-l border-slate-200 pl-1.5 sm:pl-2 min-w-0">
+              <p className="text-[11px] font-bold text-slate-900 leading-tight truncate max-w-[80px] xs:max-w-[120px]">
+                {displayName || (isTeamLead ? 'Team Lead' : 'Volunteer')}
+              </p>
+              <span className="text-[9px] font-extrabold text-indigo-600 uppercase tracking-wider block truncate">
+                {isTeamLead ? 'Team Lead' : 'Volunteer'}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {/* Single Team Lead switch-back button on top */}
+            {isTeamLead && (
+              <button
+                onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}
+                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-white bg-indigo-600 px-2 sm:px-3 py-1.5 rounded-xl shadow-xs hover:bg-indigo-700 active:scale-95 transition-all cursor-pointer shrink-0"
+                title="Switch back to Team Lead Workspace"
+              >
+                <ChevronLeft size={13} className="shrink-0" />
+                <span className="hidden xs:inline">Back to Team Lead</span>
+                <span className="xs:hidden">Team Lead</span>
+              </button>
+            )}
+
             {/* Notification Bell */}
             <button
               onClick={() => {
                 setShowNotifications(true);
                 loadNotifications();
               }}
-              className="p-2 rounded-xl text-surface-400 hover:text-primary-600 hover:bg-primary-55 transition-colors cursor-pointer relative"
+              className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer relative"
               aria-label="Notifications"
             >
-              <Bell className="w-5 h-5" />
+              <Bell size={18} />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
               )}
             </button>
 
+            {/* Logout */}
             <button
               onClick={handleLogout}
-              className="p-2 rounded-xl text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
               aria-label="Logout"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut size={18} />
             </button>
           </div>
         </div>
       </header>
 
-      {/* ─── Content ─── */}
-      <main className="flex-1 p-4 pb-8 animate-fade-in">
-        <Outlet />
+      {/* ─── Main Content Container ─── */}
+      <main className="flex-1 p-4 sm:p-6 pb-6 animate-fade-in max-w-lg mx-auto w-full flex flex-col justify-between">
+        <div className="flex-1">
+          <Outlet />
+        </div>
       </main>
 
       {/* Notification Center Dialog Modal */}
       {showNotifications && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in"
           onClick={(e) => e.target === e.currentTarget && setShowNotifications(false)}
         >
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-surface-200">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-surface-100 bg-surface-50">
-              <h3 className="text-xs font-bold text-surface-900 uppercase tracking-wider">Notifications</h3>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Field Alerts & Roll Calls</h3>
               <button
                 onClick={() => setShowNotifications(false)}
-                className="text-surface-400 hover:text-surface-600 cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="max-h-[300px] overflow-y-auto divide-y divide-surface-100">
+            <div className="max-h-[320px] overflow-y-auto divide-y divide-slate-100">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-xs text-surface-400 italic">No notifications yet.</div>
+                <div className="p-8 text-center text-xs text-slate-400 italic">No new notifications.</div>
               ) : (
                 notifications.map((n) => (
                   <div
@@ -177,24 +196,24 @@ export function VolunteerLayout() {
                         navigate(n.link);
                       }
                     }}
-                    className={`p-3 text-xs leading-relaxed transition-all ${
+                    className={`p-3.5 text-xs leading-relaxed transition-all ${
                       n.is_expired
-                        ? 'opacity-60 cursor-not-allowed hover:bg-transparent'
-                        : 'cursor-pointer hover:bg-surface-50/50'
-                    } ${!n.is_read && !n.is_expired ? 'bg-primary-50/20' : ''}`}
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'cursor-pointer hover:bg-slate-50'
+                    } ${!n.is_read && !n.is_expired ? 'bg-indigo-50/30' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className={`font-semibold ${!n.is_read && !n.is_expired ? 'text-primary-850 font-bold' : 'text-surface-850'}`}>
+                      <span className={`font-bold ${!n.is_read && !n.is_expired ? 'text-indigo-700' : 'text-slate-800'}`}>
                         {n.is_expired ? `${n.title} (Expired)` : n.title}
                       </span>
-                      {!n.is_read && !n.is_expired && <span className="w-1.5 h-1.5 rounded-full bg-primary-600 flex-shrink-0 mt-1" />}
+                      {!n.is_read && !n.is_expired && <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0 mt-1" />}
                     </div>
-                    <p className="text-surface-500 mt-0.5">
+                    <p className="text-slate-500 text-[11px] mt-0.5">
                       {n.is_expired
-                        ? 'This attendance session has ended and is no longer active.'
+                        ? 'This attendance session has ended and is closed.'
                         : n.message}
                     </p>
-                    <p className="text-[9px] text-surface-400 mt-1">
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
                       {new Date(n.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -204,7 +223,6 @@ export function VolunteerLayout() {
           </div>
         </div>
       )}
-      <NetworkStatusBar />
     </div>
   );
 }

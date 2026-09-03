@@ -25,10 +25,14 @@ export function Card({
   return (
     <div
       className={`
-        bg-white rounded-2xl border border-surface-200
-        shadow-sm shadow-surface-900/5
+        bg-white rounded-3xl border border-slate-200/90
+        shadow-xs shadow-slate-900/5
         ${paddingClasses[padding]}
-        ${hover ? 'hover:shadow-md hover:border-surface-300 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer' : ''}
+        ${
+          hover
+            ? 'hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer'
+            : ''
+        }
         ${className}
       `}
       onClick={onClick}
@@ -64,7 +68,7 @@ export function CardTitle({
   className?: string;
 }) {
   return (
-    <h3 className={`text-lg font-semibold text-surface-900 ${className}`}>
+    <h3 className={`text-base sm:text-lg font-bold text-slate-900 tracking-tight ${className}`}>
       {children}
     </h3>
   );

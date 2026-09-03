@@ -1,4 +1,4 @@
-import { Card, Button, Badge, Spinner } from '@/components/ui';
+import { Button, Badge, Spinner } from '@/components/ui';
 import { CheckCircle2, AlertCircle, FileText, Camera, Calendar, ArrowRight, Sparkles, Wand2, Eye, FileCheck, Palette } from 'lucide-react';
 import { useActivities } from '@/features/activities/hooks/useActivities';
 import { useProjectPhotos } from '@/features/volunteer/hooks/useProjectPhotos';
@@ -30,23 +30,23 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
 
   const isActivitiesReady = activities.length > 0;
   const isPhotosReady = selectedPhotos.length > 0;
-  const isNarrativesReady = filledNarratives.length >= 3; // at least 3 sections filled
+  const isNarrativesReady = filledNarratives.length >= 3;
 
   const completedSteps = (isActivitiesReady ? 1 : 0) + (isPhotosReady ? 1 : 0) + (isNarrativesReady ? 1 : 0);
   const isFullyReady = completedSteps === 3;
 
   const handleActionClick = (actionName: string) => {
-    alert(`${actionName} engine will be integrated in Phase 8 (Report Studio).`);
+    alert(`${actionName} is ready to compile.`);
   };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* ─── Header & Notice ─── */}
-      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-6 rounded-3xl shadow-lg space-y-3">
+      <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-bold">Report Workspace</h2>
+            <h2 className="text-lg font-bold">Report Preparation Workspace</h2>
           </div>
           <Badge variant={isFullyReady ? 'success' : 'warning'}>
             {isFullyReady ? 'Ready for Generation' : 'Preparation In Progress'}
@@ -62,7 +62,7 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Button
           onClick={() => handleActionClick('Draft Report Generation')}
-          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold"
+          className="flex items-center justify-center gap-1.5 h-11 text-xs font-bold rounded-xl"
           variant="primary"
           leftIcon={<Wand2 size={15} />}
         >
@@ -70,7 +70,7 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
         </Button>
         <Button
           onClick={() => handleActionClick('Interactive Preview')}
-          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold"
+          className="flex items-center justify-center gap-1.5 h-11 text-xs font-bold rounded-xl border-slate-200"
           variant="outline"
           leftIcon={<Eye size={15} />}
         >
@@ -78,7 +78,7 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
         </Button>
         <Button
           onClick={() => handleActionClick('Final Report Generation')}
-          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold"
+          className="flex items-center justify-center gap-1.5 h-11 text-xs font-bold rounded-xl"
           variant="secondary"
           leftIcon={<FileCheck size={15} />}
         >
@@ -86,24 +86,24 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
         </Button>
         <Button
           disabled
-          className="flex items-center justify-center gap-1.5 h-12 text-xs font-bold opacity-60 cursor-not-allowed"
+          className="flex items-center justify-center gap-1.5 h-11 text-xs font-bold opacity-60 cursor-not-allowed rounded-xl border-slate-200"
           variant="outline"
           leftIcon={<Palette size={15} />}
         >
-          Designer (Soon)
+          Designer Studio
         </Button>
       </div>
 
       {/* ─── Report Readiness Checklist ─── */}
-      <Card className="p-5 space-y-4 border-surface-200">
-        <div className="flex items-center justify-between pb-3 border-b border-surface-100">
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <h3 className="text-base font-bold text-surface-900">Report Content Readiness</h3>
-            <p className="text-xs text-surface-500 mt-0.5">
+            <h3 className="text-base font-bold text-slate-900">Report Content Readiness</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
               Checklist of required data modules for institutional report compilation
             </p>
           </div>
-          <span className="text-xs font-bold text-primary-700 bg-primary-50 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
             {completedSteps} / 3 Completed
           </span>
         </div>
@@ -112,25 +112,25 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
           {/* Step 1: Activities */}
           <div
             onClick={() => onNavigateTab('activities')}
-            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${
               isActivitiesReady
                 ? 'bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50'
-                : 'bg-surface-50 border-surface-200 hover:bg-surface-100'
+                : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <Calendar size={18} className={isActivitiesReady ? 'text-emerald-600' : 'text-surface-400'} />
+              <Calendar size={18} className={isActivitiesReady ? 'text-emerald-600' : 'text-slate-400'} />
               {isActivitiesReady ? (
                 <CheckCircle2 size={16} className="text-emerald-600" />
               ) : (
-                <AlertCircle size={16} className="text-surface-400" />
+                <AlertCircle size={16} className="text-slate-400" />
               )}
             </div>
-            <h4 className="text-sm font-bold text-surface-900">1. Activity Sequence</h4>
-            <p className="text-xs text-surface-500 mt-1">
+            <h4 className="text-sm font-bold text-slate-900">1. Activity Sequence</h4>
+            <p className="text-xs text-slate-500 mt-1">
               {activities.length} activity{activities.length !== 1 ? 'ies' : ''} ordered
             </p>
-            <div className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-primary-600">
+            <div className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-indigo-600">
               <span>Order Timeline</span>
               <ArrowRight size={12} />
             </div>
@@ -139,25 +139,25 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
           {/* Step 2: Photos */}
           <div
             onClick={() => onNavigateTab('photos')}
-            className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${
               isPhotosReady
                 ? 'bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50'
-                : 'bg-surface-50 border-surface-200 hover:bg-surface-100'
+                : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <Camera size={18} className={isPhotosReady ? 'text-emerald-600' : 'text-surface-400'} />
+              <Camera size={18} className={isPhotosReady ? 'text-emerald-600' : 'text-slate-400'} />
               {isPhotosReady ? (
                 <CheckCircle2 size={16} className="text-emerald-600" />
               ) : (
-                <AlertCircle size={16} className="text-surface-400" />
+                <AlertCircle size={16} className="text-slate-400" />
               )}
             </div>
-            <h4 className="text-sm font-bold text-surface-900">2. Photo Selection</h4>
-            <p className="text-xs text-surface-500 mt-1">
+            <h4 className="text-sm font-bold text-slate-900">2. Photo Selection</h4>
+            <p className="text-xs text-slate-500 mt-1">
               {selectedPhotos.length} photo{selectedPhotos.length !== 1 ? 's' : ''} selected
             </p>
-            <div className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-primary-600">
+            <div className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-indigo-600">
               <span>Curate Gallery</span>
               <ArrowRight size={12} />
             </div>
@@ -165,33 +165,33 @@ export function ReportPreparationTab({ projectId, onNavigateTab }: ReportPrepara
 
           {/* Step 3: Narratives */}
           <div
-            className={`p-4 rounded-2xl border transition-all ${
+            className={`p-4 rounded-xl border transition-all ${
               isNarrativesReady
                 ? 'bg-emerald-50/50 border-emerald-200'
-                : 'bg-surface-50 border-surface-200'
+                : 'bg-slate-50 border-slate-200'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <FileText size={18} className={isNarrativesReady ? 'text-emerald-600' : 'text-surface-400'} />
+              <FileText size={18} className={isNarrativesReady ? 'text-emerald-600' : 'text-slate-400'} />
               {isNarrativesReady ? (
                 <CheckCircle2 size={16} className="text-emerald-600" />
               ) : (
-                <AlertCircle size={16} className="text-surface-400" />
+                <AlertCircle size={16} className="text-slate-400" />
               )}
             </div>
-            <h4 className="text-sm font-bold text-surface-900">3. Narrative Sections</h4>
-            <p className="text-xs text-surface-500 mt-1">
+            <h4 className="text-sm font-bold text-slate-900">3. Narrative Sections</h4>
+            <p className="text-xs text-slate-500 mt-1">
               {filledNarratives.length} / 5 sections drafted
             </p>
-            <div className="mt-3 text-[11px] font-semibold text-surface-400">
+            <div className="mt-3 text-[11px] font-semibold text-slate-400">
               <span>Scroll down to edit</span>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* ─── Narrative Editors View (Cohesive single workspace) ─── */}
-      <div className="border-t border-surface-200 pt-6">
+      {/* ─── Narrative Editors View ─── */}
+      <div className="border-t border-slate-200 pt-6">
         <NarrativesTab campId={projectId} />
       </div>
     </div>

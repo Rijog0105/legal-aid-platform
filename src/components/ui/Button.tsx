@@ -15,21 +15,21 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-md shadow-primary-600/20',
+    'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.98] shadow-xs hover:shadow-sm shadow-indigo-500/20 font-bold',
   secondary:
-    'bg-surface-100 text-surface-800 hover:bg-surface-200 active:bg-surface-300 border border-surface-300',
+    'bg-slate-100 text-slate-700 hover:bg-slate-200/80 active:scale-[0.98] border border-slate-200 font-semibold',
   ghost:
-    'bg-transparent text-surface-600 hover:bg-surface-100 active:bg-surface-200',
+    'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 active:scale-[0.98] font-semibold',
   danger:
-    'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-md shadow-red-600/20',
+    'bg-red-600 text-white hover:bg-red-700 active:scale-[0.98] shadow-xs shadow-red-600/20 font-bold',
   outline:
-    'bg-transparent text-primary-600 border-2 border-primary-600 hover:bg-primary-50 active:bg-primary-100',
+    'bg-white text-slate-700 border border-slate-300 hover:border-slate-400 hover:bg-slate-50 active:scale-[0.98] font-semibold',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm gap-1.5',
-  md: 'px-4 py-2.5 text-sm gap-2',
-  lg: 'px-6 py-3 text-base gap-2.5',
+  sm: 'px-3 py-1.5 text-xs gap-1.5 rounded-xl',
+  md: 'px-4 py-2.5 text-xs sm:text-sm gap-2 rounded-xl',
+  lg: 'px-6 py-3 text-sm sm:text-base gap-2.5 rounded-2xl',
 };
 
 export function Button({
@@ -47,9 +47,9 @@ export function Button({
   return (
     <button
       className={`
-        inline-flex items-center justify-center font-medium rounded-xl
-        transition-all duration-200 ease-out
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+        inline-flex items-center justify-center
+        transition-all duration-150 ease-out select-none
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100
         cursor-pointer
         ${variantClasses[variant]}
         ${sizeClasses[size]}
@@ -60,12 +60,12 @@ export function Button({
       {...props}
     >
       {isLoading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
+        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
       ) : (
-        leftIcon
+        leftIcon && <span className="shrink-0">{leftIcon}</span>
       )}
-      {children}
-      {!isLoading && rightIcon}
+      <span>{children}</span>
+      {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
     </button>
   );
 }

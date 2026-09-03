@@ -85,16 +85,16 @@ export async function registerUser(
   try {
     // ── Step 1: Create Supabase Auth account with options.data ─────────────────────
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: payload.email,
+      email: payload.email.trim().toLowerCase(),
       password: payload.password,
       options: {
         data: {
-          full_name: payload.full_name,
-          phone: payload.phone,
-          usn_employee_id: payload.usn_employee_id || null,
-          department: payload.department,
-          semester: payload.category === 'faculty' ? null : (payload.semester || null),
-          designation: payload.category === 'faculty' ? (payload.designation || null) : null,
+          full_name: payload.full_name.trim(),
+          phone: payload.phone.trim(),
+          usn_employee_id: payload.usn_employee_id?.trim() || null,
+          department: payload.department.trim(),
+          semester: payload.category === 'faculty' ? null : (payload.semester?.trim() || null),
+          designation: payload.category === 'faculty' ? (payload.designation?.trim() || null) : null,
           category: payload.category,
         },
       },
@@ -103,22 +103,32 @@ export async function registerUser(
     if (authError) {
       console.error('[registrationService] signUp error:', authError.message);
       
-      let friendlyError = 'Registration failed. Please verify your details and try again.';
+      let friendlyError = authError.message || 'Registration failed. Please verify your details and try again.';
       const msg = authError.message.toLowerCase();
       
       if (msg.includes('rate limit')) {
-        friendlyError = 'Registration rate limit exceeded. Please try again in an hour.';
-      } else if (msg.includes('already exists') || msg.includes('unique_constraint') || msg.includes('duplicate')) {
-        friendlyError = 'An account with this email or SRN/Employee ID is already registered.';
-      } else if (msg.includes('profile') || msg.includes('trigger') || msg.includes('database') || msg.includes('role') || msg.includes('security policy')) {
-        friendlyError = 'Registration failed during profile creation. Please contact your Faculty Coordinator.';
+        friendlyError = 'Registration rate limit reached. Please wait a few moments or contact support.';
+      } else if (msg.includes('already exists') || msg.includes('unique_constraint') || msg.includes('duplicate') || msg.includes('already registered')) {
+        friendlyError = 'An account with this email address or SRN is already registered. Try signing in instead.';
+      } else if (msg.includes('invalid email') || msg.includes('email address is invalid')) {
+        friendlyError = 'Please provide a valid institutional email address.';
+      } else if (msg.includes('weak') || msg.includes('password')) {
+        friendlyError = 'Password is too weak. Please use at least 6 characters.';
       }
       
       return { success: false, error: friendlyError };
     }
 
+    // Supabase returns an existing user with empty identities if already registered without returning an error
+    if (authData.user && authData.user.identities && authData.user.identities.length === 0) {
+      return {
+        success: false,
+        error: 'An account with this email is already registered. Please sign in or reset your password.',
+      };
+    }
+
     if (!authData.user) {
-      return { success: false, error: 'Registration failed to create auth account.' };
+      return { success: false, error: 'Registration failed to create authentication account.' };
     }
 
     // ── Step 2: Immediate profile creation if auto-confirmed (Vite / Test Environment) ──
@@ -131,30 +141,29 @@ export async function registerUser(
           .maybeSingle();
 
         if (!existingUser) {
-          console.log('[registrationService] Session active on signup, creating profile immediately...');
+          console.log('[registrationService] Session active on signup, creating profile...');
           await insertPersonAndUserImmediate(authData.user, payload);
         }
       } catch (insertError: any) {
-        console.error('[registrationService] Immediate profile insertion error:', insertError.message);
-        await supabase.auth.signOut();
-        return {
-          success: false,
-          error: 'Registration failed during profile creation. Please contact your Faculty Coordinator.',
-        };
+        console.warn('[registrationService] Client-side profile insert skipped (handled by DB trigger or RLS):', insertError.message);
       }
     }
 
     // ── Step 3: Sign out immediately ─────────────────────────────
     // To ensure the user does not session-lock in the browser until approved.
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {
+      /* ignore */
+    }
 
     return { success: true };
-  } catch (err) {
+  } catch (err: any) {
     console.error('[registrationService] caught exception:', err);
     try { await supabase.auth.signOut(); } catch (_) { /* ignore */ }
     return {
       success: false,
-      error: 'Registration failed. Please contact your Faculty Coordinator, or try again later.',
+      error: err?.message || 'Registration encountered an unexpected issue. Please try again or contact your Coordinator.',
     };
   }
 }

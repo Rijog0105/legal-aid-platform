@@ -2,8 +2,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useMyProjectAssignment } from '@/features/volunteer/hooks/useMyProjectAssignment';
 import { ProjectDetailPage } from '@/features/projects/components/ProjectDetailPage';
-import { Spinner, Card } from '@/components/ui';
-import { MapPin, ChevronLeft } from 'lucide-react';
+import { Spinner } from '@/components/ui';
+import { MapPin, ArrowLeft } from 'lucide-react';
 import { ROUTES } from '@/constants';
 
 export function TeamLeadSurveyPortalPage() {
@@ -22,25 +22,23 @@ export function TeamLeadSurveyPortalPage() {
 
   if (error || !project) {
     return (
-      <div className="space-y-6 max-w-xl mx-auto py-20 px-4 min-h-screen bg-slate-50">
+      <div className="space-y-6 max-w-xl mx-auto py-20 px-4 min-h-screen bg-slate-50 animate-fade-in">
         <button
           onClick={() => navigate(ROUTES.TEAM_LEAD_WORKSPACE)}
-          className="flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
         >
-          <ChevronLeft size={16} />
-          Back to Workspace
+          <ArrowLeft size={14} />
+          <span>Back to Workspace</span>
         </button>
-        <Card className="p-8 text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-surface-100 text-surface-400 flex items-center justify-center mx-auto">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-10 text-center space-y-3">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
             <MapPin size={24} />
           </div>
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold text-surface-800">No Active Project Assigned</h3>
-            <p className="text-xs text-surface-500 max-w-md mx-auto">
-              {error ?? 'You must be assigned to an active project/camp to view survey data.'}
-            </p>
-          </div>
-        </Card>
+          <h3 className="text-base font-bold text-slate-900">No Active Project Assigned</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            {error ?? 'You must be assigned to an active project to access survey data.'}
+          </p>
+        </div>
       </div>
     );
   }
