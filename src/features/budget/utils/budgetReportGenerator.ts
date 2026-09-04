@@ -23,21 +23,27 @@ export function generateBudgetReportPDF(options: BudgetReportOptions): void {
 
   // Header Banner
   doc.setFillColor(30, 58, 95); // Deep primary Navy #1e3a5f
-  doc.rect(0, 0, pageWidth, 28, 'F');
+  doc.rect(0, 0, pageWidth, 32, 'F');
 
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('LEGAL AID CAMP PLATFORM', 14, 12);
+  doc.setFontSize(14);
+  doc.text('REVA UNIVERSITY', 14, 11);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(224, 231, 255);
+  doc.text('School of Legal Studies • Legal Aid Clinic', 14, 17);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text('Official Budget & Financial Expenditure Statement', 14, 19);
+  doc.setFontSize(8.5);
+  doc.setTextColor(203, 213, 225);
+  doc.text('CivicForgeLabs • Official Budget & Expenditure Statement', 14, 24);
 
-  doc.setFontSize(9);
-  doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 14, 19, { align: 'right' });
+  doc.setFontSize(8);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 14, 24, { align: 'right' });
 
-  y = 36;
+  y = 40;
 
   // Project Details Section
   doc.setTextColor(15, 23, 42);

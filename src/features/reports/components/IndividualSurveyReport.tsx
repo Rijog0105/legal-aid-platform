@@ -69,6 +69,30 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
         ref={reportRef}
         className="max-w-4xl mx-auto bg-white text-slate-900 rounded-3xl shadow-xl p-8 sm:p-14 border border-slate-300 font-sans print:shadow-none print:border-none print:p-0 print:m-0 print:w-full space-y-10"
       >
+        {/* Institutional Masthead: REVA University & CivicForgeLabs */}
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-2">
+          <div className="flex items-center gap-3">
+            <img
+              src="/reva-logo.png"
+              alt="REVA University"
+              className="h-10 sm:h-12 w-auto object-contain"
+            />
+            <div>
+              <span className="text-sm sm:text-base font-black text-slate-900 tracking-tight block uppercase">
+                REVA University
+              </span>
+              <span className="text-[10px] sm:text-xs text-slate-500 font-semibold block">
+                School of Legal Studies • Legal Aid Clinic
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200 shadow-2xs">
+              CivicForgeLabs
+            </span>
+          </div>
+        </div>
+
         {/* Top Header - Village/District */}
         <div className="text-right text-xs font-semibold text-slate-800 space-y-0.5">
           <div>
@@ -79,13 +103,6 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
 
         {/* Title */}
         <div className="text-center border-b-2 border-slate-900 pb-5 space-y-2">
-          <div className="flex justify-center mb-2">
-            <img
-              src="/reva-logo.png"
-              alt="REVA University"
-              className="h-12 sm:h-14 w-auto object-contain"
-            />
-          </div>
           <h1 className="text-2xl font-black uppercase tracking-wider text-slate-900">
             DATA COLLECTION SHEET
           </h1>

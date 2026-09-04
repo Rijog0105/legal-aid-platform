@@ -39,21 +39,43 @@ const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'
 // ─── REPORT SUB-SECTIONS ───
 
 const HeaderSection: React.FC<{ campName: string }> = ({ campName }) => (
-  <div style={{ borderBottom: '2px solid #1e1b4b', paddingBottom: '20px', marginBottom: '24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e1b4b', fontWeight: 950, fontSize: '24px', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
-        <Building2 style={{ width: '28px', height: '28px', color: '#1e1b4b' }} />
-        Consolidated Legal Aid Survey Report
+  <div style={{ borderBottom: '2px solid #1e1b4b', paddingBottom: '16px', marginBottom: '24px', width: '100%' }}>
+    {/* Institutional Co-Branding Masthead */}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <img src="/reva-logo.png" alt="REVA University" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+        <div>
+          <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
+            REVA University
+          </div>
+          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
+            School of Legal Studies • Legal Aid Clinic
+          </div>
+        </div>
       </div>
-      <p style={{ fontSize: '12px', color: '#475569', fontWeight: 500, marginTop: '8px', marginBottom: '0px' }}>
-        Institutional Statistical Digest &amp; Document Non-Availability Analysis • {campName}
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '11px', fontWeight: 900, color: '#4338ca', backgroundColor: '#eef2ff', padding: '4px 10px', borderRadius: '8px', border: '1px solid #c7d2fe', letterSpacing: '0.02em' }}>
+          CivicForgeLabs
+        </span>
+      </div>
     </div>
-    <div style={{ textAlign: 'right', fontSize: '12px' }}>
-      <span style={{ display: 'inline-block', padding: '4px 12px', backgroundColor: '#f0f2ff', border: '1px solid #c7d2fe', color: '#1e1b4b', fontFamily: 'monospace', fontWeight: 'bold', borderRadius: '8px' }}>
-        FACULTY OFFICIAL REPORT
-      </span>
-      <p style={{ color: '#64748b', marginTop: '6px', marginBottom: '0px' }}>Generated: {new Date().toLocaleDateString('en-US', { dateStyle: 'medium' })}</p>
+
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e1b4b', fontWeight: 950, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+          <Building2 style={{ width: '26px', height: '26px', color: '#1e1b4b' }} />
+          Consolidated Legal Aid Survey Report
+        </div>
+        <p style={{ fontSize: '12px', color: '#475569', fontWeight: 500, marginTop: '6px', marginBottom: '0px' }}>
+          Institutional Statistical Digest &amp; Document Non-Availability Analysis • {campName}
+        </p>
+      </div>
+      <div style={{ textAlign: 'right', fontSize: '12px' }}>
+        <span style={{ display: 'inline-block', padding: '4px 12px', backgroundColor: '#f0f2ff', border: '1px solid #c7d2fe', color: '#1e1b4b', fontFamily: 'monospace', fontWeight: 'bold', borderRadius: '8px' }}>
+          FACULTY OFFICIAL REPORT
+        </span>
+        <p style={{ color: '#64748b', marginTop: '6px', marginBottom: '0px' }}>Generated: {new Date().toLocaleDateString('en-US', { dateStyle: 'medium' })}</p>
+      </div>
     </div>
   </div>
 );

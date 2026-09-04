@@ -25,7 +25,8 @@ import {
   FileCheck,
   ShieldCheck,
   Building2,
-  Download
+  Download,
+  AlertTriangle
 } from 'lucide-react';
 import { Button, Card, ProjectStatusBadge, Spinner } from '@/components/ui';
 import { ROLES, ROUTES } from '@/constants';
@@ -621,7 +622,7 @@ export function ProjectDetailPage({
                       <p className="text-xs text-slate-500">Key metrics summary and prioritized alerts.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                       {/* KPI 1 */}
                       <div className="bg-white p-6 rounded-3xl border border-surface-200 shadow-sm flex items-center gap-5 transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-px hover:scale-[1.005]">
                         <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
@@ -669,9 +670,7 @@ export function ProjectDetailPage({
                           <span className="text-[10px] text-amber-600 font-bold block mt-1.5">Court cases (Q7)</span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                       {/* KPI 5 */}
                       <div className="bg-white p-6 rounded-3xl border border-surface-200 shadow-sm flex items-center gap-5 transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-px hover:scale-[1.005]">
                         <div className="w-14 h-14 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center flex-shrink-0">
@@ -710,22 +709,27 @@ export function ProjectDetailPage({
                         </div>
                       </div>
 
-                      {/* KPI 8 */}
+                      {/* KPI 8: Vulnerable Households */}
                       <div className="bg-white p-6 rounded-3xl border border-surface-200 shadow-sm flex items-center gap-5 transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-px hover:scale-[1.005]">
                         <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center flex-shrink-0">
                           <ShieldAlert className="w-7 h-7" />
                         </div>
-                        <div className="flex gap-5">
-                          <div>
-                            <span className="text-xs font-bold text-surface-500 uppercase tracking-wider block mb-1">Vulnerable HHs</span>
-                            <span className="text-4xl font-black text-orange-700 leading-none">{surveyStats.vulnerableHouseholds}</span>
-                            <span className="text-[10px] text-orange-500 font-bold block mt-1.5">Households</span>
-                          </div>
-                          <div className="border-l border-slate-200 pl-5">
-                            <span className="text-xs font-bold text-surface-500 uppercase tracking-wider block mb-1">Vulnerability Cases</span>
-                            <span className="text-4xl font-black text-orange-700 leading-none">{surveyStats.vulnerableCases}</span>
-                            <span className="text-[10px] text-orange-500 font-bold block mt-1.5">Affirmative cases</span>
-                          </div>
+                        <div>
+                          <span className="text-xs font-bold text-surface-500 uppercase tracking-wider block mb-1">Vulnerable HHs</span>
+                          <span className="text-4xl font-black text-orange-700 leading-none">{surveyStats.vulnerableHouseholds}</span>
+                          <span className="text-[10px] text-orange-500 font-bold block mt-1.5">Households affected</span>
+                        </div>
+                      </div>
+
+                      {/* KPI 9: Vulnerability Cases */}
+                      <div className="bg-white p-6 rounded-3xl border border-surface-200 shadow-sm flex items-center gap-5 transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-px hover:scale-[1.005]">
+                        <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+                          <AlertTriangle className="w-7 h-7" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-surface-500 uppercase tracking-wider block mb-1">Vulnerability Cases</span>
+                          <span className="text-4xl font-black text-red-700 leading-none">{surveyStats.vulnerableCases}</span>
+                          <span className="text-[10px] text-red-500 font-bold block mt-1.5">Affirmative criteria (Q12-Q18)</span>
                         </div>
                       </div>
                     </div>
@@ -1841,6 +1845,7 @@ export function ProjectDetailPage({
       {activeMainTab === 'report' && (
         <ReportPreparationTab
           projectId={project.id}
+          project={project}
           onNavigateTab={(tabKey) => {
             if (tabKey === 'activities') handleMainTabChange('camp');
             if (tabKey === 'photos') handleMainTabChange('camp');

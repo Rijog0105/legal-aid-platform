@@ -98,6 +98,30 @@ export const LegalAidCampReport: React.FC<LegalAidCampReportProps> = ({
         ref={reportRef}
         className="max-w-5xl mx-auto bg-white text-slate-900 rounded-2xl shadow-2xl p-8 sm:p-12 border border-slate-200 font-sans print:shadow-none print:border-none print:p-0 print:m-0 print:w-full"
       >
+        {/* Institutional Masthead: REVA University & CivicForgeLabs */}
+        <div className="flex items-center justify-between border-b-2 border-slate-200 pb-4 mb-6">
+          <div className="flex items-center gap-3">
+            <img
+              src="/reva-logo.png"
+              alt="REVA University"
+              className="h-10 sm:h-12 w-auto object-contain"
+            />
+            <div>
+              <span className="text-sm sm:text-base font-black text-slate-900 tracking-tight block uppercase">
+                REVA University
+              </span>
+              <span className="text-[10px] sm:text-xs text-slate-500 font-semibold block">
+                School of Legal Studies • Legal Aid Clinic
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200 shadow-2xs">
+              CivicForgeLabs
+            </span>
+          </div>
+        </div>
+
         {/* Title Header */}
         <div className="border-b-4 border-indigo-900 pb-6 mb-8 text-center">
           <div className="flex items-center justify-center gap-2 text-indigo-950 font-black text-2xl uppercase tracking-wider mb-1">

@@ -7,7 +7,6 @@ import {
   FolderKanban,
   ArrowRight,
   Plus,
-  FileText,
   Sparkles,
 } from 'lucide-react';
 import { ROUTES } from '@/constants';
@@ -160,8 +159,8 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ─── 3 Primary Modules in One Compact View (Projects, People, Survey Analytics) ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ─── 2 Primary Modules in One Compact View (Projects, People) ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Module 1: Legal Aid Projects */}
         <div
           onClick={() => navigate(ROUTES.PROJECTS)}
@@ -208,31 +207,6 @@ export function DashboardPage() {
 
           <div className="flex items-center justify-between pt-3.5 mt-3.5 border-t border-slate-100 text-xs font-bold text-emerald-600">
             <span>Open Directory & Approvals</span>
-            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </div>
-        </div>
-
-        {/* Module 3: Survey Analytics & Reports */}
-        <div
-          onClick={() => navigate(ROUTES.SURVEYS)}
-          className="group bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-purple-300 transition-all cursor-pointer flex flex-col justify-between"
-        >
-          <div className="space-y-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <FileText size={20} />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 group-hover:text-purple-600 transition-colors">
-                Survey Analytics & Reports
-              </h2>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Consolidate household vulnerabilities, view demographic charts, audit responses, and export PDF reports.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-3.5 mt-3.5 border-t border-slate-100 text-xs font-bold text-purple-600">
-            <span>View Analytics & Reports</span>
             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
