@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X, DollarSign, AlertCircle } from 'lucide-react';
-import { Input } from '@/components/ui';
+import { X, AlertCircle } from 'lucide-react';
+import { Input, IndianRupeeIcon } from '@/components/ui';
 
 const budgetSchema = z.object({
   allocated_budget: z.number().min(0, 'Budget must be a non-negative number'),
@@ -67,7 +67,7 @@ export function AllocatedBudgetModal({
         <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-              <DollarSign size={18} />
+              <IndianRupeeIcon size={18} />
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900 leading-tight">Allocated {phaseLabel} Budget</h3>

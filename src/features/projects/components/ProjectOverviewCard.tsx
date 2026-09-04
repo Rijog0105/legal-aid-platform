@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
   Users,
-  DollarSign,
   CheckCircle,
   GraduationCap,
   Loader2,
   ArrowRight,
 } from 'lucide-react';
-import { ProjectStatusBadge } from '@/components/ui';
+import { ProjectStatusBadge, IndianRupeeIcon } from '@/components/ui';
 import type { Project } from '@/types';
 import { PROJECT_ROLE } from '@/constants';
 import { useProjectPeople } from '@/features/projects/hooks/useProjectPeople';
@@ -361,7 +360,7 @@ export function ProjectOverviewCard({
 
         <div className="bg-white rounded-2xl border border-surface-200 shadow-sm p-4 flex flex-col items-center justify-between text-center h-24 transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-px">
           <div className="flex items-center gap-1.5 text-primary-400">
-            <DollarSign size={12} />
+            <IndianRupeeIcon size={12} />
             <span className="font-bold uppercase tracking-wider text-primary-400" style={{ fontSize: '9px' }}>Budget Spent</span>
           </div>
           <div className="flex items-center justify-center flex-1 mt-1">

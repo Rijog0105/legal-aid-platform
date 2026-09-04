@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import {
-  DollarSign,
   TrendingDown,
   PieChart,
   Plus,
@@ -11,7 +10,7 @@ import {
   Receipt,
   ExternalLink,
 } from 'lucide-react';
-import { Card, Button, Spinner, EmptyState } from '@/components/ui';
+import { Card, Button, Spinner, EmptyState, IndianRupeeIcon } from '@/components/ui';
 import { useExpenses } from '../hooks/useExpenses';
 import { AllocatedBudgetModal } from './AllocatedBudgetModal';
 import { ExpenseFormModal } from './ExpenseFormModal';
@@ -201,7 +200,7 @@ export function BudgetTab({ campId, camp, phase, onCampUpdate }: BudgetTabProps)
               Allocated Budget
             </span>
             <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center transition-colors group-hover:bg-blue-100">
-              <DollarSign size={18} />
+              <IndianRupeeIcon size={18} />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between gap-2">

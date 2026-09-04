@@ -5,3 +5,4 @@ export { Badge, ProjectStatusBadge, ActivityStatusBadge, ReportStatusBadge } fro
 export { Spinner, PageLoader } from './Spinner';
 export { EmptyState } from './EmptyState';
 export { ErrorBoundary } from './ErrorBoundary';
+export { IndianRupeeIcon } from './IndianRupeeIcon';

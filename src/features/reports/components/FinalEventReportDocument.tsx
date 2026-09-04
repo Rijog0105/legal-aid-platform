@@ -3,35 +3,77 @@ import type { FinalReportData } from '@/features/projects/services/finalReportSe
 
 interface FinalEventReportDocumentProps {
   data: FinalReportData;
+  forPdfExport?: boolean;
 }
 
-export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ data }) => {
+export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({
+  data,
+  forPdfExport = false,
+}) => {
   // Split photos into chunks of 2 for clean institutional A4 pages (just like the attached PDF)
   const photoPages: (typeof data.photos)[] = [];
   for (let i = 0; i < data.photos.length; i += 2) {
     photoPages.push(data.photos.slice(i, i + 2));
   }
 
+  const pageContainerClass = forPdfExport
+    ? 'report-page bg-white mx-auto border border-slate-300 flex flex-col justify-between'
+    : 'report-page bg-white w-full max-w-full sm:max-w-[210mm] sm:min-h-[297mm] mx-auto p-3.5 sm:p-12 md:p-16 mb-6 sm:mb-8 shadow-md sm:shadow-xl border border-slate-300 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-12 print:w-[210mm] print:min-h-[297mm] print:break-after-page';
+
+  const pageContainerStyle = forPdfExport
+    ? {
+        width: '794px',
+        minHeight: '1123px',
+        padding: '48px 44px',
+        boxSizing: 'border-box' as const,
+        marginBottom: '0px',
+      }
+    : undefined;
+
   // Common Institutional Masthead on TOP of every page
   const renderMasthead = () => (
-    <div className="flex items-center justify-between border-b-2 border-slate-800 pb-2.5 sm:pb-3 mb-5 sm:mb-8 gap-2">
+    <div
+      className={`flex items-center justify-between border-b-2 border-slate-800 ${
+        forPdfExport ? 'pb-3 mb-6' : 'pb-2 sm:pb-3 mb-4 sm:mb-8'
+      } gap-2`}
+    >
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <img
           src="/reva-logo.png"
           alt="REVA University Logo"
-          className="h-8 sm:h-12 md:h-14 w-auto object-contain shrink-0"
+          className={`${
+            forPdfExport ? 'h-14' : 'h-8 sm:h-12 md:h-14'
+          } w-auto object-contain shrink-0`}
         />
         <div className="min-w-0">
-          <h2 className="text-xs sm:text-base md:text-lg font-black tracking-tight text-slate-900 uppercase leading-none truncate">
+          <h2
+            className={`${
+              forPdfExport
+                ? 'text-lg font-black'
+                : 'text-[11px] sm:text-base md:text-lg font-black'
+            } tracking-tight text-slate-900 uppercase leading-tight truncate`}
+          >
             REVA UNIVERSITY
           </h2>
-          <p className="text-[9px] sm:text-[11px] font-semibold text-slate-600 tracking-wide mt-0.5 sm:mt-1 truncate">
+          <p
+            className={`${
+              forPdfExport
+                ? 'text-xs font-semibold'
+                : 'text-[8px] sm:text-[11px] font-semibold'
+            } text-slate-600 tracking-wide mt-0.5 truncate`}
+          >
             School of Legal Studies • Legal Aid & Community Outreach
           </p>
         </div>
       </div>
       <div className="flex items-center shrink-0">
-        <span className="text-[10px] sm:text-xs font-black text-indigo-900 bg-indigo-50 border border-indigo-200 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl shadow-2xs">
+        <span
+          className={`${
+            forPdfExport
+              ? 'text-xs px-3 py-1 rounded-xl'
+              : 'text-[9px] sm:text-xs px-1.5 sm:px-3 py-0.5 sm:py-1 rounded sm:rounded-xl'
+          } font-black text-indigo-900 bg-indigo-50 border border-indigo-200 shadow-2xs`}
+        >
           CivicForgeLabs
         </span>
       </div>
@@ -39,11 +81,15 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
   );
 
   return (
-    <div className="final-report-root font-serif text-slate-900 leading-relaxed print:m-0 print:p-0">
+    <div
+      className={`final-report-root font-serif text-slate-900 leading-relaxed print:m-0 print:p-0 ${
+        forPdfExport ? 'w-[794px]' : ''
+      }`}
+    >
       {/* ──────────────────────────────────────────────────────────
           PAGE 1: INSTITUTIONAL TITLE / COVER PAGE
           ────────────────────────────────────────────────────────── */}
-      <div className="report-page bg-white w-full max-w-full sm:max-w-[210mm] sm:min-h-[297mm] mx-auto p-4 sm:p-12 md:p-16 mb-6 sm:mb-8 shadow-md sm:shadow-xl border border-slate-300 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-12 print:w-[210mm] print:min-h-[297mm] print:break-after-page">
+      <div className={pageContainerClass} style={pageContainerStyle}>
         <div>
           {renderMasthead()}
 
@@ -92,71 +138,71 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
       {/* ──────────────────────────────────────────────────────────
           PAGE 2 & 3: EVENT REPORT TABLE
           ────────────────────────────────────────────────────────── */}
-      <div className="report-page bg-white w-full max-w-full sm:max-w-[210mm] sm:min-h-[297mm] mx-auto p-4 sm:p-12 md:p-16 mb-6 sm:mb-8 shadow-md sm:shadow-xl border border-slate-300 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-12 print:w-[210mm] print:min-h-[297mm] print:break-after-page">
+      <div className={pageContainerClass} style={pageContainerStyle}>
         <div>
           {renderMasthead()}
 
           {/* Table Container */}
           <div className="border border-slate-400 overflow-hidden font-sans">
             {/* Table Header Row */}
-            <div className="bg-slate-50 border-b border-slate-400 py-2.5 sm:py-3 text-center">
-              <h2 className="text-base sm:text-xl font-black uppercase tracking-wider text-slate-900 font-serif">
+            <div className="bg-slate-50 border-b border-slate-400 py-2 sm:py-3 text-center">
+              <h2 className="text-sm sm:text-xl font-black uppercase tracking-wider text-slate-900 font-serif">
                 EVENT REPORT
               </h2>
             </div>
 
             {/* Rows */}
-            <div className="divide-y divide-slate-400 text-xs sm:text-sm">
+            <div className="divide-y divide-slate-400 text-[11px] sm:text-xs md:text-sm">
               {/* Name of Event */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Name of Event
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.eventName}
                 </div>
               </div>
 
               {/* Date of Event */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Date of Event
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.dateOfEvent}
                 </div>
               </div>
 
               {/* Organized in collaboration with */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Organized in collaboration with:
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.collaborators || <span className="text-slate-400 italic">Not specified</span>}
                 </div>
               </div>
 
               {/* Organized by */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Organized by:
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.organizedBy}
                 </div>
               </div>
 
               {/* Total Students Participated (Deduplicated) */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Total Students Participated:
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-semibold">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-semibold break-words overflow-hidden">
                   <span className="text-indigo-950 font-bold">
                     {data.totalUniqueStudents} Students
                   </span>{' '}
-                  <span className="text-[11px] text-slate-500 font-normal block sm:inline mt-0.5 sm:mt-0">
+                  <span className="text-[10px] sm:text-[11px] text-slate-500 font-normal block sm:inline mt-0.5 sm:mt-0">
                     (Unique attendees verified across Survey and Camp phases without duplication)
                   </span>
                 </div>
@@ -164,11 +210,11 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
 
               {/* Overall Budget */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Overall Project Budget:
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs">
                     <span>
                       <strong className="text-slate-900">Allocated:</strong> ₹
                       {data.overallBudget.allocated.toLocaleString()}
@@ -187,17 +233,17 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
 
               {/* Schedule of Event */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Schedule of Event
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 space-y-1.5 font-medium leading-relaxed">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 space-y-1.5 font-medium leading-relaxed break-words overflow-hidden">
                   {data.scheduleItems.filter((i) => i.trim().length > 0).length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">No schedule items entered yet.</p>
+                    <p className="text-[11px] sm:text-xs text-slate-400 italic">No schedule items entered yet.</p>
                   ) : (
                     data.scheduleItems
                       .filter((i) => i.trim().length > 0)
                       .map((item, idx) => (
-                        <p key={idx} className="text-xs sm:text-[13px]">
+                        <p key={idx} className="text-[11px] sm:text-xs md:text-[13px]">
                           • {item}
                         </p>
                       ))
@@ -207,47 +253,47 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
 
               {/* Venue */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Venue
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.venue}
                 </div>
               </div>
 
               {/* Faculty Convener */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Faculty Convener
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.facultyConveners || <span className="text-slate-400 italic">Not specified</span>}
                 </div>
               </div>
 
               {/* Student Convener */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Student Convener
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.studentConveners || <span className="text-slate-400 italic">Not specified</span>}
                 </div>
               </div>
 
               {/* List of Guests Invited */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   List of Guests Invited
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 space-y-1.5 font-medium">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 space-y-1.5 font-medium break-words overflow-hidden">
                   {data.guestsInvited.filter((g) => g.trim().length > 0).length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">No guests entered yet.</p>
+                    <p className="text-[11px] sm:text-xs text-slate-400 italic">No guests entered yet.</p>
                   ) : (
                     data.guestsInvited
                       .filter((g) => g.trim().length > 0)
                       .map((guest, idx) => (
-                        <p key={idx} className="text-xs sm:text-[13px]">
+                        <p key={idx} className="text-[11px] sm:text-xs md:text-[13px]">
                           • {guest}
                         </p>
                       ))
@@ -257,27 +303,27 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
 
               {/* Objective of Event */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Objective of Event
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium leading-relaxed">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium leading-relaxed break-words overflow-hidden">
                   {data.objective || <span className="text-slate-400 italic">No objective entered yet.</span>}
                 </div>
               </div>
 
               {/* Detailed report of Day */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
-                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900">
+                <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
                   Detailed report of Day
                 </div>
-                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 space-y-3 font-medium leading-relaxed font-serif">
+                <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 space-y-3 font-medium leading-relaxed font-serif break-words overflow-hidden">
                   {data.detailedReportParagraphs.filter((p) => p.trim().length > 0).length === 0 ? (
-                    <p className="text-xs text-slate-400 italic font-sans">No detailed report entered yet.</p>
+                    <p className="text-[11px] sm:text-xs text-slate-400 italic font-sans">No detailed report entered yet.</p>
                   ) : (
                     data.detailedReportParagraphs
                       .filter((p) => p.trim().length > 0)
                       .map((para, idx) => (
-                        <p key={idx} className="text-xs sm:text-sm whitespace-pre-line text-justify">
+                        <p key={idx} className="text-[11px] sm:text-xs md:text-sm whitespace-pre-line text-justify">
                           {para}
                         </p>
                       ))
@@ -302,13 +348,14 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
       {photoPages.map((pagePhotos, pageIndex) => (
         <div
           key={`photo-page-${pageIndex}`}
-          className="report-page bg-white w-full max-w-full sm:max-w-[210mm] sm:min-h-[297mm] mx-auto p-4 sm:p-12 md:p-16 mb-6 sm:mb-8 shadow-md sm:shadow-xl border border-slate-300 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-12 print:w-[210mm] print:min-h-[297mm] print:break-after-page"
+          className={pageContainerClass}
+          style={pageContainerStyle}
         >
           <div>
             {renderMasthead()}
 
             {pageIndex === 0 && (
-              <h3 className="text-base sm:text-lg font-bold uppercase tracking-wider text-slate-900 mb-4 sm:mb-6 font-sans border-b border-slate-300 pb-2">
+              <h3 className="text-sm sm:text-lg font-bold uppercase tracking-wider text-slate-900 mb-4 sm:mb-6 font-sans border-b border-slate-300 pb-2">
                 Photographs
               </h3>
             )}
@@ -343,7 +390,7 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
                     />
                   </div>
                   {photo.caption && (
-                    <p className="text-[11px] sm:text-xs font-sans text-center text-slate-600 italic mt-1.5 sm:mt-2">
+                    <p className="text-[10px] sm:text-xs font-sans text-center text-slate-600 italic mt-1.5 sm:mt-2">
                       {photo.caption}
                     </p>
                   )}
@@ -364,17 +411,17 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({ da
       {/* ──────────────────────────────────────────────────────────
           FINAL PAGE: PRESS NOTE
           ────────────────────────────────────────────────────────── */}
-      <div className="report-page bg-white w-full max-w-full sm:max-w-[210mm] sm:min-h-[297mm] mx-auto p-4 sm:p-12 md:p-16 mb-6 sm:mb-8 shadow-md sm:shadow-xl border border-slate-300 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-12 print:w-[210mm] print:min-h-[297mm] print:break-after-page">
+      <div className={pageContainerClass} style={pageContainerStyle}>
         <div>
           {renderMasthead()}
 
           {/* Press Note Table Layout */}
           <div className="border border-slate-400 overflow-hidden font-sans my-4 sm:my-8">
-            <div className="grid grid-cols-12 divide-x divide-slate-400 min-h-[200px] sm:min-h-[320px]">
-              <div className="col-span-5 sm:col-span-3 p-3 sm:p-4 font-bold bg-slate-50 text-slate-900 text-xs sm:text-sm">
+            <div className="grid grid-cols-12 divide-x divide-slate-400 min-h-[160px] sm:min-h-[320px]">
+              <div className="col-span-5 sm:col-span-3 p-2.5 sm:p-4 font-bold bg-slate-50 text-slate-900 text-[11px] sm:text-sm break-words">
                 Press Note
               </div>
-              <div className="col-span-7 sm:col-span-9 p-3 sm:p-6 text-slate-800 text-xs sm:text-sm leading-relaxed font-serif whitespace-pre-line text-justify">
+              <div className="col-span-7 sm:col-span-9 p-2.5 sm:p-6 text-slate-800 text-[11px] sm:text-sm leading-relaxed font-serif whitespace-pre-line text-justify break-words">
                 {data.pressNote || <span className="text-slate-400 italic font-sans">No press note entered yet.</span>}
               </div>
             </div>

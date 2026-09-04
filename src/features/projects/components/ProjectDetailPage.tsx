@@ -13,7 +13,6 @@ import {
   ClipboardList,
   Layers,
   Users,
-  DollarSign,
   Camera,
   Trash2,
   Eye,
@@ -26,9 +25,9 @@ import {
   ShieldCheck,
   Building2,
   Download,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
-import { Button, Card, ProjectStatusBadge, Spinner } from '@/components/ui';
+import { Button, Card, ProjectStatusBadge, Spinner, IndianRupeeIcon } from '@/components/ui';
 import { ROLES, ROUTES } from '@/constants';
 import { useProject } from '@/features/projects/hooks/useProject';
 import { deleteProject } from '@/features/projects/services/projectService';
@@ -74,7 +73,7 @@ const SURVEY_SUB_TABS = [
   { key: 'schedule', label: 'Schedule Survey', icon: <Calendar size={20} /> },
   { key: 'people', label: 'Assign People', icon: <Users size={20} /> },
   { key: 'attendance', label: 'Attendance', icon: <CheckCircle size={20} /> },
-  { key: 'budget', label: 'Survey Budget', icon: <DollarSign size={20} /> },
+  { key: 'budget', label: 'Survey Budget', icon: <IndianRupeeIcon size={20} /> },
   { key: 'forms', label: 'Survey Forms', icon: <FileText size={20} /> },
   { key: 'dashboard', label: 'Survey Dashboard', icon: <ClipboardList size={20} /> },
 ] as const;
@@ -84,7 +83,7 @@ const CAMP_SUB_TABS = [
   { key: 'people', label: 'Assign People', icon: <Users size={20} /> },
   { key: 'activities', label: 'Activities', icon: <Layers size={20} /> },
   { key: 'attendance', label: 'Attendance', icon: <CheckCircle size={20} /> },
-  { key: 'budget', label: 'Camp Budget', icon: <DollarSign size={20} /> },
+  { key: 'budget', label: 'Camp Budget', icon: <IndianRupeeIcon size={20} /> },
   { key: 'photos', label: 'Documentation Photos', icon: <Camera size={20} /> },
 ] as const;
 
@@ -495,7 +494,7 @@ export function ProjectDetailPage({
 
       {/* ─── Segmented Workspace Switcher ─── */}
       {!isTeamLead && (
-        <div className="w-full flex gap-1.5 bg-surface-100 p-1.5 rounded-2xl border border-surface-200 shadow-sm">
+        <div className="w-full grid grid-cols-4 gap-1 sm:gap-1.5 bg-surface-100 p-1 sm:p-1.5 rounded-2xl border border-surface-200 shadow-sm">
           {(
             [
               { key: 'overview', label: 'Overview' },
@@ -507,13 +506,13 @@ export function ProjectDetailPage({
             <button
               key={tab.key}
               onClick={() => handleMainTabChange(tab.key)}
-              className={`flex-1 text-center py-3 rounded-xl text-xs font-bold cursor-pointer transition-all duration-200 ease-out ${
+              className={`text-center py-2.5 sm:py-3 px-1 rounded-xl text-[11px] sm:text-xs font-bold cursor-pointer transition-all duration-200 ease-out min-h-[42px] flex items-center justify-center leading-tight ${
                 activeMainTab === tab.key
                   ? 'bg-white text-surface-900 shadow-md border border-surface-200'
                   : 'text-surface-500 hover:text-surface-800 hover:bg-white hover:shadow-sm hover:-translate-y-px'
               }`}
             >
-              {tab.label}
+              <span className="truncate">{tab.label}</span>
             </button>
           ))}
         </div>

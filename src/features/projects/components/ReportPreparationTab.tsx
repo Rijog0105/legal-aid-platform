@@ -11,24 +11,97 @@ import {
   Save,
   RotateCcw,
   Sparkles,
-  DollarSign,
   Users,
   ShieldCheck,
   Calendar,
   MapPin,
   ArrowRight,
 } from 'lucide-react';
-import { Spinner } from '@/components/ui';
+import { Spinner, IndianRupeeIcon } from '@/components/ui';
 import { useProject } from '../hooks/useProject';
 import {
   type FinalReportData,
   initializeFinalReportData,
   saveFinalReportDraft,
+  fetchReportConvenerAndGuestOptions,
+  type ConvenerAndGuestOptions,
 } from '../services/finalReportService';
 import { ReportPhotoManager } from './ReportPhotoManager';
 import { FinalEventReportDocument } from '@/features/reports/components/FinalEventReportDocument';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { saveAs } from 'file-saver';
+
+/**
+ * Overrides window.getComputedStyle and provides a color converter so that
+ * Tailwind CSS v4's oklch(...) color specifications do not crash html2canvas.
+ */
+function setupOklchColorConverter() {
+  const originalGetComputedStyle = window.getComputedStyle;
+  const dummyCanvas = document.createElement('canvas');
+  dummyCanvas.width = 1;
+  dummyCanvas.height = 1;
+  const ctx = dummyCanvas.getContext('2d', { willReadFrequently: true });
+  const colorCache = new Map<string, string>();
+
+  const convertOklchToRgb = (cssText: string): string => {
+    if (!cssText || !cssText.includes('oklch')) return cssText;
+    if (!ctx) return cssText;
+
+    return cssText.replace(/oklch\([^)]+\)/g, (match) => {
+      const cached = colorCache.get(match);
+      if (cached) return cached;
+
+      try {
+        ctx.fillStyle = match;
+        ctx.clearRect(0, 0, 1, 1);
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+        const rgbStr =
+          a === 255
+            ? `rgb(${r}, ${g}, ${b})`
+            : `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(3)})`;
+        colorCache.set(match, rgbStr);
+        return rgbStr;
+      } catch (e) {
+        return 'rgb(79, 70, 229)';
+      }
+    });
+  };
+
+  // Global override of getComputedStyle on the main window during html2canvas capture
+  window.getComputedStyle = function (element, pseudoElt) {
+    const style = originalGetComputedStyle(element, pseudoElt);
+    return new Proxy(style, {
+      get(target, prop) {
+        if (prop === 'getPropertyValue') {
+          return (propertyName: string) => {
+            const val = target.getPropertyValue(propertyName);
+            if (typeof val === 'string' && val.includes('oklch')) {
+              return convertOklchToRgb(val);
+            }
+            return val;
+          };
+        }
+        const val = Reflect.get(target, prop);
+        if (typeof val === 'string' && val.includes('oklch')) {
+          return convertOklchToRgb(val);
+        }
+        if (typeof val === 'function') {
+          return val.bind(target);
+        }
+        return val;
+      },
+    });
+  };
+
+  return {
+    convertOklchToRgb,
+    cleanup: () => {
+      window.getComputedStyle = originalGetComputedStyle;
+    },
+  };
+}
 
 interface ReportPreparationTabProps {
   projectId: string;
@@ -50,19 +123,32 @@ export function ReportPreparationTab({
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>('');
   const [saveToast, setSaveToast] = useState(false);
+  const [lastGeneratedPdfUrl, setLastGeneratedPdfUrl] = useState<string | null>(null);
+  const [lastGeneratedPdfFilename, setLastGeneratedPdfFilename] = useState<string>('');
+
+  const [convenerOptions, setConvenerOptions] = useState<ConvenerAndGuestOptions>({
+    availableStudents: [],
+    availableFaculty: [],
+    availableGuests: [],
+  });
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
+  const pdfExportContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize report data
+  // Initialize report data and dropdown options
   useEffect(() => {
     if (!project) return;
     let isMounted = true;
     setIsLoadingData(true);
 
-    initializeFinalReportData(projectId, project)
-      .then((data) => {
+    Promise.all([
+      initializeFinalReportData(projectId, project),
+      fetchReportConvenerAndGuestOptions(projectId),
+    ])
+      .then(([data, options]) => {
         if (isMounted) {
           setReportData(data);
+          setConvenerOptions(options);
           setIsLoadingData(false);
         }
       })
@@ -178,23 +264,87 @@ export function ReportPreparationTab({
     updateReportData({ detailedReportParagraphs: next });
   };
 
-  // Generate multi-page PDF matching exact sample format
+  const handleSelectFacultyConvener = (val: string) => {
+    if (!val || !reportData) return;
+    if (!reportData.facultyConveners.trim()) {
+      updateReportData({ facultyConveners: val });
+    } else if (!reportData.facultyConveners.includes(val)) {
+      updateReportData({ facultyConveners: `${reportData.facultyConveners}, ${val}` });
+    }
+  };
+
+  const handleSelectStudentConvener = (val: string) => {
+    if (!val || !reportData) return;
+    if (!reportData.studentConveners.trim()) {
+      updateReportData({ studentConveners: val });
+    } else if (!reportData.studentConveners.includes(val)) {
+      updateReportData({ studentConveners: `${reportData.studentConveners}, ${val}` });
+    }
+  };
+
+  const handleSelectGuest = (val: string) => {
+    if (!val || !reportData) return;
+    const emptyIndex = reportData.guestsInvited.findIndex((g) => !g.trim());
+    if (emptyIndex !== -1) {
+      const next = [...reportData.guestsInvited];
+      next[emptyIndex] = val;
+      updateReportData({ guestsInvited: next });
+    } else {
+      updateReportData({ guestsInvited: [...reportData.guestsInvited, val] });
+    }
+  };
+
+  // Generate multi-page PDF matching exact preview A4 dimensions
   const handleGenerateFinalReport = async () => {
     if (!reportData) return;
     setIsGeneratingPDF(true);
-    setGenerationProgress('Preparing institutional document pages...');
+    setGenerationProgress('Preparing high-fidelity institutional pages...');
+
+    const { convertOklchToRgb, cleanup } = setupOklchColorConverter();
 
     try {
-      // If currently on wizard mode, switch to preview briefly to ensure DOM nodes are rendered
-      if (activeStage !== 'preview') {
-        setActiveStage('preview');
-        await new Promise((resolve) => setTimeout(resolve, 300));
+      const container = pdfExportContainerRef.current;
+      if (!container) {
+        throw new Error('PDF export container is not mounted.');
       }
 
-      const container = previewContainerRef.current;
-      if (!container) {
-        throw new Error('Report preview container is not mounted.');
+      // Convert images inside the export container to base64 data URLs to eliminate CORS & canvas taint issues
+      const images = Array.from(container.querySelectorAll('img'));
+      if (images.length > 0) {
+        setGenerationProgress('Decoding logos and photographs...');
+        await Promise.all(
+          images.map(async (img) => {
+            if (img.src && !img.src.startsWith('data:')) {
+              try {
+                const res = await fetch(img.src);
+                const blob = await res.blob();
+                await new Promise<void>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    if (typeof reader.result === 'string') {
+                      img.src = reader.result;
+                    }
+                    resolve();
+                  };
+                  reader.onerror = () => resolve();
+                  reader.readAsDataURL(blob);
+                });
+              } catch {
+                // If fetch fails, retain original src with useCORS
+              }
+            }
+            if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+            return new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+              setTimeout(resolve, 3000);
+            });
+          })
+        );
       }
+
+      // Extra tick for rendering stability
+      await new Promise((res) => setTimeout(res, 200));
 
       const pages = container.querySelectorAll('.report-page');
       if (pages.length === 0) {
@@ -206,29 +356,82 @@ export function ReportPreparationTab({
       const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
 
       for (let i = 0; i < pages.length; i++) {
-        setGenerationProgress(`Rendering Page ${i + 1} of ${pages.length} with REVA & CivicForgeLabs branding...`);
+        setGenerationProgress(
+          `Rendering Page ${i + 1} of ${pages.length} with REVA University & CivicForgeLabs branding...`
+        );
         if (i > 0) pdf.addPage();
 
         const pageEl = pages[i] as HTMLElement;
         const canvas = await html2canvas(pageEl, {
           scale: 2,
           useCORS: true,
+          allowTaint: false,
           logging: false,
           backgroundColor: '#ffffff',
+          windowWidth: 794,
+          onclone: (clonedDoc) => {
+            // Normalize text spacing styles and font-family to prevent character collapse
+            clonedDoc.querySelectorAll('*').forEach((node) => {
+              const htmlEl = node as HTMLElement;
+              if (htmlEl.style) {
+                htmlEl.style.setProperty(
+                  'font-family',
+                  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                  'important'
+                );
+                htmlEl.style.setProperty('letter-spacing', 'normal', 'important');
+                htmlEl.style.setProperty('word-spacing', 'normal', 'important');
+              }
+            });
+
+            // Replace stylesheets with oklch-sanitized styles
+            const head = clonedDoc.head;
+            clonedDoc
+              .querySelectorAll('style, link[rel="stylesheet"]')
+              .forEach((node) => node.remove());
+
+            Array.from(document.styleSheets).forEach((sheet) => {
+              try {
+                let cssText = '';
+                const rules = sheet.cssRules || sheet.rules;
+                if (rules) {
+                  cssText = Array.from(rules)
+                    .map((rule) => rule.cssText)
+                    .join('\n');
+                }
+                const cleanCss = convertOklchToRgb(cssText);
+                const styleEl = clonedDoc.createElement('style');
+                styleEl.textContent = cleanCss;
+                head.appendChild(styleEl);
+              } catch (e) {
+                // Cross-origin stylesheet safely ignored
+              }
+            });
+          },
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       }
 
-      setGenerationProgress('Finalizing PDF package...');
-      const cleanCampName = (reportData.eventName || 'Camp').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
-      pdf.save(`Final_Institutional_Report_${cleanCampName}.pdf`);
+      setGenerationProgress('Finalizing PDF download package...');
+      const cleanCampName = (reportData.eventName || 'Camp')
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .slice(0, 30);
+      const filename = `Final_Institutional_Report_${cleanCampName}.pdf`;
+
+      const pdfBlob = pdf.output('blob');
+      saveAs(pdfBlob, filename);
+
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      setLastGeneratedPdfUrl(blobUrl);
+      setLastGeneratedPdfFilename(filename);
     } catch (err) {
       console.error('Failed to generate final report PDF:', err);
-      alert('Failed to generate high-resolution PDF automatically. Triggering native print dialog.');
+      alert('Automatic high-resolution PDF creation encountered an issue. Triggering native print dialog.');
       window.print();
     } finally {
+      cleanup();
       setIsGeneratingPDF(false);
       setGenerationProgress('');
     }
@@ -377,7 +580,7 @@ export function ReportPreparationTab({
               <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-200/80 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-indigo-700" />
+                    <IndianRupeeIcon className="w-3.5 h-3.5 text-indigo-700" />
                     Overall Budget Statement
                   </span>
                 </div>
@@ -614,49 +817,130 @@ export function ReportPreparationTab({
                   </div>
                 </div>
 
-                {/* Conveners & Guests Grid */}
+                {/* Conveners & Guests Grid with Dropdowns */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Faculty Convener */}
-                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-1.5 focus-within:border-indigo-500">
-                    <label className="text-xs font-bold text-slate-800 block">
-                      Faculty Convener(s)
-                    </label>
+                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 focus-within:border-indigo-500">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 block">
+                        Faculty Convener(s)
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-semibold">Dropdown or type</span>
+                    </div>
+
+                    {/* Dropdown for Available Faculty */}
+                    <div className="space-y-1">
+                      <select
+                        value=""
+                        onChange={(e) => handleSelectFacultyConvener(e.target.value)}
+                        className="w-full text-xs text-indigo-900 font-medium bg-indigo-50/80 border border-indigo-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="">
+                          {convenerOptions.availableFaculty.length > 0
+                            ? '▼ Choose assigned faculty with faculty access...'
+                            : '▼ No assigned faculties found with faculty access'}
+                        </option>
+                        {convenerOptions.availableFaculty.map((fac) => (
+                          <option key={fac.id} value={fac.name}>
+                            {fac.name} {fac.subtitle ? `— ${fac.subtitle}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <input
                       type="text"
                       value={reportData.facultyConveners}
                       onChange={(e) => updateReportData({ facultyConveners: e.target.value })}
-                      className="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500"
+                      placeholder="e.g. Dr. Priya Sharma, Prof. Rajesh Kumar"
+                      className="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500 bg-white"
                     />
+                    <p className="text-[10px] text-slate-400 leading-tight">
+                      Select assigned faculties who have faculty access on the website, or edit / add names directly.
+                    </p>
                   </div>
 
                   {/* Student Convener */}
-                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-1.5 focus-within:border-indigo-500">
-                    <label className="text-xs font-bold text-slate-800 block">
-                      Student Convener(s)
-                    </label>
+                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 focus-within:border-indigo-500">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 block">
+                        Student Convener(s)
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-semibold">Dropdown or type</span>
+                    </div>
+
+                    {/* Dropdown for Available Students */}
+                    <div className="space-y-1">
+                      <select
+                        value=""
+                        onChange={(e) => handleSelectStudentConvener(e.target.value)}
+                        className="w-full text-xs text-indigo-900 font-medium bg-indigo-50/80 border border-indigo-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                      >
+                        <option value="">▼ Choose from available students / leads to add...</option>
+                        {convenerOptions.availableStudents.map((stu) => (
+                          <option key={stu.id} value={stu.name}>
+                            {stu.name} {stu.subtitle ? `— ${stu.subtitle}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <input
                       type="text"
                       value={reportData.studentConveners}
                       onChange={(e) => updateReportData({ studentConveners: e.target.value })}
-                      className="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500"
+                      placeholder="e.g. Arjun Mehta, Sneha Patel"
+                      className="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500 bg-white"
                     />
+                    <p className="text-[10px] text-slate-400 leading-tight">
+                      Select project student leads from dropdown above, or edit / add custom names directly.
+                    </p>
                   </div>
                 </div>
 
-                {/* List of Guests Invited */}
+                {/* List of Guests Invited with Dropdown */}
                 <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="text-xs font-bold text-slate-800 block">
-                      List of Guests Invited
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleAddGuest}
-                      className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 flex items-center gap-1 cursor-pointer min-h-[36px] shrink-0"
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 block">
+                        List of Guests Invited
+                      </label>
+                      <p className="text-[10px] text-slate-400">
+                        Choose dignitaries from dropdown or enter custom guest details below.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAddGuest}
+                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 flex items-center gap-1 cursor-pointer min-h-[36px] shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5 shrink-0" />
+                        <span>Add Blank Row</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dropdown for Guests */}
+                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-700 shrink-0">
+                      Choose Dignitary / Guest:
+                    </span>
+                    <select
+                      value=""
+                      onChange={(e) => handleSelectGuest(e.target.value)}
+                      className="flex-1 text-xs text-slate-800 font-medium bg-white border border-slate-300 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                     >
-                      <Plus className="w-3.5 h-3.5 shrink-0" />
-                      <span>Add Guest</span>
-                    </button>
+                      <option value="">▼ Select guest from available / suggested directory...</option>
+                      {convenerOptions.availableGuests.map((guest) => (
+                        <option
+                          key={guest.id}
+                          value={`${guest.name}${guest.subtitle ? `, ${guest.subtitle}` : ''}`}
+                        >
+                          {guest.name} {guest.subtitle ? `(${guest.subtitle})` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="space-y-2">
@@ -668,6 +952,7 @@ export function ReportPreparationTab({
                         <input
                           type="text"
                           value={guest}
+                          placeholder={`Guest ${idx + 1} Name & Title`}
                           onChange={(e) => handleGuestChange(idx, e.target.value)}
                           className="flex-1 min-w-0 text-xs text-slate-800 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500 bg-white"
                         />
@@ -793,6 +1078,16 @@ export function ReportPreparationTab({
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <button
                 type="button"
+                disabled={isGeneratingPDF}
+                onClick={handleGenerateFinalReport}
+                className="w-full sm:w-auto min-h-[42px] justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download PDF</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => window.print()}
                 className="w-full sm:w-auto min-h-[42px] justify-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
@@ -803,9 +1098,9 @@ export function ReportPreparationTab({
               <button
                 type="button"
                 onClick={() => setActiveStage('generate')}
-                className="w-full sm:w-auto min-h-[42px] justify-center px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                className="w-full sm:w-auto min-h-[42px] justify-center px-5 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
               >
-                <span>Proceed to Generate & Download</span>
+                <span>Proceed to Generation Hub</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -939,15 +1234,51 @@ export function ReportPreparationTab({
                   <span>Print Document</span>
                 </button>
               </div>
+
+              {/* Direct Re-Download Link if generated */}
+              {lastGeneratedPdfUrl && (
+                <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-2 max-w-lg mx-auto text-xs">
+                  <div className="flex items-center gap-1.5 text-emerald-800 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>PDF successfully compiled!</span>
+                  </div>
+                  <a
+                    href={lastGeneratedPdfUrl}
+                    download={lastGeneratedPdfFilename}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-2xs transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Direct Download Link</span>
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Dedicated container for html2canvas rendering */}
+          {/* Dedicated container for preview rendering */}
           <div ref={previewContainerRef} className="p-1 sm:p-4 bg-slate-100/90 rounded-2xl border border-slate-200/80 overflow-x-auto print:bg-white print:border-none print:p-0">
             <FinalEventReportDocument data={reportData} />
           </div>
         </div>
       )}
+
+      {/* Offscreen A4 container permanently mounted for 100% desktop fidelity PDF export */}
+      <div
+        ref={pdfExportContainerRef}
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          width: '794px',
+          backgroundColor: '#ffffff',
+          zIndex: -100,
+          pointerEvents: 'none',
+          opacity: 1,
+        }}
+        aria-hidden="true"
+      >
+        <FinalEventReportDocument data={reportData} forPdfExport={true} />
+      </div>
     </div>
   );
 }

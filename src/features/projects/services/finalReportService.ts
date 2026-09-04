@@ -44,49 +44,84 @@ export async function getDeduplicatedStudentAttendance(projectId: string): Promi
   students: Array<{ id: string; name: string; usn?: string }>;
 }> {
   try {
-    // 1. Fetch attendance records for both phases where status is 'present'
-    const { data: records, error: recError } = await supabase
+    const uniqueMap = new Map<string, { id: string; name: string; usn?: string }>();
+
+    // 1. Fetch attendance sessions for this project (survey + camp phases)
+    const { data: sessions } = await supabase
+      .from('attendance_sessions')
+      .select('id, phase')
+      .eq('camp_id', projectId);
+
+    const sessionIds = (sessions || []).map((s) => s.id);
+
+    // 2. Fetch present records for this camp across both survey and camp phases
+    const presentUserIds = new Set<string>();
+
+    // Query by camp_id
+    const { data: recByCamp } = await supabase
       .from('attendance_records')
-      .select(`
-        id,
-        user_id,
-        status,
-        phase,
-        user:users(
-          id,
-          person_id,
-          person:persons(id, full_name, usn_employee_id, category)
-        )
-      `)
+      .select('user_id, status, phase')
       .eq('camp_id', projectId)
       .eq('status', 'present');
 
-    if (recError) {
-      console.warn('Could not query attendance_records directly:', recError.message);
+    if (recByCamp && recByCamp.length > 0) {
+      recByCamp.forEach((r) => {
+        if (r.user_id) presentUserIds.add(r.user_id);
+      });
     }
 
-    const uniqueMap = new Map<string, { id: string; name: string; usn?: string }>();
+    // Query by session_id
+    if (sessionIds.length > 0) {
+      const { data: recBySession } = await supabase
+        .from('attendance_records')
+        .select('user_id, status, phase')
+        .in('session_id', sessionIds)
+        .eq('status', 'present');
 
-    if (records && records.length > 0) {
-      for (const rec of records as any[]) {
-        const person = rec.user?.person;
-        const studentId = person?.id || rec.user_id;
-        const name = person?.full_name || 'Volunteer Student';
-        const usn = person?.usn_employee_id || undefined;
+      if (recBySession && recBySession.length > 0) {
+        recBySession.forEach((r) => {
+          if (r.user_id) presentUserIds.add(r.user_id);
+        });
+      }
+    }
 
-        if (studentId && !uniqueMap.has(studentId)) {
-          uniqueMap.set(studentId, { id: studentId, name, usn });
+    const uniqueUserIds = Array.from(presentUserIds);
+
+    // 3. Resolve student records for users who marked attendance present
+    if (uniqueUserIds.length > 0) {
+      const { data: usersWithPersons } = await supabase
+        .from('users')
+        .select(`
+          id,
+          person_id,
+          person:persons(id, full_name, usn_employee_id, category)
+        `)
+        .in('id', uniqueUserIds);
+
+      if (usersWithPersons && usersWithPersons.length > 0) {
+        for (const u of usersWithPersons as any[]) {
+          const p = u.person;
+          if (p?.category === 'faculty') continue;
+          const studentId = p?.id || u.person_id || u.id;
+          const name = p?.full_name || 'Volunteer Student';
+          const usn = p?.usn_employee_id || undefined;
+          const normKey = (studentId || name).trim().toLowerCase();
+
+          if (!uniqueMap.has(normKey)) {
+            uniqueMap.set(normKey, { id: studentId, name, usn });
+          }
         }
       }
     }
 
-    // 2. If no check-in records logged yet, check roster volunteers assigned to this project
+    // 4. Also check attendance roster for survey & camp phases to capture all student participants without duplication
     if (uniqueMap.size === 0) {
       const { data: roster } = await supabase
         .from('camp_people')
         .select(`
           person_id,
           camp_role,
+          phase,
           person:persons(id, full_name, usn_employee_id, category)
         `)
         .eq('camp_id', projectId)
@@ -95,12 +130,15 @@ export async function getDeduplicatedStudentAttendance(projectId: string): Promi
       if (roster && roster.length > 0) {
         for (const item of roster as any[]) {
           const p = item.person;
-          if (p && !uniqueMap.has(p.id)) {
-            uniqueMap.set(p.id, {
-              id: p.id,
-              name: p.full_name,
-              usn: p.usn_employee_id || undefined,
-            });
+          if (p && p.full_name && p.category !== 'faculty') {
+            const normKey = (p.id || p.full_name).trim().toLowerCase();
+            if (!uniqueMap.has(normKey)) {
+              uniqueMap.set(normKey, {
+                id: p.id || normKey,
+                name: p.full_name,
+                usn: p.usn_employee_id || undefined,
+              });
+            }
           }
         }
       }
@@ -124,15 +162,25 @@ export async function getOverallProjectBudget(
   project: Project
 ): Promise<{ allocated: number; spent: number; balance: number }> {
   try {
-    const allocatedSurvey = Number(project.allocated_budget_survey) || 0;
-    const allocatedCamp = Number(project.allocated_budget_camp) || 0;
-    const totalAllocated =
-      Number(project.allocated_budget) ||
-      (allocatedSurvey + allocatedCamp > 0 ? allocatedSurvey + allocatedCamp : 0);
+    // 1. Fetch live camp record to ensure latest allocation figures
+    const { data: liveCamp } = await supabase
+      .from('camps')
+      .select('allocated_budget, allocated_budget_survey, allocated_budget_camp')
+      .eq('id', projectId)
+      .maybeSingle();
 
+    const campData = liveCamp || project;
+    const allocatedSurvey = Number(campData?.allocated_budget_survey) || 0;
+    const allocatedCamp = Number(campData?.allocated_budget_camp) || 0;
+    const totalAllocated =
+      allocatedSurvey + allocatedCamp > 0
+        ? allocatedSurvey + allocatedCamp
+        : Number(campData?.allocated_budget) || 0;
+
+    // 2. Fetch all expenses for this project across both survey and camp phases
     const { data: expenses } = await supabase
       .from('expenses')
-      .select('total_amount, quantity, unit_cost')
+      .select('total_amount, quantity, unit_cost, phase')
       .eq('camp_id', projectId);
 
     let totalSpent = 0;
@@ -145,7 +193,7 @@ export async function getOverallProjectBudget(
       }, 0);
     }
 
-    const balance = Math.max(0, totalAllocated - totalSpent);
+    const balance = totalAllocated - totalSpent;
 
     return {
       allocated: totalAllocated,
@@ -348,3 +396,231 @@ export async function fetchAvailableCampPhotos(projectId: string): Promise<Avail
     return [];
   }
 }
+
+export interface ConvenerGuestPersonOption {
+  id: string;
+  name: string;
+  subtitle?: string;
+  category: 'student' | 'faculty' | 'guest';
+}
+
+export interface ConvenerAndGuestOptions {
+  availableStudents: ConvenerGuestPersonOption[];
+  availableFaculty: ConvenerGuestPersonOption[];
+  availableGuests: ConvenerGuestPersonOption[];
+}
+
+/**
+ * Fetches available students, faculty, and guests from project roster, attendance, and institutional directory.
+ */
+export async function fetchReportConvenerAndGuestOptions(
+  projectId: string
+): Promise<ConvenerAndGuestOptions> {
+  const studentMap = new Map<string, ConvenerGuestPersonOption>();
+  const facultyMap = new Map<string, ConvenerGuestPersonOption>();
+  const guestMap = new Map<string, ConvenerGuestPersonOption>();
+
+  // 1. Fetch only registered website users who have faculty access
+  try {
+    const { data: facultyUsers } = await supabase
+      .from('users')
+      .select(`
+        id,
+        is_active,
+        role:roles(*),
+        person:persons(*)
+      `)
+      .eq('is_active', true);
+
+    if (facultyUsers && facultyUsers.length > 0) {
+      for (const item of facultyUsers as any[]) {
+        const roleName = item.role?.name;
+        if (roleName === 'faculty' || roleName === 'admin') {
+          const p = item.person;
+          if (p && p.full_name) {
+            const normKey = p.full_name.trim().toLowerCase();
+            facultyMap.set(normKey, {
+              id: p.id || item.id,
+              name: p.full_name.startsWith('Dr.') || p.full_name.startsWith('Prof.') ? p.full_name : `Prof. ${p.full_name}`,
+              subtitle: p.designation || (roleName === 'admin' ? 'Faculty Admin' : 'Faculty Coordinator'),
+              category: 'faculty',
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error querying faculty users with access:', e);
+  }
+
+  // 2. Fetch assigned faculty from project roster (camp_people)
+  try {
+    const { data: campFaculties } = await supabase
+      .from('camp_people')
+      .select(`
+        camp_role,
+        person:persons(id, full_name, designation, category)
+      `)
+      .eq('camp_id', projectId)
+      .in('camp_role', ['faculty', 'faculty_coordinator']);
+
+    if (campFaculties && campFaculties.length > 0) {
+      for (const item of campFaculties as any[]) {
+        const p = item.person;
+        if (p && p.full_name) {
+          const normKey = p.full_name.trim().toLowerCase();
+          if (!facultyMap.has(normKey)) {
+            facultyMap.set(normKey, {
+              id: p.id || normKey,
+              name: p.full_name.startsWith('Dr.') || p.full_name.startsWith('Prof.') ? p.full_name : `Prof. ${p.full_name}`,
+              subtitle: p.designation || 'Assigned Faculty Coordinator',
+              category: 'faculty',
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error querying camp_people for faculty coordinators:', e);
+  }
+
+  // 3. Fetch persons in database registered under faculty category
+  try {
+    const { data: facultyPersons } = await supabase
+      .from('persons')
+      .select('id, full_name, designation, category')
+      .eq('category', 'faculty');
+
+    if (facultyPersons && facultyPersons.length > 0) {
+      for (const p of facultyPersons as any[]) {
+        if (p && p.full_name) {
+          const normKey = p.full_name.trim().toLowerCase();
+          if (!facultyMap.has(normKey)) {
+            facultyMap.set(normKey, {
+              id: p.id || normKey,
+              name: p.full_name.startsWith('Dr.') || p.full_name.startsWith('Prof.') ? p.full_name : `Prof. ${p.full_name}`,
+              subtitle: p.designation || 'School of Legal Studies Faculty',
+              category: 'faculty',
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error querying persons for faculty category:', e);
+  }
+
+  // 4. Fetch camp coordinator if set
+  try {
+    const { data: campInfo } = await supabase
+      .from('camps')
+      .select('coordinator_name, faculty_coordinator:faculty_coordinator_id(id, full_name, designation)')
+      .eq('id', projectId)
+      .maybeSingle();
+
+    if (campInfo) {
+      const fc = (campInfo as any).faculty_coordinator;
+      if (fc && fc.full_name) {
+        const normKey = fc.full_name.trim().toLowerCase();
+        if (!facultyMap.has(normKey)) {
+          facultyMap.set(normKey, {
+            id: fc.id || normKey,
+            name: fc.full_name.startsWith('Dr.') || fc.full_name.startsWith('Prof.') ? fc.full_name : `Prof. ${fc.full_name}`,
+            subtitle: fc.designation || 'Project Faculty Coordinator',
+            category: 'faculty',
+          });
+        }
+      } else if (campInfo.coordinator_name) {
+        const normKey = campInfo.coordinator_name.trim().toLowerCase();
+        if (!facultyMap.has(normKey)) {
+          facultyMap.set(normKey, {
+            id: normKey,
+            name: campInfo.coordinator_name.startsWith('Dr.') || campInfo.coordinator_name.startsWith('Prof.') ? campInfo.coordinator_name : `Prof. ${campInfo.coordinator_name}`,
+            subtitle: 'Project Coordinator',
+            category: 'faculty',
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error querying camp coordinator:', e);
+  }
+
+  // 5. Fetch available students from project roster & attendees
+  try {
+    const { data: campStudents } = await supabase
+      .from('camp_people')
+      .select(`
+        camp_role,
+        person:persons(id, full_name, category, designation, usn_employee_id)
+      `)
+      .eq('camp_id', projectId)
+      .in('camp_role', ['volunteer', 'team_lead']);
+
+    if (campStudents && campStudents.length > 0) {
+      for (const item of campStudents as any[]) {
+        const p = item.person;
+        if (p && p.full_name) {
+          const normKey = p.full_name.trim().toLowerCase();
+          if (!studentMap.has(normKey)) {
+            studentMap.set(normKey, {
+              id: p.id || normKey,
+              name: p.full_name,
+              subtitle: p.usn_employee_id ? `USN: ${p.usn_employee_id}` : (item.camp_role === 'team_lead' ? 'Team Lead' : 'Student Volunteer'),
+              category: 'student',
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error querying students for roster:', e);
+  }
+
+  // 6. Fetch available guests from external invitees and camp people
+  try {
+    const { data: externalPersons } = await supabase
+      .from('persons')
+      .select('id, full_name, designation, organization, category')
+      .eq('category', 'external');
+
+    if (externalPersons && externalPersons.length > 0) {
+      for (const p of externalPersons as any[]) {
+        if (p && p.full_name) {
+          const normKey = p.full_name.trim().toLowerCase();
+          if (!guestMap.has(normKey)) {
+            guestMap.set(normKey, {
+              id: p.id || normKey,
+              name: p.full_name,
+              subtitle: p.designation || p.organization || 'Guest of Honour',
+              category: 'guest',
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error querying external persons for guests:', e);
+  }
+
+  // Standard legal aid institutional guest panels
+  const institutionalGuests: ConvenerGuestPersonOption[] = [
+    { id: 'inst-gst-1', name: 'Justice R. Venkataraman (Retd.)', subtitle: 'Retired Judge, High Court of Karnataka', category: 'guest' },
+    { id: 'inst-gst-2', name: 'Adv. Meera Iyer', subtitle: 'Senior Advocate, District Bar Association', category: 'guest' },
+    { id: 'inst-gst-3', name: 'Member Secretary, DLSA', subtitle: 'District Legal Services Authority', category: 'guest' },
+    { id: 'inst-gst-4', name: 'President, Grama Panchayat', subtitle: 'Local Village Administration', category: 'guest' },
+    { id: 'inst-gst-5', name: 'Senior Civil Judge & CJM', subtitle: 'Chief Judicial Magistrate', category: 'guest' },
+  ];
+
+  for (const g of institutionalGuests) {
+    const key = g.name.toLowerCase();
+    if (!guestMap.has(key)) guestMap.set(key, g);
+  }
+
+  return {
+    availableStudents: Array.from(studentMap.values()),
+    availableFaculty: Array.from(facultyMap.values()),
+    availableGuests: Array.from(guestMap.values()),
+  };
+}
+
