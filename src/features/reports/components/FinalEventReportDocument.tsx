@@ -18,61 +18,96 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({
 
   const pageContainerClass = forPdfExport
     ? 'report-page bg-white mx-auto border border-slate-300 flex flex-col justify-between'
-    : 'report-page bg-white w-full max-w-full sm:max-w-[210mm] sm:min-h-[297mm] mx-auto p-3.5 sm:p-12 md:p-16 mb-6 sm:mb-8 shadow-md sm:shadow-xl border border-slate-300 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-12 print:w-[210mm] print:min-h-[297mm] print:break-after-page';
+    : 'report-page bg-white w-full max-w-full sm:max-w-[210mm] sm:min-h-[297mm] mx-auto mb-6 sm:mb-8 shadow-md sm:shadow-xl border border-slate-300 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:w-[210mm] print:min-h-[297mm] print:break-after-page';
 
-  const pageContainerStyle = forPdfExport
+  const pageContainerStyle: React.CSSProperties = forPdfExport
     ? {
         width: '794px',
         minHeight: '1123px',
-        padding: '48px 44px',
-        boxSizing: 'border-box' as const,
+        padding: '48px 44px 40px 44px',
+        boxSizing: 'border-box',
         marginBottom: '0px',
+        backgroundColor: '#ffffff',
       }
-    : undefined;
+    : {
+        padding: '36px 28px 32px 28px',
+        boxSizing: 'border-box',
+        backgroundColor: '#ffffff',
+      };
 
-  // Common Institutional Masthead on TOP of every page
+  // Common Institutional Masthead on TOP of every page - Clean, uncluttered, uncropped
   const renderMasthead = () => (
     <div
-      className={`flex items-center justify-between border-b-2 border-slate-800 ${
-        forPdfExport ? 'pb-3 mb-6' : 'pb-2 sm:pb-3 mb-4 sm:mb-8'
-      } gap-2`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '2px solid #0f172a',
+        paddingBottom: forPdfExport ? '14px' : '12px',
+        marginBottom: forPdfExport ? '24px' : '20px',
+        width: '100%',
+      }}
     >
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
         <img
           src="/reva-logo.png"
-          alt="REVA University Logo"
-          className={`${
-            forPdfExport ? 'h-14' : 'h-8 sm:h-12 md:h-14'
-          } w-auto object-contain shrink-0`}
+          alt="REVA University"
+          style={{
+            height: forPdfExport ? '46px' : '42px',
+            width: 'auto',
+            objectFit: 'contain',
+            flexShrink: 0,
+            display: 'block',
+          }}
         />
-        <div className="min-w-0">
-          <h2
-            className={`${
-              forPdfExport
-                ? 'text-lg font-black'
-                : 'text-[11px] sm:text-base md:text-lg font-black'
-            } tracking-tight text-slate-900 uppercase leading-tight truncate`}
+        <div
+          style={{
+            borderLeft: '2px solid #cbd5e1',
+            paddingLeft: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            minWidth: 0,
+          }}
+        >
+          <span
+            style={{
+              fontSize: forPdfExport ? '13px' : '12px',
+              fontWeight: 800,
+              color: '#0f172a',
+              letterSpacing: '-0.01em',
+              textTransform: 'uppercase',
+              lineHeight: 1.25,
+              display: 'block',
+            }}
           >
-            REVA UNIVERSITY
-          </h2>
-          <p
-            className={`${
-              forPdfExport
-                ? 'text-xs font-semibold'
-                : 'text-[8px] sm:text-[11px] font-semibold'
-            } text-slate-600 tracking-wide mt-0.5 truncate`}
+            School of Legal Studies
+          </span>
+          <span
+            style={{
+              fontSize: forPdfExport ? '10.5px' : '10px',
+              fontWeight: 600,
+              color: '#475569',
+              letterSpacing: '0.01em',
+              marginTop: '2px',
+              lineHeight: 1.25,
+              display: 'block',
+            }}
           >
-            School of Legal Studies • Legal Aid & Community Outreach
-          </p>
+            Legal Aid Clinic &amp; Community Outreach
+          </span>
         </div>
       </div>
-      <div className="flex items-center shrink-0">
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
         <span
-          className={`${
-            forPdfExport
-              ? 'text-xs px-3 py-1 rounded-xl'
-              : 'text-[9px] sm:text-xs px-1.5 sm:px-3 py-0.5 sm:py-1 rounded sm:rounded-xl'
-          } font-black text-indigo-900 bg-indigo-50 border border-indigo-200 shadow-2xs`}
+          style={{
+            fontSize: forPdfExport ? '13px' : '12px',
+            fontWeight: 800,
+            color: '#1e1b4b',
+            letterSpacing: '-0.01em',
+            lineHeight: 1,
+            display: 'inline-block',
+          }}
         >
           CivicForgeLabs
         </span>
@@ -271,10 +306,10 @@ export const FinalEventReportDocument: FC<FinalEventReportDocumentProps> = ({
                 </div>
               </div>
 
-              {/* Student Convener */}
+              {/* Student / Team Lead Convener */}
               <div className="grid grid-cols-12 divide-x divide-slate-400">
                 <div className="col-span-5 sm:col-span-4 p-2 sm:p-3 font-bold bg-slate-50 text-slate-900 break-words">
-                  Student Convener
+                  Student / Team Lead Convener
                 </div>
                 <div className="col-span-7 sm:col-span-8 p-2 sm:p-3 text-slate-800 font-medium break-words overflow-hidden">
                   {data.studentConveners || <span className="text-slate-400 italic">Not specified</span>}

@@ -154,6 +154,11 @@ export const FacultySurveyDashboard: React.FC = () => {
       <LegalAidCampReport
         surveys={surveys}
         campName={assignedProject?.camp_name}
+        villageName={assignedProject?.village_name}
+        district={assignedProject?.district}
+        campDate={assignedProject?.camp_date}
+        venue={assignedProject?.venue}
+        facultyInCharge={assignedProject?.coordinator_name || 'Faculty Coordinator'}
         onBack={() => setViewMode('dashboard')}
       />
     );

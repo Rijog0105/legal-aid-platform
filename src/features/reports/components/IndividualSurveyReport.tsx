@@ -19,8 +19,19 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
 
   const handleDownloadPDF = async () => {
     if (!reportRef.current) return;
+    const savedScrollX = typeof window !== 'undefined' ? window.scrollX : 0;
+    const savedScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
     try {
-      const canvas = await html2canvas(reportRef.current, { scale: 2, useCORS: true });
+      if (typeof window !== 'undefined') {
+        window.scrollTo(0, 0);
+      }
+      await new Promise((res) => setTimeout(res, 150));
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+      });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -30,6 +41,10 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
     } catch (err) {
       console.error('Failed to generate PDF', err);
       window.print();
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.scrollTo(savedScrollX, savedScrollY);
+      }
     }
   };
 
@@ -71,23 +86,24 @@ export const IndividualSurveyReport: React.FC<IndividualSurveyReportProps> = ({ 
       >
         {/* Institutional Masthead: REVA University & CivicForgeLabs */}
         <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-2">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             <img
               src="/reva-logo.png"
               alt="REVA University"
-              className="h-10 sm:h-12 w-auto object-contain"
+              style={{ height: '44px', width: 'auto', objectFit: 'contain' }}
+              className="shrink-0"
             />
-            <div>
-              <span className="text-sm sm:text-base font-black text-slate-900 tracking-tight block uppercase">
-                REVA University
+            <div className="border-l-2 border-slate-300 pl-3">
+              <span className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight block uppercase">
+                School of Legal Studies
               </span>
-              <span className="text-[10px] sm:text-xs text-slate-500 font-semibold block">
-                School of Legal Studies • Legal Aid Clinic
+              <span className="text-[10px] sm:text-xs text-slate-500 font-semibold block mt-0.5">
+                Legal Aid Clinic &amp; Community Outreach
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200 shadow-2xs">
+          <div className="flex items-center">
+            <span className="text-xs sm:text-sm font-extrabold text-indigo-950 tracking-tight">
               CivicForgeLabs
             </span>
           </div>

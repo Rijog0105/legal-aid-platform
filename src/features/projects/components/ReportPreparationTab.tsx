@@ -301,6 +301,8 @@ export function ReportPreparationTab({
     setGenerationProgress('Preparing high-fidelity institutional pages...');
 
     const { convertOklchToRgb, cleanup } = setupOklchColorConverter();
+    const savedScrollX = typeof window !== 'undefined' ? window.scrollX : 0;
+    const savedScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
 
     try {
       const container = pdfExportContainerRef.current;
@@ -343,6 +345,11 @@ export function ReportPreparationTab({
         );
       }
 
+      // Scroll window to (0,0) during capture to guarantee html2canvas never offsets or crops the top header
+      if (typeof window !== 'undefined') {
+        window.scrollTo(0, 0);
+      }
+
       // Extra tick for rendering stability
       await new Promise((res) => setTimeout(res, 200));
 
@@ -369,6 +376,8 @@ export function ReportPreparationTab({
           logging: false,
           backgroundColor: '#ffffff',
           windowWidth: 794,
+          scrollX: 0,
+          scrollY: 0,
           onclone: (clonedDoc) => {
             // Normalize text spacing styles and font-family to prevent character collapse
             clonedDoc.querySelectorAll('*').forEach((node) => {
@@ -432,6 +441,9 @@ export function ReportPreparationTab({
       window.print();
     } finally {
       cleanup();
+      if (typeof window !== 'undefined') {
+        window.scrollTo(savedScrollX, savedScrollY);
+      }
       setIsGeneratingPDF(false);
       setGenerationProgress('');
     }
@@ -462,8 +474,8 @@ export function ReportPreparationTab({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <h2 className="text-sm sm:text-base md:text-lg font-bold">Final Institutional Event Report</h2>
-              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-indigo-300 bg-indigo-950/80 px-1.5 sm:px-2 py-0.5 rounded border border-indigo-700/50">
-                CivicForgeLabs
+              <span className="text-[10px] font-bold text-indigo-300">
+                • CivicForgeLabs
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-400 truncate">
@@ -837,8 +849,8 @@ export function ReportPreparationTab({
                       >
                         <option value="">
                           {convenerOptions.availableFaculty.length > 0
-                            ? '▼ Choose assigned faculty with faculty access...'
-                            : '▼ No assigned faculties found with faculty access'}
+                            ? '▼ Choose assigned faculty convener for this camp...'
+                            : '▼ No assigned faculty convener for this camp'}
                         </option>
                         {convenerOptions.availableFaculty.map((fac) => (
                           <option key={fac.id} value={fac.name}>
@@ -852,19 +864,19 @@ export function ReportPreparationTab({
                       type="text"
                       value={reportData.facultyConveners}
                       onChange={(e) => updateReportData({ facultyConveners: e.target.value })}
-                      placeholder="e.g. Dr. Priya Sharma, Prof. Rajesh Kumar"
+                      placeholder="e.g. Dr. Priya Sharma, Prof. K. R. Gowda"
                       className="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500 bg-white"
                     />
                     <p className="text-[10px] text-slate-400 leading-tight">
-                      Select assigned faculties who have faculty access on the website, or edit / add names directly.
+                      Select assigned faculty coordinators for this camp from dropdown, or edit / add names directly.
                     </p>
                   </div>
 
-                  {/* Student Convener */}
+                  {/* Student / Team Lead Convener */}
                   <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 focus-within:border-indigo-500">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-slate-800 block">
-                        Student Convener(s)
+                        Student / Team Lead Convener(s)
                       </label>
                       <span className="text-[10px] text-slate-400 font-semibold">Dropdown or type</span>
                     </div>
@@ -876,7 +888,11 @@ export function ReportPreparationTab({
                         onChange={(e) => handleSelectStudentConvener(e.target.value)}
                         className="w-full text-xs text-indigo-900 font-medium bg-indigo-50/80 border border-indigo-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                       >
-                        <option value="">▼ Choose from available students / leads to add...</option>
+                        <option value="">
+                          {convenerOptions.availableStudents.length > 0
+                            ? '▼ Choose assigned team lead convener for this camp...'
+                            : '▼ No assigned team leads for this camp'}
+                        </option>
                         {convenerOptions.availableStudents.map((stu) => (
                           <option key={stu.id} value={stu.name}>
                             {stu.name} {stu.subtitle ? `— ${stu.subtitle}` : ''}
@@ -889,11 +905,11 @@ export function ReportPreparationTab({
                       type="text"
                       value={reportData.studentConveners}
                       onChange={(e) => updateReportData({ studentConveners: e.target.value })}
-                      placeholder="e.g. Arjun Mehta, Sneha Patel"
+                      placeholder="e.g. Rahul Sharma, Ananya Verma"
                       className="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500 bg-white"
                     />
                     <p className="text-[10px] text-slate-400 leading-tight">
-                      Select project student leads from dropdown above, or edit / add custom names directly.
+                      Select assigned student team leads / conveners for this camp from dropdown, or edit / add names directly.
                     </p>
                   </div>
                 </div>
@@ -1130,8 +1146,8 @@ export function ReportPreparationTab({
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     Report Ready for Final Generation
                   </span>
-                  <span className="text-[10px] font-black uppercase text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                    CivicForgeLabs
+                  <span className="text-xs font-bold text-indigo-700">
+                    • CivicForgeLabs
                   </span>
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
@@ -1266,7 +1282,7 @@ export function ReportPreparationTab({
       <div
         ref={pdfExportContainerRef}
         style={{
-          position: 'fixed',
+          position: 'absolute',
           left: 0,
           top: 0,
           width: '794px',

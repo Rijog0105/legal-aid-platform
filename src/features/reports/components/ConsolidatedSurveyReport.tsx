@@ -39,22 +39,22 @@ const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'
 // ─── REPORT SUB-SECTIONS ───
 
 const HeaderSection: React.FC<{ campName: string }> = ({ campName }) => (
-  <div style={{ borderBottom: '2px solid #1e1b4b', paddingBottom: '16px', marginBottom: '24px', width: '100%' }}>
+  <div style={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderWidth: '1px', borderStyle: 'solid', borderRadius: '16px', padding: '24px 28px', width: '100%', boxSizing: 'border-box', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
     {/* Institutional Co-Branding Masthead */}
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <img src="/reva-logo.png" alt="REVA University" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
-        <div>
-          <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
-            REVA University
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '14px', marginBottom: '18px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <img src="/reva-logo.png" alt="REVA University" style={{ height: '44px', width: 'auto', objectFit: 'contain', display: 'block' }} />
+        <div style={{ borderLeft: '2px solid #cbd5e1', paddingLeft: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.01em', textTransform: 'uppercase', lineHeight: 1.25 }}>
+            School of Legal Studies
           </div>
-          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
-            School of Legal Studies • Legal Aid Clinic
+          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, marginTop: '2px', lineHeight: 1.25 }}>
+            Legal Aid Clinic &amp; Community Outreach
           </div>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '11px', fontWeight: 900, color: '#4338ca', backgroundColor: '#eef2ff', padding: '4px 10px', borderRadius: '8px', border: '1px solid #c7d2fe', letterSpacing: '0.02em' }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.01em', lineHeight: 1 }}>
           CivicForgeLabs
         </span>
       </div>
@@ -62,8 +62,8 @@ const HeaderSection: React.FC<{ campName: string }> = ({ campName }) => (
 
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e1b4b', fontWeight: 950, fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
-          <Building2 style={{ width: '26px', height: '26px', color: '#1e1b4b' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e1b4b', fontWeight: 950, fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+          <Building2 style={{ width: '24px', height: '24px', color: '#1e1b4b' }} />
           Consolidated Legal Aid Survey Report
         </div>
         <p style={{ fontSize: '12px', color: '#475569', fontWeight: 500, marginTop: '6px', marginBottom: '0px' }}>
@@ -406,6 +406,11 @@ export const ConsolidatedSurveyReport: React.FC<ConsolidatedSurveyReportProps> =
     setDownloading(true);
     
     const originalGetComputedStyle = window.getComputedStyle;
+    const savedScrollX = typeof window !== 'undefined' ? window.scrollX : 0;
+    const savedScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
     
     // Create single reusable canvas and cache
     const dummyCanvas = document.createElement('canvas');
@@ -533,6 +538,8 @@ export const ConsolidatedSurveyReport: React.FC<ConsolidatedSurveyReportProps> =
               const canvas = await html2canvas(el, {
                 scale: 2,
                 useCORS: true,
+                scrollX: 0,
+                scrollY: 0,
                 onclone: (clonedDoc) => {
                   // Normalize text spacing styles and font-family to prevent html2canvas character spacing collapse bugs
                   clonedDoc.querySelectorAll('*').forEach((node) => {
@@ -607,6 +614,9 @@ export const ConsolidatedSurveyReport: React.FC<ConsolidatedSurveyReportProps> =
           } catch (err) {
             console.error('Failed to generate PDF', err);
           } finally {
+            if (typeof window !== 'undefined') {
+              window.scrollTo(savedScrollX, savedScrollY);
+            }
             window.getComputedStyle = originalGetComputedStyle;
             setTimeout(() => {
               setPdfPages([]);
