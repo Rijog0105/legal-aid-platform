@@ -146,6 +146,8 @@ export function VolunteerCapturePage() {
         uploadedBy: userId,
         latitude: activeGps?.latitude,
         longitude: activeGps?.longitude,
+        activityName: selectedActivity.activity_name,
+        activityPhase: selectedActivity.phase,
       });
 
       await reloadPhotos();

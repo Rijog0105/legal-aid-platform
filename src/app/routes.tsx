@@ -12,6 +12,7 @@ import { RootRedirect } from '@/components/guards/RootRedirect';
 /* Pages */
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { RegisterPage } from '@/features/auth/components/RegisterPage';
+import { ForgotPasswordPage } from '@/features/auth/components/ForgotPasswordPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PeoplePage } from '@/features/people';
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.REGISTER,
     element: <RegisterPage />,
+  },
+  {
+    path: ROUTES.FORGOT_PASSWORD,
+    element: <ForgotPasswordPage />,
   },
   {
     path: ROUTES.UNAUTHORIZED,

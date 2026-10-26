@@ -2,6 +2,7 @@ import { supabase } from '@/services/supabase';
 import type { Project, ProjectPersonWithDetails } from '@/types';
 import { getProjectLifecycleState } from '@/utils/projectLifecycle';
 import { ensureSurveyActivityExists } from '@/features/activities/services/activityService';
+import { withOfflineCache } from '@/services/offlineCache';
 
 interface ProjectPersonWithProject extends ProjectPersonWithDetails {
   camp: Project;
@@ -19,14 +20,15 @@ export interface MyProjectAssignment {
 export async function fetchAllMyProjectAssignments(
   personId: string
 ): Promise<MyProjectAssignment[]> {
-  const { data, error } = await supabase
-    .from('camp_people')
-    .select('*, person:persons(*), camp:camps(*)')
-    .eq('person_id', personId);
+  const rows = await withOfflineCache(`assignments:${personId}`, async () => {
+    const { data, error } = await supabase
+      .from('camp_people')
+      .select('*, person:persons(*), camp:camps(*)')
+      .eq('person_id', personId);
 
-  if (error) throw new Error(error.message);
-
-  const rows = (data ?? []) as unknown as ProjectPersonWithProject[];
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as ProjectPersonWithProject[];
+  });
   const validRows = rows.filter((row) => Boolean(row.camp));
 
   const isAccessible = (camp: Project) => {

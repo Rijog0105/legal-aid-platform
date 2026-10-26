@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { offlineDb } from '@/db/offlineDb';
 import { surveySubmissionService } from '@/features/survey/services/surveySubmissionService';
@@ -6,12 +6,17 @@ import { uploadSurveyProofPhoto } from '@/features/volunteer/services/photoServi
 import { surveyService } from '@/services/surveyService';
 import { makeDraftKey } from '@/utils/draftKey';
 import { useSyncStore } from '@/store/syncStore';
+import { countMutations, processPendingMutations, resetFailedMutations } from '@/services/mutationQueue';
+import { notifyOfflineSyncComplete } from '@/services/offlineCache';
 
 const MAX_AUTO_ATTEMPTS = 5;
 
+// Shared across every component that mounts this hook, so only one sync runs at a time.
+const syncLock = { current: false };
+
 export function useSyncEngine() {
   const { userId, isAuthenticated } = useAuth();
-  const isSyncingRef = useRef(false);
+
   const { setSyncState, setCounts, setLastErrorMessage } = useSyncStore();
 
   const refreshSyncCounts = async () => {
@@ -33,10 +38,14 @@ export function useSyncEngine() {
         .filter(item => item.sync_status === 'failed')
         .toArray();
 
-      setCounts(pending, failedItems.length);
-      
+      const mutations = await countMutations(userId);
+
+      setCounts(pending + mutations.pending, failedItems.length + mutations.failed);
+
       if (failedItems.length > 0) {
         setLastErrorMessage(failedItems[0].error_message || 'Submission failed');
+      } else if (mutations.failed > 0) {
+        setLastErrorMessage(mutations.lastError || 'Saved change failed to sync');
       } else {
         setLastErrorMessage(null);
       }
@@ -61,7 +70,7 @@ export function useSyncEngine() {
     await refreshSyncCounts();
     const currentCounts = useSyncStore.getState();
     
-    if (isSyncingRef.current) {
+    if (syncLock.current) {
       setSyncState('syncing');
     } else if (currentCounts.failedCount > 0) {
       setSyncState('failed');
@@ -77,12 +86,12 @@ export function useSyncEngine() {
       await updateStoreState();
       return;
     }
-    if (isSyncingRef.current) {
+    if (syncLock.current) {
       console.log('[SyncEngine] Sync is already in progress, skipping overlapping run.');
       return;
     }
 
-    isSyncingRef.current = true;
+    syncLock.current = true;
     await updateStoreState('syncing');
     console.log('[SyncEngine] Starting offline survey synchronization sequence...');
 
@@ -90,6 +99,16 @@ export function useSyncEngine() {
     let anyErrors = false;
 
     try {
+      // 0. Replay photos and expenses saved while offline
+      const mutationResult = await processPendingMutations(userId);
+      if (mutationResult.processed > 0) {
+        hadItems = true;
+        notifyOfflineSyncComplete();
+      }
+      if (mutationResult.remaining > 0) {
+        anyErrors = true;
+      }
+
       // 1. Fetch pending submissions for current user
       const pendingItems = await offlineDb.pendingSurveySubmissions
         .where('userId')
@@ -103,8 +122,13 @@ export function useSyncEngine() {
       if (pendingItems.length > 0) {
         hadItems = true;
       } else {
-        isSyncingRef.current = false;
-        await updateStoreState();
+        syncLock.current = false;
+        if (hadItems && !anyErrors) {
+          await updateStoreState('success');
+          setTimeout(() => updateStoreState(), 3000);
+        } else {
+          await updateStoreState();
+        }
         return;
       }
 
@@ -264,7 +288,7 @@ export function useSyncEngine() {
       console.error('[SyncEngine] Global error in synchronization loop:', globalErr);
       anyErrors = true;
     } finally {
-      isSyncingRef.current = false;
+      syncLock.current = false;
       
       if (hadItems && !anyErrors) {
         await updateStoreState('success');
@@ -301,6 +325,7 @@ export function useSyncEngine() {
           error_message: null
         });
       }
+      await resetFailedMutations(userId);
       await refreshSyncCounts();
     } catch (err) {
       console.error('[SyncEngine] Error resetting failed items:', err);

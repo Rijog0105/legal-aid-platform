@@ -77,6 +77,40 @@ async function insertPersonAndUserImmediate(user: any, payload: RegisterPayload)
   }
 }
 
+/**
+ * Confirms a new account using the code from the sign-up email.
+ * The profile rows already exist (created by the auth trigger at sign-up),
+ * so the user is signed out again and waits for coordinator approval.
+ */
+export async function confirmSignupCode(
+  email: string,
+  code: string
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.auth.verifyOtp({
+    email: email.trim().toLowerCase(),
+    token: code.trim(),
+    type: 'signup',
+  });
+  try {
+    await supabase.auth.signOut();
+  } catch (_) {
+    /* ignore */
+  }
+  if (error) {
+    return { success: false, error: 'The code is invalid or has expired. Request a new code and try again.' };
+  }
+  return { success: true };
+}
+
+export async function resendSignupCode(email: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: email.trim().toLowerCase(),
+    options: { emailRedirectTo: `${window.location.origin}/login?confirmed=1` },
+  });
+  return error ? { success: false, error: error.message } : { success: true };
+}
+
 export async function registerUser(
   payload: RegisterPayload
 ): Promise<{ success: boolean; error?: string }> {
@@ -88,6 +122,8 @@ export async function registerUser(
       email: payload.email.trim().toLowerCase(),
       password: payload.password,
       options: {
+        // If the user clicks the email link instead of typing the code, bring them back to this site.
+        emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
         data: {
           full_name: payload.full_name.trim(),
           phone: payload.phone.trim(),

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchMyPhotos, type PhotoWithActivityName } from '@/features/volunteer/services/photoService';
+import { subscribeToOfflineSync } from '@/services/offlineCache';
 
 /**
  * All photos captured by the current volunteer within their assigned camp —
@@ -31,6 +32,8 @@ export function useMyPhotos(campId: string | null, uploadedBy: string | null) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => subscribeToOfflineSync(load), [load]);
 
   return { photos, isLoading, error, reload: load };
 }

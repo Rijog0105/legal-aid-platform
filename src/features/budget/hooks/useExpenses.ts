@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { subscribeToOfflineSync } from '@/services/offlineCache';
 import type { Expense, Project } from '@/types';
 import {
   fetchExpenses,
@@ -37,6 +38,8 @@ export function useExpenses(campId: string, phase: 'survey' | 'camp', allocatedB
   useEffect(() => {
     loadExpenses();
   }, [loadExpenses]);
+
+  useEffect(() => subscribeToOfflineSync(loadExpenses), [loadExpenses]);
 
   const addExpense = useCallback(
     async (payload: CreateExpensePayload): Promise<Expense> => {

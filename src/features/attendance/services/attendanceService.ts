@@ -1,5 +1,6 @@
 import { supabase } from '@/services/supabase';
 import type { AttendanceSession, AttendanceRecord, Notification } from '@/types';
+import { withOfflineCache } from '@/services/offlineCache';
 
 export interface CreateSessionPayload {
   camp_id: string;
@@ -391,14 +392,16 @@ export async function fetchSessionDashboardData(
  * Fetch all notifications for a user.
  */
 export async function fetchNotifications(userId: string): Promise<Notification[]> {
-  const { data, error } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  return withOfflineCache(`notifications:${userId}`, async () => {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data as Notification[];
+    if (error) throw new Error(error.message);
+    return data as Notification[];
+  });
 }
 
 /**

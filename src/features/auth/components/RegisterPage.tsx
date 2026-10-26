@@ -18,7 +18,7 @@ import {
   ArrowRight,
   ShieldCheck,
 } from 'lucide-react';
-import { registerUser } from '@/features/auth/services/registrationService';
+import { confirmSignupCode, registerUser, resendSignupCode } from '@/features/auth/services/registrationService';
 import { ROUTES } from '@/constants';
 
 const registerSchema = z
@@ -125,6 +125,45 @@ export function RegisterPage() {
 
   const selectedCategory = watch('category');
 
+  const [confirmCode, setConfirmCode] = useState('');
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [confirmInfo, setConfirmInfo] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
+
+  const handleConfirmCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!successData) return;
+    setConfirmError(null);
+    setConfirmInfo(null);
+    if (!/^\d{6,10}$/.test(confirmCode)) {
+      setConfirmError('Enter the numeric code from the email.');
+      return;
+    }
+    setIsConfirming(true);
+    const result = await confirmSignupCode(successData.email, confirmCode);
+    setIsConfirming(false);
+    if (!result.success) {
+      setConfirmError(result.error ?? 'Verification failed.');
+      return;
+    }
+    setEmailConfirmed(true);
+  };
+
+  const handleResendCode = async () => {
+    if (!successData) return;
+    setConfirmError(null);
+    setConfirmInfo(null);
+    setIsConfirming(true);
+    const result = await resendSignupCode(successData.email);
+    setIsConfirming(false);
+    if (!result.success) {
+      setConfirmError(result.error ?? 'Could not resend the code.');
+      return;
+    }
+    setConfirmInfo('A new code has been sent.');
+  };
+
   const onSubmit = async (values: RegisterFormValues) => {
     setServerError(null);
     try {
@@ -163,23 +202,71 @@ export function RegisterPage() {
             <CheckCircle2 size={32} />
           </div>
 
-          <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-slate-900">Registration Submitted</h2>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Your application for <strong className="text-slate-800 font-semibold">{successData.email}</strong> has been received.
-            </p>
-          </div>
+          {emailConfirmed ? (
+            <>
+              <div className="space-y-1.5">
+                <h2 className="text-xl font-bold text-slate-900">Email Confirmed</h2>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  <strong className="text-slate-800 font-semibold">{successData.email}</strong> has been verified.
+                </p>
+              </div>
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left text-xs space-y-2.5">
+                <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <ShieldCheck size={16} className="text-indigo-600 shrink-0" />
+                  <span>Next Step</span>
+                </p>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Your faculty coordinator will now approve your account. You can sign in once it is approved.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-1.5">
+                <h2 className="text-xl font-bold text-slate-900">Confirm Your Email</h2>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  We sent a verification code to <strong className="text-slate-800 font-semibold">{successData.email}</strong>. Enter it below.
+                </p>
+              </div>
 
-          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left text-xs space-y-2.5">
-            <p className="font-bold text-slate-800 flex items-center gap-1.5">
-              <ShieldCheck size={16} className="text-indigo-600 shrink-0" />
-              <span>Next Verification Steps</span>
-            </p>
-            <ol className="list-decimal pl-4 space-y-1.5 text-slate-600 text-[11px] leading-relaxed">
-              <li>Check your inbox and verify your email link from Supabase.</li>
-              <li>Your faculty coordinator will approve your account to activate access.</li>
-            </ol>
-          </div>
+              {confirmError && (
+                <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-red-50/90 border border-red-200/90 text-red-800 text-xs text-left">
+                  <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed font-semibold">{confirmError}</span>
+                </div>
+              )}
+              {confirmInfo && !confirmError && (
+                <p className="text-xs font-semibold text-indigo-700">{confirmInfo}</p>
+              )}
+
+              <form onSubmit={handleConfirmCode} noValidate className="space-y-3">
+                <input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="Enter code"
+                  maxLength={10}
+                  value={confirmCode}
+                  onChange={(e) => setConfirmCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full px-3.5 py-3 rounded-2xl border border-slate-200 text-center text-base font-bold tracking-[0.3em] bg-slate-50/50 focus:bg-white text-slate-900 placeholder:text-slate-400 placeholder:font-normal placeholder:tracking-normal focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                />
+                <button
+                  type="submit"
+                  disabled={isConfirming}
+                  className="w-full h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-xs shadow-lg shadow-indigo-600/20 disabled:opacity-60 transition-all cursor-pointer flex items-center justify-center"
+                >
+                  {isConfirming ? 'Verifying…' : 'Confirm Email'}
+                </button>
+                <button
+                  type="button"
+                  disabled={isConfirming}
+                  onClick={handleResendCode}
+                  className="w-full text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  Didn&apos;t get a code? Resend
+                </button>
+              </form>
+            </>
+          )}
 
           <button
             onClick={() => navigate(ROUTES.LOGIN)}

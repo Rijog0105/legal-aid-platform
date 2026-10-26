@@ -49,6 +49,23 @@ export default defineConfig({
             },
           },
           {
+            // Private photos are served through signed URLs whose token changes each time;
+            // ignoring the query string lets a previously viewed photo load while offline.
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/sign\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'supabase-photos-cache',
+              matchOptions: { ignoreSearch: true },
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 60,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
             handler: 'StaleWhileRevalidate',
             options: {

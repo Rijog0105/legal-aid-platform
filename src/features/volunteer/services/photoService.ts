@@ -1,6 +1,9 @@
 import { supabase } from '@/services/supabase';
 import { APP_CONFIG } from '@/constants';
 import type { Photo } from '@/types';
+import { offlineDb, type PendingMutation } from '@/db/offlineDb';
+import { isNetworkError, isOffline, makeTempId, withOfflineCache } from '@/services/offlineCache';
+import { getPendingMutations, queueMutation } from '@/services/mutationQueue';
 
 export interface PhotoWithActivityName extends Photo {
   activity: { activity_name: string; phase: 'survey' | 'camp' } | null;
@@ -16,7 +19,12 @@ export interface UploadPhotoInput {
   file: File;
   latitude?: number | null;
   longitude?: number | null;
+  /** Shown in galleries while the photo is waiting to sync. */
+  activityName?: string;
+  activityPhase?: 'survey' | 'camp';
 }
+
+const LOCAL_PHOTO_PREFIX = 'local:';
 
 function buildStoragePath(projectId: string, activityId: string, file: File): string {
   const ext = file.name.split('.').pop() || 'jpg';
@@ -24,9 +32,34 @@ function buildStoragePath(projectId: string, activityId: string, file: File): st
   return `${projectId}/${activityId}/${unique}.${ext}`;
 }
 
+/** Converts a queued photo upload into the Photo shape the UI renders. */
+function pendingToPhoto(m: PendingMutation): PhotoWithActivityName {
+  const p = m.payload;
+  return {
+    id: m.tempId!,
+    camp_id: p.camp_id,
+    activity_id: p.activity_id,
+    uploaded_by: p.uploaded_by,
+    file_url: `${LOCAL_PHOTO_PREFIX}${m.tempId}`,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    captured_at: p.captured_at,
+    is_selected_for_report: false,
+    created_at: m.created_at,
+    activity: p.activity_name ? { activity_name: p.activity_name, phase: p.activity_phase ?? 'camp' } : null,
+    uploader: null,
+  };
+}
+
+async function pendingPhotos(filter: (p: any) => boolean): Promise<PhotoWithActivityName[]> {
+  const items = await getPendingMutations((m) => m.type === 'photo_upload' && filter(m.payload));
+  return items.map(pendingToPhoto).reverse();
+}
+
 /**
  * Uploads a photo file to the private `camp-photos` storage bucket, then
- * records its metadata in the `photos` table.
+ * records its metadata in the `photos` table. When offline the photo is kept
+ * on the device and uploaded automatically once the connection returns.
  */
 export async function uploadPhoto({
   projectId,
@@ -35,23 +68,46 @@ export async function uploadPhoto({
   file,
   latitude = null,
   longitude = null,
+  activityName,
+  activityPhase,
 }: UploadPhotoInput): Promise<Photo> {
   const path = buildStoragePath(projectId, activityId, file);
-  console.log('[photoService.uploadPhoto] Storage Path:', path);
-  console.log('[photoService.uploadPhoto] File type:', file.type, 'File size:', file.size);
 
-  console.log('[photoService.uploadPhoto] Starting Supabase storage upload...');
+  const queueForLater = async (): Promise<Photo> => {
+    const tempId = makeTempId();
+    await queueMutation({
+      type: 'photo_upload',
+      userId: uploadedBy,
+      campId: projectId,
+      tempId,
+      payload: {
+        path,
+        blob: file,
+        camp_id: projectId,
+        activity_id: activityId,
+        uploaded_by: uploadedBy,
+        latitude,
+        longitude,
+        captured_at: new Date().toISOString(),
+        activity_name: activityName,
+        activity_phase: activityPhase,
+      },
+    });
+    const [queued] = await getPendingMutations((m) => m.tempId === tempId);
+    return pendingToPhoto(queued);
+  };
+
+  if (isOffline()) return queueForLater();
+
   const { error: uploadError } = await supabase.storage
     .from(APP_CONFIG.PHOTO_BUCKET)
     .upload(path, file, { contentType: file.type, upsert: false });
-  
+
   if (uploadError) {
-    console.error('[photoService.uploadPhoto] Supabase Storage upload error:', uploadError);
+    if (isNetworkError(uploadError.message)) return queueForLater();
     throw new Error(`Storage upload failed: ${uploadError.message}`);
   }
-  console.log('[photoService.uploadPhoto] Supabase Storage upload succeeded!');
 
-  console.log('[photoService.uploadPhoto] Starting Database insert into photos...');
   const { data, error } = await supabase
     .from('photos')
     .insert([
@@ -68,13 +124,11 @@ export async function uploadPhoto({
     .single();
 
   if (error) {
-    console.error('[photoService.uploadPhoto] Database insert error:', error);
-    console.log('[photoService.uploadPhoto] Cleaning up uploaded storage file...');
     await supabase.storage.from(APP_CONFIG.PHOTO_BUCKET).remove([path]);
+    if (isNetworkError(error.message)) return queueForLater();
     throw new Error(`Database insert failed: ${error.message}`);
   }
 
-  console.log('[photoService.uploadPhoto] Database insert succeeded! Data:', data);
   return data as Photo;
 }
 
@@ -85,14 +139,19 @@ export async function fetchMyPhotosForActivity(
   activityId: string,
   uploadedBy: string
 ): Promise<Photo[]> {
-  const { data, error } = await supabase
-    .from('photos')
-    .select('*')
-    .eq('activity_id', activityId)
-    .eq('uploaded_by', uploadedBy)
-    .order('captured_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Photo[];
+  const remote = await withOfflineCache(`photos:activity:${activityId}:${uploadedBy}`, async () => {
+    const { data, error } = await supabase
+      .from('photos')
+      .select('*')
+      .eq('activity_id', activityId)
+      .eq('uploaded_by', uploadedBy)
+      .order('captured_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Photo[];
+  }).catch(() => [] as Photo[]);
+
+  const local = await pendingPhotos((p) => p.activity_id === activityId && p.uploaded_by === uploadedBy);
+  return [...local, ...remote];
 }
 
 /**
@@ -103,24 +162,34 @@ export async function fetchMyPhotos(
   projectId: string,
   uploadedBy: string
 ): Promise<PhotoWithActivityName[]> {
-  const { data, error } = await supabase
-    .from('photos')
-    .select('*, activity:activities(activity_name)')
-    .eq('camp_id', projectId)
-    .eq('uploaded_by', uploadedBy)
-    .order('captured_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as PhotoWithActivityName[];
+  const remote = await withOfflineCache(`photos:mine:${projectId}:${uploadedBy}`, async () => {
+    const { data, error } = await supabase
+      .from('photos')
+      .select('*, activity:activities(activity_name)')
+      .eq('camp_id', projectId)
+      .eq('uploaded_by', uploadedBy)
+      .order('captured_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as PhotoWithActivityName[];
+  });
+
+  const local = await pendingPhotos((p) => p.camp_id === projectId && p.uploaded_by === uploadedBy);
+  return [...local, ...remote];
 }
 
 export async function fetchProjectPhotos(projectId: string): Promise<PhotoWithDetails[]> {
-  const { data, error } = await supabase
-    .from('photos')
-    .select('*, activity:activities(activity_name, phase), uploader:users(person:persons(full_name))')
-    .eq('camp_id', projectId)
-    .order('captured_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as PhotoWithDetails[];
+  const remote = await withOfflineCache(`photos:project:${projectId}`, async () => {
+    const { data, error } = await supabase
+      .from('photos')
+      .select('*, activity:activities(activity_name, phase), uploader:users(person:persons(full_name))')
+      .eq('camp_id', projectId)
+      .order('captured_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as PhotoWithDetails[];
+  });
+
+  const local = await pendingPhotos((p) => p.camp_id === projectId);
+  return [...local, ...remote];
 }
 
 export async function togglePhotoReportSelection(photoId: string, isSelected: boolean): Promise<void> {
@@ -176,6 +245,28 @@ export async function uploadSurveyProofPhoto(
 }
 
 /**
+ * Creates a signed URL and remembers it, so the image (cached by the service
+ * worker) can still be shown when the device is offline.
+ */
+async function signedUrlWithFallback(bucket: string, path: string, expiresInSeconds: number): Promise<string | null> {
+  const cacheKey = `${bucket}/${path}`;
+  if (!isOffline()) {
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresInSeconds);
+    if (!error && data?.signedUrl) {
+      offlineDb.signedUrlCache
+        .put({ path: cacheKey, url: data.signedUrl, cached_at: new Date().toISOString() })
+        .catch(() => undefined);
+      return data.signedUrl;
+    }
+    if (error && !isNetworkError(error.message)) {
+      console.error(`Error generating signed URL for ${cacheKey}:`, error);
+    }
+  }
+  const cached = await offlineDb.signedUrlCache.get(cacheKey).catch(() => undefined);
+  return cached?.url ?? null;
+}
+
+/**
  * Generates a temporary signed URL for a private survey proof photo.
  */
 export async function getSignedSurveyProofPhotoUrl(
@@ -186,18 +277,12 @@ export async function getSignedSurveyProofPhotoUrl(
   if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  const { data, error } = await supabase.storage
-    .from(APP_CONFIG.SURVEY_PROOF_PHOTO_BUCKET)
-    .createSignedUrl(path, expiresInSeconds);
-  if (error) {
-    console.error('Error generating signed URL for survey proof photo:', error);
-    return null;
-  }
-  return data.signedUrl;
+  return signedUrlWithFallback(APP_CONFIG.SURVEY_PROOF_PHOTO_BUCKET, path, expiresInSeconds);
 }
 
 /**
- * Generates a temporary signed URL for a private storage object.
+ * Generates a temporary signed URL for a private storage object. Photos still
+ * waiting to sync are read straight from the device.
  */
 export async function getSignedPhotoUrl(
   path: string,
@@ -206,14 +291,20 @@ export async function getSignedPhotoUrl(
   if (path.startsWith('data:image/') || path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  const { data, error } = await supabase.storage
-    .from(APP_CONFIG.PHOTO_BUCKET)
-    .createSignedUrl(path, expiresInSeconds);
-  if (error) return null;
-  return data.signedUrl;
+  if (path.startsWith(LOCAL_PHOTO_PREFIX)) {
+    const tempId = path.slice(LOCAL_PHOTO_PREFIX.length);
+    const [queued] = await getPendingMutations((m) => m.tempId === tempId);
+    return queued?.payload?.blob ? URL.createObjectURL(queued.payload.blob) : null;
+  }
+  return signedUrlWithFallback(APP_CONFIG.PHOTO_BUCKET, path, expiresInSeconds);
 }
 
 export async function deletePhoto(id: string, storagePath: string): Promise<void> {
+  if (storagePath.startsWith(LOCAL_PHOTO_PREFIX)) {
+    const queued = await getPendingMutations((m) => m.tempId === id);
+    await Promise.all(queued.map((m) => offlineDb.pendingMutations.delete(m.localId!)));
+    return;
+  }
   if (!storagePath.startsWith('data:')) {
     await supabase.storage.from(APP_CONFIG.PHOTO_BUCKET).remove([storagePath]);
   }

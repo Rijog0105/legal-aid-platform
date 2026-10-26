@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabase';
 import type { Person } from '@/types';
 import type { PersonCategory } from '@/constants';
+import { withOfflineCache } from '@/services/offlineCache';
 
 export interface PersonPayload {
   full_name: string;
@@ -21,38 +22,37 @@ export interface PeopleFilters {
 }
 
 export async function fetchPeople(filters: PeopleFilters = {}): Promise<Person[]> {
-  let query = supabase
-    .from('persons')
-    .select('*')
-    .order('full_name', { ascending: true });
+  const all = await withOfflineCache('people:all', async () => {
+    const { data, error } = await supabase
+      .from('persons')
+      .select('*')
+      .order('full_name', { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Person[];
+  });
 
-  if (!filters.includePending) {
-    // Only approved/active people in main registry
-    query = query.neq('registration_status', 'pending');
-  }
-
-  if (filters.category) {
-    query = query.eq('category', filters.category);
-  }
-
-  if (filters.search && filters.search.trim()) {
-    query = query.ilike('full_name', `%${filters.search.trim()}%`);
-  }
-
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Person[];
+  // Filtering happens on the device so the saved list also works offline.
+  const search = filters.search?.trim().toLowerCase();
+  return all.filter(
+    (p) =>
+      // Only approved/active people in main registry unless pending are requested
+      (filters.includePending || p.registration_status !== 'pending') &&
+      (!filters.category || p.category === filters.category) &&
+      (!search || p.full_name.toLowerCase().includes(search))
+  );
 }
 
 export async function fetchPendingRegistrations(): Promise<Person[]> {
-  const { data, error } = await supabase
-    .from('persons')
-    .select('*')
-    .eq('registration_status', 'pending')
-    .order('created_at', { ascending: false });
+  return withOfflineCache('people:pending', async () => {
+    const { data, error } = await supabase
+      .from('persons')
+      .select('*')
+      .eq('registration_status', 'pending')
+      .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Person[];
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Person[];
+  });
 }
 
 export async function approvePendingRegistration(

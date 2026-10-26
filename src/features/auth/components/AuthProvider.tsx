@@ -118,16 +118,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               const cachedRecord = await offlineDb.offlineCachedUserProfiles.get(session.user.id);
               
               if (cachedRecord) {
-                // Enforce security boundaries: Offline access ONLY for volunteer / team_lead
-                if (cachedRecord.roleName !== 'volunteer' && cachedRecord.roleName !== 'team_lead') {
-                  console.error('[AuthProvider] Offline access restricted. Administrative roles require internet connection.');
-                  store.reset();
-                  store.setAuthError('Offline access is only available for Volunteer and Team Lead roles. Please connect to the internet to access administrative features.');
-                  store.setLoading(false);
-                  store.setInitialized(true);
-                  return;
-                }
-
+                // All roles may open the app offline; they see data previously saved on this device,
+                // and the database still enforces permissions when changes sync.
                 console.info('[AuthProvider] Restored session from offline profile cache:', cachedRecord.displayName);
                 isOfflineMode = true;
                 roleOverride = cachedRecord.roleName as RoleName;
@@ -147,7 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                   person: {
                     id: cachedRecord.personId,
                     full_name: cachedRecord.displayName,
-                    category: 'student',
+                    category: cachedRecord.roleName === 'faculty' || cachedRecord.roleName === 'admin' ? 'faculty' : 'student',
                     designation: null,
                     organization: null,
                     phone: '',

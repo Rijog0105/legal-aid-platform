@@ -68,7 +68,39 @@ export interface OfflineCachedUserProfile {
   cached_at: string;
 }
 
+// Last successful response of a read query, served when the device is offline
+export interface OfflineQueryCacheEntry {
+  key: string;                 // PK = '<resource>:<params>'
+  data: any;
+  cached_at: string;
+}
+
+// Writes made while offline, replayed in order by the sync engine
+export interface PendingMutation {
+  localId?: number;            // Auto-incremented PK
+  type: 'photo_upload' | 'expense_create' | 'expense_update' | 'expense_delete';
+  userId: string;
+  campId: string;
+  tempId: string | null;       // Client-side id handed to the UI for not-yet-synced rows
+  payload: any;                // Photo uploads keep the image Blob here
+  status: 'pending' | 'failed';
+  created_at: string;
+  attempt_count: number;
+  error_message: string | null;
+}
+
+// Last signed URL per storage path, so cached images resolve while offline
+export interface SignedUrlCacheEntry {
+  path: string;                // PK = '<bucket>/<object path>'
+  url: string;
+  cached_at: string;
+}
+
 export class LegalAidOfflineDB extends Dexie {
+  queryCache!: Table<OfflineQueryCacheEntry, string>;
+  pendingMutations!: Table<PendingMutation, number>;
+  signedUrlCache!: Table<SignedUrlCacheEntry, string>;
+
   offlineSurveyTemplates!: Table<OfflineSurveyTemplate, string>;
   offlineSurveySections!: Table<OfflineSurveySection, string>;
   offlineSurveyQuestions!: Table<OfflineSurveyQuestion, string>;
@@ -85,6 +117,11 @@ export class LegalAidOfflineDB extends Dexie {
       offlineSurveyDrafts: 'draftKey, userId, campId, templateId, updatedAt',
       pendingSurveySubmissions: '++localId, surveyReferenceId, userId, campId, sync_status, created_at',
       offlineCachedUserProfiles: 'userId, cached_at',
+    });
+    this.version(2).stores({
+      queryCache: 'key, cached_at',
+      pendingMutations: '++localId, type, userId, campId, tempId, status, created_at',
+      signedUrlCache: 'path',
     });
   }
 }

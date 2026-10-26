@@ -27,6 +27,9 @@ export function LoginPage() {
   const { login, isAuthenticated, isInitialized, isLoading, roleName, authError, clearAuthError } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailJustConfirmed] = useState(
+    () => new URLSearchParams(window.location.search).get('confirmed') === '1'
+  );
 
   const {
     register,
@@ -86,6 +89,15 @@ export function LoginPage() {
               Enter your institutional credentials to access your legal aid workspace.
             </p>
           </div>
+
+          {emailJustConfirmed && (
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 text-emerald-800 text-xs animate-fade-in">
+              <ShieldCheck size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+              <span className="leading-relaxed font-semibold">
+                Your email has been confirmed. You can sign in once your faculty coordinator approves your account.
+              </span>
+            </div>
+          )}
 
           {/* Error Alert */}
           {(serverError || authError) && (
@@ -158,6 +170,14 @@ export function LoginPage() {
               {errors.password && (
                 <p className="text-[11px] font-semibold text-red-600 pl-1">{errors.password.message}</p>
               )}
+              <div className="flex justify-end">
+                <Link
+                  to={ROUTES.FORGOT_PASSWORD}
+                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             {/* Submit Button */}

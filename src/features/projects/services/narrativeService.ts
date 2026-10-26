@@ -1,18 +1,21 @@
 import { supabase } from '@/services/supabase';
 import type { NarrativeSection } from '@/types';
 import type { NarrativeSectionType } from '@/constants';
+import { withOfflineCache } from '@/services/offlineCache';
 
 /**
  * Fetch all narrative sections for a given project.
  */
 export async function fetchNarrativeSections(projectId: string): Promise<NarrativeSection[]> {
-  const { data, error } = await supabase
-    .from('narrative_sections')
-    .select('*')
-    .eq('camp_id', projectId);
+  return withOfflineCache(`narratives:${projectId}`, async () => {
+    const { data, error } = await supabase
+      .from('narrative_sections')
+      .select('*')
+      .eq('camp_id', projectId);
 
-  if (error) throw new Error(error.message);
-  return (data as NarrativeSection[]) || [];
+    if (error) throw new Error(error.message);
+    return (data as NarrativeSection[]) || [];
+  });
 }
 
 /**

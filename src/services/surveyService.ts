@@ -1,5 +1,7 @@
 import { supabase } from '@/services/supabase';
 import type { SurveyResponseData } from '@/types/survey';
+import { offlineDb } from '@/db/offlineDb';
+import { isOffline, readOfflineCache } from '@/services/offlineCache';
 
 const LOCAL_STORAGE_SURVEYS_KEY = 'legal_aid_submitted_surveys_v2';
 // Draft key is now generated per user/camp/template; removed global constant
@@ -121,6 +123,10 @@ export const surveyService = {
 
   // Fetch all submitted surveys (with relational hydration from Supabase)
   async fetchAllSurveys(campId?: string): Promise<SurveyResponseData[]> {
+    const cacheKey = `surveys:${campId ?? 'all'}`;
+    if (isOffline()) {
+      return (await readOfflineCache<SurveyResponseData[]>(cacheKey)) ?? [];
+    }
     try {
       // 1. Fetch survey headers
       let query = supabase.from('surveys').select('*').order('submitted_at', { ascending: false });
@@ -315,6 +321,9 @@ export const surveyService = {
         return result;
       });
 
+      offlineDb.queryCache
+        .put({ key: cacheKey, data: remoteSurveys, cached_at: new Date().toISOString() })
+        .catch(() => undefined);
       return remoteSurveys;
     } catch (e) {
       console.error('[surveyService] Error loading remote surveys:', e);
@@ -330,6 +339,16 @@ export const surveyService = {
 
   // Fetch complete survey (relational hydration)
   async fetchCompleteSurvey(surveyId: string): Promise<SurveyResponseData | null> {
+    if (isOffline()) {
+      // Use the copy saved with the survey list, if this survey was loaded before.
+      const cached = await offlineDb.queryCache.toArray().catch(() => []);
+      for (const entry of cached) {
+        if (!entry.key.startsWith('surveys:')) continue;
+        const match = (entry.data as SurveyResponseData[]).find((s) => s.id === surveyId);
+        if (match) return match;
+      }
+      return null;
+    }
     try {
       // 1. Fetch survey header
       const { data: survey, error: surveyErr } = await supabase

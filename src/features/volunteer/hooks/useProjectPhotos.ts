@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { subscribeToOfflineSync } from '@/services/offlineCache';
 import {
   fetchProjectPhotos,
   togglePhotoReportSelection,
@@ -32,6 +33,8 @@ export function useProjectPhotos(projectId: string | null) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => subscribeToOfflineSync(load), [load]);
 
   const toggleReportSelection = async (photoId: string, isSelected: boolean) => {
     // Optimistic update

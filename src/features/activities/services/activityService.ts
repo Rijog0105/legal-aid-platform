@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabase';
 import type { Activity } from '@/types';
 import type { ActivityStatus } from '@/constants';
+import { isOffline, withOfflineCache } from '@/services/offlineCache';
 
 export interface ActivityPayload {
   camp_id: string;
@@ -14,19 +15,21 @@ export async function fetchActivities(
   campId: string,
   phase?: 'survey' | 'camp'
 ): Promise<Activity[]> {
-  let query = supabase
-    .from('activities')
-    .select('*')
-    .eq('camp_id', campId)
-    .order('activity_order', { ascending: true });
+  return withOfflineCache(`activities:${campId}:${phase ?? 'all'}`, async () => {
+    let query = supabase
+      .from('activities')
+      .select('*')
+      .eq('camp_id', campId)
+      .order('activity_order', { ascending: true });
 
-  if (phase) {
-    query = query.eq('phase', phase);
-  }
+    if (phase) {
+      query = query.eq('phase', phase);
+    }
 
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Activity[];
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Activity[];
+  });
 }
 
 export async function fetchActivity(id: string): Promise<Activity | null> {
@@ -118,6 +121,7 @@ export async function reorderActivities(campId: string, orderedIds: string[]): P
 }
 
 export async function ensureSurveyActivityExists(campId: string): Promise<void> {
+  if (isOffline()) return;
   try {
     // 1. Check if an activity with name 'Survey Activity' and phase = 'camp' already exists for this camp
     const { data: existing, error: fetchError } = await supabase

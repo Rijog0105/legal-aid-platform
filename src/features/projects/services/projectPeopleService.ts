@@ -1,25 +1,28 @@
 import { supabase } from '@/services/supabase';
 import type { ProjectPersonWithDetails } from '@/types';
 import type { ProjectRole } from '@/constants';
+import { withOfflineCache } from '@/services/offlineCache';
 
 export async function fetchProjectPeople(
   projectId: string,
   phase?: 'survey' | 'camp'
 ): Promise<ProjectPersonWithDetails[]> {
-  let query = supabase
-    .from('camp_people')
-    .select('*, person:persons(*)');
+  return withOfflineCache(`projectPeople:${projectId}:${phase ?? 'all'}`, async () => {
+    let query = supabase
+      .from('camp_people')
+      .select('*, person:persons(*)');
 
-  if (phase) {
-    // Show phase-specific assignments AND legacy/neutral assignments whose phase is unknown (NULL)
-    query = query.eq('camp_id', projectId).or(`phase.eq.${phase},phase.is.null`);
-  } else {
-    query = query.eq('camp_id', projectId);
-  }
+    if (phase) {
+      // Show phase-specific assignments AND legacy/neutral assignments whose phase is unknown (NULL)
+      query = query.eq('camp_id', projectId).or(`phase.eq.${phase},phase.is.null`);
+    } else {
+      query = query.eq('camp_id', projectId);
+    }
 
-  const { data, error } = await query.order('assigned_at', { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as ProjectPersonWithDetails[];
+    const { data, error } = await query.order('assigned_at', { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as ProjectPersonWithDetails[];
+  });
 }
 
 export async function assignPersonToProject(

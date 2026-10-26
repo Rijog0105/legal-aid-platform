@@ -2,6 +2,7 @@ import { supabase } from '@/services/supabase';
 import type { Project, ReportSettings } from '@/types';
 import type { ProjectStatus } from '@/constants';
 import { ensureSurveyActivityExists } from '@/features/activities/services/activityService';
+import { withOfflineCache } from '@/services/offlineCache';
 
 export interface ProjectPayload {
   camp_name: string;
@@ -22,32 +23,38 @@ export interface ProjectFilters {
 }
 
 export async function fetchProjects(filters: ProjectFilters = {}): Promise<Project[]> {
-  let query = supabase
-    .from('camps')
-    .select('*')
-    .order('camp_date', { ascending: false });
+  const all = await withOfflineCache('projects:all', async () => {
+    const { data, error } = await supabase
+      .from('camps')
+      .select('*')
+      .order('camp_date', { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Project[];
+  });
 
-  if (filters.status) {
-    query = query.eq('status', filters.status);
-  }
-
-  if (filters.search && filters.search.trim()) {
-    query = query.ilike('camp_name', `%${filters.search.trim()}%`);
-  }
-
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Project[];
+  // Filtering happens on the device so the saved list also works offline.
+  const search = filters.search?.trim().toLowerCase();
+  return all.filter(
+    (p) =>
+      (!filters.status || p.status === filters.status) &&
+      (!search || p.camp_name.toLowerCase().includes(search))
+  );
 }
 
 export async function fetchProject(id: string): Promise<Project | null> {
-  const { data, error } = await supabase
-    .from('camps')
-    .select('*')
-    .eq('id', id)
-    .single();
-  if (error) return null;
-  return data as Project;
+  try {
+    return await withOfflineCache(`project:${id}`, async () => {
+      const { data, error } = await supabase
+        .from('camps')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw new Error(error.message);
+      return data as Project;
+    });
+  } catch {
+    return null;
+  }
 }
 
 export async function createProject(payload: ProjectPayload): Promise<Project> {
